@@ -1,5 +1,3 @@
-Mapa Calistenia Araraquara
-
 > Mapa Colaborativo de Calistenia 
 
 Aplicação web para mapear e avaliar equipamentos de calistenia em espaços públicos de Araraquara (SP).
