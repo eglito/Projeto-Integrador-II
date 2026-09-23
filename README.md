@@ -1,4 +1,4 @@
-v=# Mapa Calistenia Araraquara
+Mapa Calistenia Araraquara
 
 > Mapa Colaborativo de Calistenia 
 
