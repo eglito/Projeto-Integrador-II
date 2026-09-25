@@ -96,8 +96,15 @@ Validação: Lighthouse, axe DevTools, navegação por teclado e leitor de tela 
 ### Subir o projeto
 
 ```bash
-# TODO
+cp .env.example .env                                    # depois troque chave e senha
+docker compose up -d --build
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
 ```
+
+Aplicação em http://localhost:8000 e admin em http://localhost:8000/admin/.
+
+Para parar: `docker compose down`. Para apagar também o banco local: `docker compose down -v`.
 
 ### Variáveis de ambiente
 
@@ -105,7 +112,14 @@ Copie `.env.example` para `.env` e preencha os valores.
 
 | Variável | Descrição |
 |---|---|
-| `TODO` | |
+| `DJANGO_SECRET_KEY` | Chave criptográfica do Django. Obrigatória. |
+| `DJANGO_DEBUG` | `True` só em desenvolvimento. Ausente vale `False`. |
+| `DJANGO_ALLOWED_HOSTS` | Domínios aceitos, separados por vírgula. |
+| `POSTGRES_DB` | Nome do banco. |
+| `POSTGRES_USER` | Usuário do banco. |
+| `POSTGRES_PASSWORD` | Senha do banco. |
+| `POSTGRES_HOST` | Host do banco. No Docker Compose, `db`. |
+| `POSTGRES_PORT` | Porta do banco. Padrão `5432`. |
 
 ## 8. Estrutura do repositório
 
@@ -117,8 +131,12 @@ TODO
 
 ## 9. Testes
 
+Os testes rodam dentro do container, contra PostgreSQL + PostGIS real.
+
 ```bash
-# TODO
+docker compose exec web pytest
+docker compose exec web ruff check .
+docker compose exec web ruff format --check .
 ```
 
 ## 10. API

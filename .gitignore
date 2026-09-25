@@ -1,0 +1,14 @@
+# Segredos
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Ferramentas
+.pytest_cache/
+.ruff_cache/
+
+# Sistema operacional
+.DS_Store

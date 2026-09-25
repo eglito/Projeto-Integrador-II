@@ -31,11 +31,11 @@ Este projeto atende a uma disciplina acadêmica com requisitos fixos. Não subst
 ## Comandos
 
 ```bash
-# TODO: preencher conforme o projeto for construído
-# Subir ambiente:   docker compose up -d
+# Subir ambiente:   docker compose up -d --build
 # Migrations:       docker compose exec web python manage.py migrate
 # Testes:           docker compose exec web pytest
-# Lint:             ruff check . && ruff format --check .
+# Lint:             docker compose exec web ruff check . && docker compose exec web ruff format --check .
+# Parar:            docker compose down   (down -v apaga o banco local)
 ```
 
 ## Arquitetura

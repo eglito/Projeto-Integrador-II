@@ -1,0 +1,16 @@
+[tool.ruff]
+target-version = "py312"
+# Migrations são geradas pelo Django; não vale a pena lintar nem reformatar.
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+# E, W: estilo (pycodestyle)       F: erros prováveis (pyflakes)
+# I: ordem dos imports (isort)     B: armadilhas comuns (bugbear)
+# UP: sintaxe moderna do Python    DJ: boas práticas de Django
+select = ["E", "W", "F", "I", "B", "UP", "DJ"]
+# Tamanho de linha fica a cargo do "ruff format". O E501 só apontaria o que o
+# formatador não consegue quebrar, como strings longas de configuração.
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
