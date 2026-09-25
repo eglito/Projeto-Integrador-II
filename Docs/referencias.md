@@ -6,7 +6,7 @@ Critério de inclusão: fonte com autoria identificável e método verificável.
 
 ---
 
-## 1. Processo de Design Thinking
+## 1. Processo de Design Thinking 
 
 **Design Thinking Bootleg** (originalmente *Bootcamp Bootleg*, 2010) — Stanford d.school.
 Baralho de métodos organizado pelos cinco modos: empatizar, definir, idear, prototipar, testar. Gratuito.
