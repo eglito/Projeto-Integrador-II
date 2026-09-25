@@ -3,7 +3,6 @@
 Bibliografia do projeto, organizada por tópico.
 
 Critério de inclusão: fonte com autoria identificável e método verificável. Ao citar no relatório, use a **fonte primária**, não o intermediário que a popularizou.
-
 ---
 
 ## 1. Processo de Design Thinking 
