@@ -43,7 +43,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    # Apps do projeto
+    "usuarios",
 ]
+
+# Modelo de usuário do projeto, no lugar do django.contrib.auth.models.User.
+AUTH_USER_MODEL = "usuarios.Usuario"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
