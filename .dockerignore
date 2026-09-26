@@ -1,0 +1,9 @@
+# O que não entra na imagem. O .env fica de fora para nenhum segredo
+# ser gravado numa camada da imagem.
+.env
+.git
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+Docs
