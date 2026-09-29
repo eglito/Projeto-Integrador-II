@@ -1,7 +1,6 @@
 FROM python:3.12-slim-trixie
 
-# Não gera arquivos .pyc e não segura a saída em buffer: os logs aparecem
-# na hora em "docker compose logs".
+# Não gera arquivos .pyc e não segura a saída em buffer: os logs aparecem na hora em "docker compose logs".
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
