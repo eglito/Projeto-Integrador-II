@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     # Apps do projeto
     "usuarios",
+    "locais",
+    "moderacao",
 ]
 
 # Modelo de usuário do projeto, no lugar do django.contrib.auth.models.User.
