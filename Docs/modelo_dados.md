@@ -207,12 +207,21 @@ Regras simples o bastante para virar `CONSTRAINT` no PostgreSQL. Valem mesmo par
 
 Regras que dependem de consulta ou de critério ajustável. Ficam fora de models e views (CLAUDE.md, Arquitetura).
 
-| Regra | Origem |
-|---|---|
-| Condição atual de um equipamento = registro mais recente | RN-02 |
-| Aviso de possível duplicata: local com nome parecido a poucos metros de outro | RN-01 |
-| Busca por raio a partir de um ponto, com filtros por tipo de equipamento, dimensão e faixa de horário | RN-03, RN-04, RN-06 |
-| Resumo de segurança por faixa de horário, a partir das avaliações recentes | RN-04 |
+Implementadas em `locais/servicos.py`.
+
+| Regra | Função | Origem |
+|---|---|---|
+| Condição atual de um equipamento = registro mais recente | `com_condicao_atual` | RN-02 |
+| Aviso de possível duplicata: local que pode ser o mesmo lugar | `possiveis_duplicatas` | RN-01 |
+| Busca por raio a partir de um ponto, com filtros por tipo de equipamento e altura máxima, valendo para o mesmo equipamento | `buscar_proximos` | RN-03, RN-06 |
+| Resumo de segurança por faixa de horário, a partir das avaliações recentes | `resumo_seguranca` | RN-04 |
+
+Parâmetros definidos como **decisão de projeto**:
+
+| Parâmetro | Valor | Motivo |
+|---|---|---|
+| Raio máximo da busca | 10 km | Cobre a área urbana de uma cidade média e impede consultas que varreriam a base inteira |
+| Janela das avaliações de segurança | 90 dias | Avaliação envelhece como a condição do equipamento (RN-02) |
 
 ---
 
