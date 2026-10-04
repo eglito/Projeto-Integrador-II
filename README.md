@@ -68,6 +68,10 @@ Registro do que foi decidido e por quê. Decisão nova entra no fim da lista.
 | 04 | Condição do equipamento como registro datado | Estado de conservação muda. Campo fixo perde histórico e envelhece silenciosamente. |
 | 05 | Segurança do local por campos estruturados | Texto livre sobre segurança de bairro tende a produzir estigmatização. |
 | 06 | Lista textual equivalente ao mapa | Mapa puro é inacessível a leitor de tela e a navegação por teclado. |
+| 07 | Ponto do local como `geography` (SRID 4326) | Distância em metros sem projeção regional. Não fixa a aplicação em Araraquara (RN-09 da síntese da pesquisa). |
+| 08 | Município pelo código IBGE | Identificador oficial, sem ambiguidade de grafia. A UF sai dos dois primeiros dígitos. |
+| 09 | Segurança e zeladoria num único relato por visita | Um formulário por visita. A segurança fica vinculada à faixa de horário (RN-04). |
+| 10 | Denúncia sobre o local, sem fila de aprovação prévia | Autoria visível e correção posterior (RN-08). A análise das denúncias é feita no admin. |
 
 ## 6. Acessibilidade
 
@@ -149,7 +153,7 @@ Documentação OpenAPI gerada automaticamente em `/api/docs/` com a aplicação 
 
 ## 11. Modelo de dados
 
-> Preencher após a modelagem. Diagrama ER em `docs/`.
+Diagrama entidade-relacionamento, entidades, restrições e a origem de cada campo na pesquisa em [Docs/modelo_dados.md](Docs/modelo_dados.md).
 
 ## 12. Contexto acadêmico
 
