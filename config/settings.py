@@ -32,6 +32,12 @@ ALLOWED_HOSTS = [
     host for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if host
 ]
 
+# Os servidores de tiles do OpenStreetMap exigem o cabeçalho Referer
+# (osm.wiki/Blocked). O padrão do Django, "same-origin", omite o Referer para
+# outros domínios e faz o mapa ser bloqueado. Este valor envia só a origem
+# (ex.: http://localhost:8000), nunca o caminho ou os parâmetros da página.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 
 # Application definition
 
