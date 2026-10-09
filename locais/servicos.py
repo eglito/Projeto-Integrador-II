@@ -21,32 +21,39 @@ RAIO_MAXIMO_M = 10_000
 JANELA_AVALIACOES = timedelta(days=90)
 
 
+def filtrar_por_equipamento(
+    locais: QuerySet[Local],
+    tipo: str | None = None,
+    altura_maxima_cm: int | None = None,
+) -> QuerySet[Local]:
+    """Mantém os locais que têm um equipamento com o tipo e a altura pedidos (RN-03).
+
+    Os filtros valem para o mesmo equipamento: "barra australiana com até
+    90 cm" não aceita um local cuja barra baixa seja fixa.
+    """
+    filtro = Q()
+    if tipo:
+        filtro &= Q(equipamentos__tipo=tipo)
+    if altura_maxima_cm is not None:
+        filtro &= Q(equipamentos__altura_cm__lte=altura_maxima_cm)
+    if not filtro:
+        return locais
+    # Um único filter(): as duas condições se aplicam ao mesmo equipamento.
+    return locais.filter(filtro).distinct()
+
+
 def buscar_proximos(
     ponto: Point,
     raio_m: int,
     tipo: str | None = None,
     altura_maxima_cm: int | None = None,
 ) -> QuerySet[Local]:
-    """Locais a até `raio_m` metros de `ponto`, do mais perto ao mais longe (RN-06).
-
-    Os filtros de equipamento valem para o mesmo equipamento: "barra
-    australiana com até 90 cm" não aceita um local cuja barra baixa seja fixa
-    (RN-03).
-    """
+    """Locais a até `raio_m` metros de `ponto`, do mais perto ao mais longe (RN-06)."""
     if not 0 < raio_m <= RAIO_MAXIMO_M:
         raise ValueError(f"O raio deve estar entre 1 e {RAIO_MAXIMO_M} metros.")
 
     locais = Local.objects.filter(ponto__dwithin=(ponto, D(m=raio_m)))
-
-    filtro = Q()
-    if tipo:
-        filtro &= Q(equipamentos__tipo=tipo)
-    if altura_maxima_cm is not None:
-        filtro &= Q(equipamentos__altura_cm__lte=altura_maxima_cm)
-    if filtro:
-        # Um único filter(): as duas condições se aplicam ao mesmo equipamento.
-        locais = locais.filter(filtro).distinct()
-
+    locais = filtrar_por_equipamento(locais, tipo, altura_maxima_cm)
     return locais.annotate(distancia=Distance("ponto", ponto)).order_by("distancia")
 
 
