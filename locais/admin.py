@@ -34,9 +34,11 @@ class LocalAdmin(GISModelAdmin):
         super().save_model(request, obj, form, change)
 
     def save_formset(self, request, form, formset, change):
+        # save(commit=False) vem primeiro: é ele que cria formset.deleted_objects.
+        equipamentos = formset.save(commit=False)
         for equipamento in formset.deleted_objects:
             equipamento.delete()
-        for equipamento in formset.save(commit=False):
+        for equipamento in equipamentos:
             if equipamento.criado_por_id is None:
                 equipamento.criado_por = request.user
             equipamento.save()
