@@ -127,11 +127,36 @@ Copie `.env.example` para `.env` e preencha os valores.
 
 ## 8. Estrutura do repositório
 
-> Preencher quando a estrutura estabilizar.
+```
+.
+├── config/               Configuração do projeto: settings, rotas raiz, WSGI e ASGI
+├── usuarios/             Modelo de usuário e API de autenticação por sessão
+├── locais/               Locais, equipamentos, condição e avaliações
+├── moderacao/            Denúncias, analisadas no admin
+├── tests/                Testes de infraestrutura: PostGIS, cabeçalhos HTTP, OpenAPI
+├── docker/postgis/       Imagem do banco: PostgreSQL 16 + PostGIS
+├── Docs/                 Pesquisa de campo, modelo de dados e guias de uso
+├── conftest.py           Fixtures dos testes, com locais reais de Araraquara
+├── docker-compose.yml    Ambiente local: banco (db) e aplicação (web)
+├── Dockerfile            Imagem da aplicação Django
+├── manage.py             Linha de comando do Django
+├── pyproject.toml        Configuração do ruff e do pytest
+├── requirements.txt      Dependências de produção
+└── requirements-dev.txt  Dependências de desenvolvimento: testes e lint
+```
 
-```
-TODO
-```
+Cada app do Django (`usuarios`, `locais`, `moderacao`) segue a mesma divisão de arquivos:
+
+| Arquivo | Papel |
+|---|---|
+| `models.py` | Entidades e restrições do banco |
+| `servicos.py` | Regras de negócio (camada de serviço) |
+| `serializers.py` | Validação da entrada e conversão de e para JSON |
+| `views.py` | Views finas da API: validam a entrada, chamam o serviço, devolvem a resposta |
+| `urls.py` | Rotas do app |
+| `admin.py` | Telas de cadastro e moderação no admin |
+| `migrations/` | Histórico das mudanças no banco |
+| `tests/` | Testes do app |
 
 ## 9. Testes
 
@@ -147,9 +172,30 @@ docker compose exec web ruff format --check .
 
 Documentação OpenAPI gerada automaticamente em `/api/docs/` com a aplicação rodando.
 
-| Método | Rota | Descrição |
-|---|---|---|
-| TODO | | |
+Consultas são abertas. Rotas que alteram dados exigem sessão autenticada e o cabeçalho `X-CSRFToken`, com o valor do cookie `csrftoken` entregue por `/api/auth/sessao/`. Login e cadastro também exigem o cabeçalho, mesmo sem sessão.
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/auth/sessao/` | Livre | Informa se há sessão aberta e entrega o cookie `csrftoken` |
+| POST | `/api/auth/cadastro/` | Livre, com CSRF | Cria o usuário (nome e senha) e abre a sessão |
+| POST | `/api/auth/login/` | Livre, com CSRF | Abre a sessão |
+| POST | `/api/auth/logout/` | Autenticado | Encerra a sessão |
+| GET | `/api/locais/` | Livre | Lista os locais com equipamentos e condição atual. Serve o mapa e a lista textual |
+| GET | `/api/locais/{id}/` | Livre | Detalhe do local, com autor e resumo de segurança por faixa de horário |
+| GET | `/api/schema/` | Livre | Esquema OpenAPI 3 |
+| GET | `/api/docs/` | Livre | Documentação navegável (Swagger UI) |
+| — | `/admin/` | Equipe | Cadastro e moderação |
+
+Parâmetros de `GET /api/locais/`:
+
+| Parâmetro | Descrição |
+|---|---|
+| `latitude`, `longitude` | Juntos, ativam a busca por proximidade, ordenada por distância (RN-06) |
+| `raio` | Raio da busca em metros. Padrão 2000, máximo 10000 |
+| `tipo` | Tipo de equipamento: `barra_fixa`, `barras_paralelas`, `espaldar`, `barra_australiana`, `outro` |
+| `altura_maxima` | Altura máxima do equipamento, em centímetros. Combinado com `tipo`, vale para o mesmo equipamento (RN-03) |
+
+Rotas de escrita (cadastro de locais, condição, avaliações, denúncias e fotos) entram nas próximas etapas da Fase 3.
 
 ## 11. Modelo de dados
 
