@@ -7,6 +7,7 @@ Locais e equipamentos são reais: coordenadas do OpenStreetMap (consultadas em
 
 import pytest
 from django.contrib.gis.geos import Point
+from rest_framework.test import APIClient
 
 from locais.models import Equipamento, Local, Municipio, TipoEquipamento
 
@@ -31,6 +32,26 @@ EQUIPAMENTOS = {
 @pytest.fixture
 def usuario(django_user_model):
     return django_user_model.objects.create_user(username="praticante")
+
+
+@pytest.fixture
+def api():
+    """Cliente HTTP que cobra o token CSRF, como acontece no navegador."""
+    return APIClient(enforce_csrf_checks=True)
+
+
+@pytest.fixture
+def api_com_csrf(api):
+    """Faz o que o jQuery fará: pega o cookie csrftoken e o envia no cabeçalho."""
+    api.get("/api/auth/sessao/")
+    api.credentials(HTTP_X_CSRFTOKEN=api.cookies["csrftoken"].value)
+    return api
+
+
+@pytest.fixture
+def api_logado(api_com_csrf, usuario):
+    api_com_csrf.force_login(usuario)
+    return api_com_csrf
 
 
 @pytest.fixture
