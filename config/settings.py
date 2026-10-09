@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    "rest_framework",
+    "drf_spectacular",
     # Apps do projeto
     "usuarios",
     "locais",
@@ -57,6 +59,29 @@ INSTALLED_APPS = [
 
 # Modelo de usuário do projeto, no lugar do django.contrib.auth.models.User.
 AUTH_USER_MODEL = "usuarios.Usuario"
+
+# API REST. Sessão + CSRF: o front-end jQuery é servido pelo mesmo domínio.
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    # Consultar é livre; cadastrar e avaliar exige login (autoria, RN-08).
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# Documentação OpenAPI gerada a partir do código, em /api/docs/.
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Mapa Colaborativo de Calistenia",
+    "DESCRIPTION": (
+        "API dos locais de treino de calistenia em espaços públicos. "
+        "Consultas são abertas; cadastros exigem sessão autenticada e o "
+        "cabeçalho X-CSRFToken."
+    ),
+    "VERSION": "0.1.0",
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
