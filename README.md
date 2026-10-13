@@ -2,7 +2,9 @@
 
 Aplicação web para mapear e avaliar equipamentos de calistenia em espaços públicos de Araraquara (SP).
 
-**Status:** em desenvolvimento — Fase 1 (Design Thinking / pesquisa com usuários)
+**Status:** finalizado — Fase 1 (Design Thinking / pesquisa com usuários)
+**Status:** finalizado — Fase 2 (Ideação e Prototipagem)
+**Status:** em desenvolvimento — Fase 3 (Beck-end e API)
 
 ---
 
@@ -213,8 +215,8 @@ Disciplinas em diálogo: Algoritmos e Programação I e II, Fundamentos de Inter
 
 ## 13. Roadmap
 
-- [ ] Fase 1 — Empatia e definição (Design Thinking)
-- [ ] Fase 2 — Ideação, prototipagem e modelagem de dados
+- [X] Fase 1 — Empatia e definição (Design Thinking)
+- [X] Fase 2 — Ideação, prototipagem e modelagem de dados
 - [ ] Fase 3 — Back-end e API
 - [ ] Fase 4 — Front-end acessível
 - [ ] Fase 5 — Nuvem, teste com usuários e entrega
