@@ -16,6 +16,7 @@ from .serializers import (
     BuscaLocaisSerializer,
     EquipamentoEscritaSerializer,
     EquipamentoSerializer,
+    FotoLocalSerializer,
     LocalDetalheSerializer,
     LocalEscritaSerializer,
     LocalSerializer,
@@ -26,6 +27,7 @@ from .servicos import (
     avaliacoes_recentes,
     buscar_proximos,
     com_condicao_atual,
+    definir_foto_local,
     filtrar_por_equipamento,
 )
 
@@ -39,7 +41,7 @@ class PaginacaoHistorico(PageNumberPagination):
 def com_equipamentos(locais):
     """Carrega equipamentos e condição atual em 2 consultas, não 1 por local."""
     equipamentos = com_condicao_atual(Equipamento.objects.order_by("tipo", "id"))
-    return locais.select_related("criado_por").prefetch_related(
+    return locais.select_related("criado_por", "foto__enviada_por").prefetch_related(
         Prefetch("equipamentos", queryset=equipamentos)
     )
 
@@ -171,6 +173,27 @@ class LocalViewSet(
         )
         return self.get_paginated_response(
             AvaliacaoLocalSerializer(pagina, many=True).data
+        )
+
+    @extend_schema(
+        request=FotoLocalSerializer,
+        responses={200: FotoLocalSerializer, 201: FotoLocalSerializer},
+    )
+    @action(detail=True, methods=["put"], permission_classes=[IsAuthenticated])
+    def foto(self, request, pk=None):
+        """Define (201) ou troca (200) a única foto do local (decisão 17).
+
+        O arquivo precisa ter sido enviado antes pelo fluxo de POST /api/uploads/.
+        """
+        local = self.get_object()
+        serializer = FotoLocalSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        foto, criada = definir_foto_local(
+            local, request.user, **serializer.validated_data
+        )
+        return Response(
+            FotoLocalSerializer(foto).data,
+            status=status.HTTP_201_CREATED if criada else status.HTTP_200_OK,
         )
 
 

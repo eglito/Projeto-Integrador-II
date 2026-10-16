@@ -34,3 +34,7 @@ def test_cadastro_de_local_com_equipamento_registra_o_autor_dos_dois(
     local = Local.objects.get(nome="Praça Pedro de Toledo")
     assert local.criado_por == admin_user
     assert local.equipamentos.get().criado_por == admin_user
+
+
+def test_moderacao_lista_as_fotos_dos_locais(admin_client):
+    assert admin_client.get("/admin/locais/fotolocal/").status_code == 200

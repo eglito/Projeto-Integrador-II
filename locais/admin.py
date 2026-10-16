@@ -1,7 +1,10 @@
 from django.contrib import admin
 from django.contrib.gis.admin import GISModelAdmin
+from django.utils.html import format_html
 
-from .models import AvaliacaoLocal, Equipamento, Local, RegistroCondicao
+from fotos.armazenamento import armazenamento
+
+from .models import AvaliacaoLocal, Equipamento, FotoLocal, Local, RegistroCondicao
 
 
 class EquipamentoInline(admin.TabularInline):
@@ -64,3 +67,19 @@ class AvaliacaoLocalAdmin(admin.ModelAdmin):
     ]
     list_filter = ["faixa_horario", "movimento", "limpeza"]
     list_select_related = ["local"]
+
+
+@admin.register(FotoLocal)
+class FotoLocalAdmin(admin.ModelAdmin):
+    """Moderação das fotos: a denúncia "foto inadequada" é resolvida aqui."""
+
+    list_display = ["local", "texto_alternativo", "enviada_por", "enviada_em", "abrir"]
+    readonly_fields = ["local", "objeto", "abrir", "enviada_por", "enviada_em"]
+    list_select_related = ["local", "enviada_por"]
+
+    @admin.display(description="foto")
+    def abrir(self, foto):
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener">Abrir foto</a>',
+            armazenamento().url_publica(foto.objeto),
+        )

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "usuarios",
     "locais",
     "moderacao",
+    "fotos",
 ]
 
 # Modelo de usuário do projeto, no lugar do django.contrib.auth.models.User.
@@ -164,6 +165,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+# Fotos enviadas. No desenvolvimento ficam em disco, servidas pelo runserver;
+# em produção, no Cloud Storage (README, decisão 15).
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

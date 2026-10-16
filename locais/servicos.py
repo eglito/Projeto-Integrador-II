@@ -11,7 +11,16 @@ from django.contrib.gis.measure import D
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 from django.utils import timezone
 
-from .models import AvaliacaoLocal, Equipamento, FaixaHorario, Local, RegistroCondicao
+from fotos.armazenamento import armazenamento
+
+from .models import (
+    AvaliacaoLocal,
+    Equipamento,
+    FaixaHorario,
+    FotoLocal,
+    Local,
+    RegistroCondicao,
+)
 
 # Decisão de projeto: cobre a área urbana de uma cidade média e impede
 # consultas que varreriam a base inteira.
@@ -73,6 +82,11 @@ def com_condicao_atual(equipamentos: QuerySet[Equipamento]) -> QuerySet[Equipame
     return equipamentos.annotate(
         condicao_atual=Subquery(mais_recente.values("condicao")[:1]),
         condicao_registrada_em=Subquery(mais_recente.values("registrado_em")[:1]),
+        # A foto mostrada é a do registro mais recente: envelhece com ele (decisão 16).
+        condicao_foto_objeto=Subquery(mais_recente.values("foto_objeto")[:1]),
+        condicao_foto_texto_alternativo=Subquery(
+            mais_recente.values("foto_texto_alternativo")[:1]
+        ),
     )
 
 
@@ -153,3 +167,30 @@ def cadastrar_local(autor, *, nome: str, ponto: Point, confirmar_novo=False, **d
         if candidatos.exists():
             raise PossivelDuplicata(candidatos)
     return Local.objects.create(nome=nome, ponto=ponto, criado_por=autor, **dados)
+
+
+def definir_foto_local(local: Local, autor, *, objeto: str, texto_alternativo: str):
+    """Define ou troca a única foto do local (decisão 17).
+
+    Na troca, o arquivo antigo é removido do armazenamento para não ficar órfão.
+    Devolve a foto e se ela foi criada (True) ou trocada (False).
+    """
+    anterior = FotoLocal.objects.filter(local=local).first()
+    if anterior is None:
+        foto = FotoLocal.objects.create(
+            local=local,
+            objeto=objeto,
+            texto_alternativo=texto_alternativo,
+            enviada_por=autor,
+        )
+        return foto, True
+
+    objeto_antigo = anterior.objeto
+    anterior.objeto = objeto
+    anterior.texto_alternativo = texto_alternativo
+    anterior.enviada_por = autor
+    anterior.enviada_em = timezone.now()
+    anterior.save()
+    if objeto_antigo != objeto:
+        armazenamento().remover(objeto_antigo)
+    return anterior, False

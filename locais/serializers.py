@@ -4,10 +4,14 @@ from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
+from fotos.armazenamento import armazenamento
+from fotos.serializers import ObjetoFotoField
+
 from .models import (
     AvaliacaoLocal,
     Condicao,
     Equipamento,
+    FotoLocal,
     Local,
     RegistroCondicao,
     TipoEquipamento,
@@ -44,6 +48,10 @@ class EquipamentoSerializer(serializers.ModelSerializer):
     condicao_atual = serializers.CharField(read_only=True, allow_null=True)
     condicao_atual_nome = serializers.SerializerMethodField()
     condicao_registrada_em = serializers.DateTimeField(read_only=True, allow_null=True)
+    foto_condicao_url = serializers.SerializerMethodField()
+    foto_condicao_texto_alternativo = serializers.CharField(
+        source="condicao_foto_texto_alternativo", read_only=True, allow_null=True
+    )
 
     class Meta:
         model = Equipamento
@@ -57,12 +65,42 @@ class EquipamentoSerializer(serializers.ModelSerializer):
             "condicao_atual",
             "condicao_atual_nome",
             "condicao_registrada_em",
+            "foto_condicao_url",
+            "foto_condicao_texto_alternativo",
         ]
+
+    def get_foto_condicao_url(self, equipamento) -> str | None:
+        """Foto do registro de condição mais recente, se houver (decisão 16)."""
+        objeto = equipamento.condicao_foto_objeto
+        return armazenamento().url_publica(objeto) if objeto else None
 
     def get_condicao_atual_nome(self, equipamento) -> str | None:
         if equipamento.condicao_atual is None:
             return None
         return Condicao(equipamento.condicao_atual).label
+
+
+class FotoLocalSerializer(ValidaRestricoesMixin, serializers.ModelSerializer):
+    objeto = ObjetoFotoField(write_only=True, max_length=200)
+    # allow_blank: o texto vazio chega à restrição do model, cuja mensagem
+    # explica como corrigir (a do DRF só diria "não pode ser em branco").
+    texto_alternativo = serializers.CharField(max_length=250, allow_blank=True)
+    url = serializers.SerializerMethodField()
+    enviada_por = serializers.CharField(
+        source="enviada_por.username", read_only=True, default=None
+    )
+
+    class Meta:
+        model = FotoLocal
+        fields = ["objeto", "texto_alternativo", "url", "enviada_por", "enviada_em"]
+        read_only_fields = ["enviada_em"]
+
+    def get_url(self, foto) -> str:
+        return armazenamento().url_publica(foto.objeto)
+
+    def validate(self, dados):
+        self.validar_restricoes(dados)
+        return dados
 
 
 class LocalSerializer(serializers.ModelSerializer):
@@ -106,9 +144,16 @@ class LocalDetalheSerializer(LocalSerializer):
         source="criado_por.username", read_only=True, default=None
     )
     seguranca = serializers.SerializerMethodField()
+    foto = FotoLocalSerializer(read_only=True, allow_null=True)
 
     class Meta(LocalSerializer.Meta):
-        fields = [*LocalSerializer.Meta.fields, "criado_por", "criado_em", "seguranca"]
+        fields = [
+            *LocalSerializer.Meta.fields,
+            "foto",
+            "criado_por",
+            "criado_em",
+            "seguranca",
+        ]
 
     def get_seguranca(self, local) -> dict:
         """Avaliações dos últimos 90 dias por faixa de horário (RN-04)."""
@@ -207,17 +252,38 @@ class EquipamentoEscritaSerializer(ValidaRestricoesMixin, serializers.ModelSeria
         return dados
 
 
-class RegistroCondicaoSerializer(serializers.ModelSerializer):
+class RegistroCondicaoSerializer(ValidaRestricoesMixin, serializers.ModelSerializer):
     """Registro imutável: só leitura e criação, para preservar o histórico (RN-02)."""
 
     condicao_nome = serializers.CharField(source="get_condicao_display", read_only=True)
     autor = serializers.CharField(source="autor.username", read_only=True, default=None)
+    foto_objeto = ObjetoFotoField(
+        write_only=True, required=False, allow_blank=True, max_length=200
+    )
+    foto_url = serializers.SerializerMethodField()
 
     class Meta:
         model = RegistroCondicao
-        fields = ["id", "condicao", "condicao_nome", "autor", "registrado_em"]
+        fields = [
+            "id",
+            "condicao",
+            "condicao_nome",
+            "foto_objeto",
+            "foto_texto_alternativo",
+            "foto_url",
+            "autor",
+            "registrado_em",
+        ]
         # A data é a do envio: ninguém registra condição no passado.
         read_only_fields = ["registrado_em"]
+
+    def get_foto_url(self, registro) -> str | None:
+        objeto = registro.foto_objeto
+        return armazenamento().url_publica(objeto) if objeto else None
+
+    def validate(self, dados):
+        self.validar_restricoes(dados)
+        return dados
 
 
 class AvaliacaoLocalSerializer(ValidaRestricoesMixin, serializers.ModelSerializer):

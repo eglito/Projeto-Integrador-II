@@ -171,6 +171,11 @@ class RegistroCondicao(models.Model):
         related_name="registros_condicao",
     )
     condicao = models.CharField("condição", max_length=12, choices=Condicao.choices)
+    # Foto opcional da condição (README, decisão 16): envelhece junto com o registro.
+    foto_objeto = models.CharField("foto", max_length=200, blank=True)
+    foto_texto_alternativo = models.CharField(
+        "texto alternativo da foto", max_length=250, blank=True
+    )
     # default (e não auto_now_add) permite informar a data em testes e importações.
     registrado_em = models.DateTimeField("registrado em", default=timezone.now)
 
@@ -178,6 +183,18 @@ class RegistroCondicao(models.Model):
         verbose_name = "registro de condição"
         verbose_name_plural = "registros de condição"
         ordering = ["-registrado_em"]
+        constraints = [
+            # CLAUDE.md: foto exige texto alternativo, garantido no banco.
+            models.CheckConstraint(
+                condition=(Q(foto_objeto="") & Q(foto_texto_alternativo=""))
+                | (~Q(foto_objeto="") & ~Q(foto_texto_alternativo="")),
+                name="registro_foto_com_texto_alternativo",
+                violation_error_message=(
+                    "Descreva a foto no texto alternativo, para quem usa leitor de "
+                    "tela. Envie o texto junto com a foto, e só quando houver foto."
+                ),
+            ),
+        ]
         indexes = [
             # Sustenta a busca do registro mais recente de cada equipamento.
             models.Index(
@@ -235,3 +252,37 @@ class AvaliacaoLocal(models.Model):
 
     def __str__(self):
         return f"{self.local}, {self.get_faixa_horario_display()}"
+
+
+class FotoLocal(models.Model):
+    """Uma foto por local (README, decisão 17), para reconhecer o lugar."""
+
+    local = models.OneToOneField(Local, on_delete=models.CASCADE, related_name="foto")
+    objeto = models.CharField("arquivo", max_length=200)
+    # CLAUDE.md: texto alternativo obrigatório no modelo, não só no formulário.
+    texto_alternativo = models.CharField("texto alternativo", max_length=250)
+    enviada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="fotos_enviadas",
+        verbose_name="enviada por",
+    )
+    enviada_em = models.DateTimeField("enviada em", default=timezone.now)
+
+    class Meta:
+        verbose_name = "foto do local"
+        verbose_name_plural = "fotos dos locais"
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(texto_alternativo=""),
+                name="foto_local_texto_alternativo_obrigatorio",
+                violation_error_message=(
+                    "Descreva a foto no texto alternativo, para quem usa leitor de "
+                    "tela. Exemplo: barras paralelas ao lado de bancos, sob árvores."
+                ),
+            ),
+        ]
+
+    def __str__(self):
+        return f"Foto de {self.local}"
