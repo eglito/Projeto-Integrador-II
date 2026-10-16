@@ -1,10 +1,40 @@
+import copy
+
+from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
-from .models import Condicao, Equipamento, Local, TipoEquipamento
-from .servicos import RAIO_MAXIMO_M, resumo_seguranca
+from .models import (
+    AvaliacaoLocal,
+    Condicao,
+    Equipamento,
+    Local,
+    RegistroCondicao,
+    TipoEquipamento,
+)
+from .servicos import RAIO_MAXIMO_M, cadastrar_local, resumo_seguranca
 
 # Decisão de projeto: sem raio informado, a busca cobre cerca de 25 minutos a pé.
 RAIO_PADRAO_M = 2_000
+
+
+class ValidaRestricoesMixin:
+    """Aplica as restrições do model (CHECK e UNIQUE) na validação da API.
+
+    O ModelSerializer não as verifica: sem isto, o banco recusaria o INSERT e a
+    API responderia 500. As mensagens vêm de violation_error_message no model e
+    dizem como corrigir.
+    """
+
+    def validar_restricoes(self, dados, **extras):
+        # Na edição, parte do registro atual; na criação, de uma instância nova.
+        instancia = copy.copy(self.instance) if self.instance else self.Meta.model()
+        for campo, valor in {**dados, **extras}.items():
+            setattr(instancia, campo, valor)
+        try:
+            instancia.validate_constraints()
+        except DjangoValidationError as erro:
+            raise serializers.ValidationError(erro.messages) from erro
 
 
 class EquipamentoSerializer(serializers.ModelSerializer):
@@ -110,4 +140,104 @@ class BuscaLocaisSerializer(serializers.Serializer):
                 "Informe latitude e longitude juntas para buscar por proximidade, "
                 "ou nenhuma das duas para listar todos os locais."
             )
+        return dados
+
+
+class LocalEscritaSerializer(ValidaRestricoesMixin, serializers.ModelSerializer):
+    """Cadastro (POST) e correção pelo autor (PATCH) de um local."""
+
+    latitude = serializers.FloatField(write_only=True, min_value=-90, max_value=90)
+    longitude = serializers.FloatField(write_only=True, min_value=-180, max_value=180)
+    confirmar_novo = serializers.BooleanField(
+        write_only=True,
+        default=False,
+        help_text=(
+            "Envie true para cadastrar mesmo havendo possíveis duplicatas "
+            "(depois de uma resposta 409)."
+        ),
+    )
+
+    class Meta:
+        model = Local
+        fields = [
+            "nome",
+            "municipio_ibge",
+            "endereco",
+            "latitude",
+            "longitude",
+            "tem_bebedouro",
+            "tem_sanitario",
+            "tem_bancos",
+            "confirmar_novo",
+        ]
+
+    def validate_nome(self, nome):
+        # "Praça  dos   Advogados" e "Praça dos Advogados" são o mesmo nome.
+        return " ".join(nome.split())
+
+    def validate(self, dados):
+        latitude = dados.pop("latitude", None)
+        longitude = dados.pop("longitude", None)
+        if (latitude is None) != (longitude is None):
+            raise serializers.ValidationError(
+                "Informe latitude e longitude juntas para definir a localização."
+            )
+        if latitude is not None:
+            dados["ponto"] = Point(longitude, latitude, srid=4326)
+
+        restricoes = {k: v for k, v in dados.items() if k != "confirmar_novo"}
+        self.validar_restricoes(restricoes)
+        return dados
+
+    def create(self, dados):
+        return cadastrar_local(self.context["request"].user, **dados)
+
+    def update(self, local, dados):
+        dados.pop("confirmar_novo", None)
+        return super().update(local, dados)
+
+
+class EquipamentoEscritaSerializer(ValidaRestricoesMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Equipamento
+        fields = ["tipo", "nome_outro", "altura_cm", "largura_cm"]
+
+    def validate(self, dados):
+        self.validar_restricoes(dados)
+        return dados
+
+
+class RegistroCondicaoSerializer(serializers.ModelSerializer):
+    """Registro imutável: só leitura e criação, para preservar o histórico (RN-02)."""
+
+    condicao_nome = serializers.CharField(source="get_condicao_display", read_only=True)
+    autor = serializers.CharField(source="autor.username", read_only=True, default=None)
+
+    class Meta:
+        model = RegistroCondicao
+        fields = ["id", "condicao", "condicao_nome", "autor", "registrado_em"]
+        # A data é a do envio: ninguém registra condição no passado.
+        read_only_fields = ["registrado_em"]
+
+
+class AvaliacaoLocalSerializer(ValidaRestricoesMixin, serializers.ModelSerializer):
+    """Avaliação imutável de segurança e limpeza numa faixa de horário (RN-04)."""
+
+    autor = serializers.CharField(source="autor.username", read_only=True, default=None)
+
+    class Meta:
+        model = AvaliacaoLocal
+        fields = [
+            "id",
+            "faixa_horario",
+            "iluminacao",
+            "movimento",
+            "limpeza",
+            "autor",
+            "registrado_em",
+        ]
+        read_only_fields = ["registrado_em"]
+
+    def validate(self, dados):
+        self.validar_restricoes(dados)
         return dados

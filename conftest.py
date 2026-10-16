@@ -55,6 +55,25 @@ def api_logado(api_com_csrf, usuario):
 
 
 @pytest.fixture
+def outro_usuario(django_user_model):
+    return django_user_model.objects.create_user(username="outra_praticante")
+
+
+@pytest.fixture
+def cliente_logado():
+    """Fábrica de clientes com CSRF e sessão, para simular pessoas diferentes."""
+
+    def criar(pessoa):
+        cliente = APIClient(enforce_csrf_checks=True)
+        cliente.get("/api/auth/sessao/")
+        cliente.credentials(HTTP_X_CSRFTOKEN=cliente.cookies["csrftoken"].value)
+        cliente.force_login(pessoa)
+        return cliente
+
+    return criar
+
+
+@pytest.fixture
 def locais_araraquara(usuario):
     """Os cinco locais citados nas entrevistas, com seus equipamentos."""
     locais = {}

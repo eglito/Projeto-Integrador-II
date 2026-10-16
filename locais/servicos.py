@@ -76,14 +76,19 @@ def com_condicao_atual(equipamentos: QuerySet[Equipamento]) -> QuerySet[Equipame
     )
 
 
+def avaliacoes_recentes(local: Local) -> QuerySet[AvaliacaoLocal]:
+    """Avaliações dentro da janela de validade, da mais nova à mais antiga."""
+    desde = timezone.now() - JANELA_AVALIACOES
+    return AvaliacaoLocal.objects.filter(local=local, registrado_em__gte=desde)
+
+
 def resumo_seguranca(local: Local) -> dict[str, dict]:
     """Avaliações recentes do local, contadas por faixa de horário (RN-04).
 
     Segurança é propriedade do par local e horário: cada faixa tem seu próprio
     resumo de movimento e iluminação.
     """
-    desde = timezone.now() - JANELA_AVALIACOES
-    recentes = AvaliacaoLocal.objects.filter(local=local, registrado_em__gte=desde)
+    recentes = avaliacoes_recentes(local)
 
     resumo = {
         faixa.value: {"avaliacoes": 0, "movimento": {}, "iluminacao": {}}
@@ -127,3 +132,24 @@ def possiveis_duplicatas(nome: str, ponto: Point) -> QuerySet[Local]:
         .annotate(distancia=Distance("ponto", ponto))
         .order_by("distancia")
     )
+
+
+class PossivelDuplicata(Exception):
+    """Há locais que podem ser o mesmo lugar que se quer cadastrar (RN-01)."""
+
+    def __init__(self, candidatos: QuerySet[Local]):
+        super().__init__("Possível duplicata de local já cadastrado.")
+        self.candidatos = candidatos
+
+
+def cadastrar_local(autor, *, nome: str, ponto: Point, confirmar_novo=False, **dados):
+    """Cadastra um local, avisando antes se ele pode já existir (RN-01).
+
+    Com candidatos e sem `confirmar_novo`, nada é gravado: quem cadastra vê os
+    candidatos e decide se é mesmo outro lugar.
+    """
+    if not confirmar_novo:
+        candidatos = possiveis_duplicatas(nome, ponto)
+        if candidatos.exists():
+            raise PossivelDuplicata(candidatos)
+    return Local.objects.create(nome=nome, ponto=ponto, criado_por=autor, **dados)

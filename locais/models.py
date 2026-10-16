@@ -89,6 +89,9 @@ class Local(models.Model):
                 Lower("nome"),
                 "municipio_ibge",
                 name="local_nome_unico_por_municipio",
+                violation_error_message=(
+                    "Já existe um local com este nome neste município. Se for o mesmo lugar, avalie o local já cadastrado; se for outro, use o nome oficial da praça ou do parque."
+                ),
             ),
         ]
 
@@ -122,19 +125,31 @@ class Equipamento(models.Model):
                 condition=(Q(tipo=TipoEquipamento.OUTRO) & ~Q(nome_outro=""))
                 | (~Q(tipo=TipoEquipamento.OUTRO) & Q(nome_outro="")),
                 name="equipamento_nome_outro_somente_tipo_outro",
+                violation_error_message=(
+                    "Preencha o nome do equipamento quando o tipo for “Outro”, e somente nesse caso."
+                ),
             ),
             models.CheckConstraint(
                 condition=Q(largura_cm__isnull=True)
                 | Q(tipo=TipoEquipamento.BARRAS_PARALELAS),
                 name="equipamento_largura_somente_paralelas",
+                violation_error_message=(
+                    "A largura vale só para barras paralelas. Deixe o campo em branco para os outros tipos."
+                ),
             ),
             models.CheckConstraint(
                 condition=Q(altura_cm__isnull=True) | Q(altura_cm__gt=0),
                 name="equipamento_altura_positiva",
+                violation_error_message=(
+                    "Informe a altura em centímetros, com valor maior que zero."
+                ),
             ),
             models.CheckConstraint(
                 condition=Q(largura_cm__isnull=True) | Q(largura_cm__gt=0),
                 name="equipamento_largura_positiva",
+                violation_error_message=(
+                    "Informe a largura em centímetros, com valor maior que zero."
+                ),
             ),
         ]
 
@@ -206,6 +221,9 @@ class AvaliacaoLocal(models.Model):
             models.CheckConstraint(
                 condition=~Q(faixa_horario=FaixaHorario.NOITE) | ~Q(iluminacao=""),
                 name="avaliacao_iluminacao_obrigatoria_noite",
+                violation_error_message=(
+                    "Na avaliação noturna, informe também como está a iluminação."
+                ),
             ),
         ]
         indexes = [
