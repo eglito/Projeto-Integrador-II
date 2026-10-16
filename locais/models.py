@@ -68,6 +68,7 @@ class Local(models.Model):
     # null=True: "não informado" é diferente de "não tem".
     tem_bebedouro = models.BooleanField("tem bebedouro", null=True, blank=True)
     tem_sanitario = models.BooleanField("tem sanitário", null=True, blank=True)
+    tem_bancos = models.BooleanField("tem bancos", null=True, blank=True)
     # SET_NULL: excluir a conta (direito previsto na LGPD) não apaga o local.
     criado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,

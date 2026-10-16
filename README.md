@@ -4,7 +4,7 @@ Aplicação web para mapear e avaliar equipamentos de calistenia em espaços pú
 
 **Status:** finalizado — Fase 1 (Design Thinking / pesquisa com usuários)
 **Status:** finalizado — Fase 2 (Ideação e Prototipagem)
-**Status:** em desenvolvimento — Fase 3 (Beck-end e API)
+**Status:** em desenvolvimento — Fase 3 (Back-end e API)
 
 ---
 
@@ -26,8 +26,9 @@ O mapa possui uma **lista textual equivalente** com os mesmos dados e filtros, p
 - Cadastro de local por clique no mapa ou por endereço
 - Equipamentos vinculados ao local (barra fixa, paralelas, espaldar, barra australiana, outros)
 - Uma foto por local, com texto alternativo obrigatório
-- Comodidades: bebedouro, sanitário, iluminação
-- Avaliação de condição datada
+- Comodidades: bebedouro, sanitário e bancos
+- Avaliação de condição datada, com foto opcional do equipamento
+- Avaliação de segurança e limpeza por faixa de horário (manhã, tarde, noite). A iluminação entra aqui, e não nas comodidades: ela só importa para a segurança, e só à noite (RN-04, RN-05)
 - Busca por proximidade geográfica
 - API REST documentada
 - Acessibilidade WCAG 2.2 nível AA
@@ -74,6 +75,13 @@ Registro do que foi decidido e por quê. Decisão nova entra no fim da lista.
 | 08 | Município pelo código IBGE | Identificador oficial, sem ambiguidade de grafia. A UF sai dos dois primeiros dígitos. |
 | 09 | Segurança e zeladoria num único relato por visita | Um formulário por visita. A segurança fica vinculada à faixa de horário (RN-04). |
 | 10 | Denúncia sobre o local, sem fila de aprovação prévia | Autoria visível e correção posterior (RN-08). A análise das denúncias é feita no admin. |
+| 11 | Autenticação por sessão + CSRF | O front-end jQuery é servido pelo mesmo domínio: cookie de sessão HttpOnly e nenhum token guardado no navegador. Login e cadastro também exigem CSRF. |
+| 12 | Coordenadas como `latitude` e `longitude` explícitas na API | Evita a troca de ordem entre GeoJSON `[lon, lat]` e Leaflet `[lat, lon]`. |
+| 13 | `Referrer-Policy: strict-origin-when-cross-origin` | Os servidores de tiles do OpenStreetMap exigem o cabeçalho Referer; o padrão do Django omitia e o mapa era bloqueado. Só a origem do site é enviada. |
+| 14 | Raio padrão de 2 km na busca por proximidade | Cerca de 25 minutos a pé. O máximo é 10 km. |
+| 15 | Upload de foto por URL assinada, com simulação local no desenvolvimento | O front faz o mesmo fluxo em desenvolvimento e em produção, sem recurso no GCP até a Fase 5. |
+| 16 | Foto de equipamento dentro do registro de condição | A foto envelhece como a condição (decisão 04): nasce datada e com autor. |
+| 17 | Uma foto por local | Escopo do MVP. Serve para reconhecer o lugar; a condição vem das fotos dos equipamentos. |
 
 ## 6. Acessibilidade
 

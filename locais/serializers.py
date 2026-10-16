@@ -60,6 +60,7 @@ class LocalSerializer(serializers.ModelSerializer):
             "longitude",
             "tem_bebedouro",
             "tem_sanitario",
+            "tem_bancos",
             "distancia_m",
             "equipamentos",
         ]

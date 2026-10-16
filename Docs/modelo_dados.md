@@ -35,6 +35,7 @@ erDiagram
         geography ponto "Point, SRID 4326, índice GiST"
         boolean tem_bebedouro "nulo = não informado"
         boolean tem_sanitario "nulo = não informado"
+        boolean tem_bancos "nulo = não informado"
         bigint criado_por_id FK
         timestamptz criado_em
     }
@@ -101,7 +102,7 @@ Lugar público com equipamentos, identificado pelo nome que os praticantes usam.
 | `municipio_ibge` | inteiro, código IBGE de 7 dígitos | RN-09: a cidade é atributo, não constante do código |
 | `endereco` | texto, opcional | RN-10: descrição legível para a lista textual |
 | `ponto` | `PointField(geography=True)` | RN-06: busca por raio é a consulta principal |
-| `tem_bebedouro`, `tem_sanitario` | booleano, nulo = não informado | RN-07: presença de comodidade |
+| `tem_bebedouro`, `tem_sanitario`, `tem_bancos` | booleano, nulo = não informado | RN-07: presença de comodidade. Bancos citados na proposta do README |
 | `criado_por`, `criado_em` | FK Usuario, data | RN-08: autoria visível |
 
 Sobre `municipio_ibge`: Araraquara é `3503208`. Os dois primeiros dígitos identificam a UF (`35` = SP), por isso a UF não tem campo próprio. Os municípios atendidos ficam numa lista de opções no código (`IntegerChoices`), que dá o nome a ser exibido. No MVP a lista tem só Araraquara; atender outra cidade é acrescentar uma linha, sem refatoração (RN-09).
