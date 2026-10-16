@@ -68,6 +68,7 @@ class Local(models.Model):
     # null=True: "não informado" é diferente de "não tem".
     tem_bebedouro = models.BooleanField("tem bebedouro", null=True, blank=True)
     tem_sanitario = models.BooleanField("tem sanitário", null=True, blank=True)
+    tem_bancos = models.BooleanField("tem bancos", null=True, blank=True)
     # SET_NULL: excluir a conta (direito previsto na LGPD) não apaga o local.
     criado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -88,6 +89,9 @@ class Local(models.Model):
                 Lower("nome"),
                 "municipio_ibge",
                 name="local_nome_unico_por_municipio",
+                violation_error_message=(
+                    "Já existe um local com este nome neste município. Se for o mesmo lugar, avalie o local já cadastrado; se for outro, use o nome oficial da praça ou do parque."
+                ),
             ),
         ]
 
@@ -121,19 +125,31 @@ class Equipamento(models.Model):
                 condition=(Q(tipo=TipoEquipamento.OUTRO) & ~Q(nome_outro=""))
                 | (~Q(tipo=TipoEquipamento.OUTRO) & Q(nome_outro="")),
                 name="equipamento_nome_outro_somente_tipo_outro",
+                violation_error_message=(
+                    "Preencha o nome do equipamento quando o tipo for “Outro”, e somente nesse caso."
+                ),
             ),
             models.CheckConstraint(
                 condition=Q(largura_cm__isnull=True)
                 | Q(tipo=TipoEquipamento.BARRAS_PARALELAS),
                 name="equipamento_largura_somente_paralelas",
+                violation_error_message=(
+                    "A largura vale só para barras paralelas. Deixe o campo em branco para os outros tipos."
+                ),
             ),
             models.CheckConstraint(
                 condition=Q(altura_cm__isnull=True) | Q(altura_cm__gt=0),
                 name="equipamento_altura_positiva",
+                violation_error_message=(
+                    "Informe a altura em centímetros, com valor maior que zero."
+                ),
             ),
             models.CheckConstraint(
                 condition=Q(largura_cm__isnull=True) | Q(largura_cm__gt=0),
                 name="equipamento_largura_positiva",
+                violation_error_message=(
+                    "Informe a largura em centímetros, com valor maior que zero."
+                ),
             ),
         ]
 
@@ -155,6 +171,11 @@ class RegistroCondicao(models.Model):
         related_name="registros_condicao",
     )
     condicao = models.CharField("condição", max_length=12, choices=Condicao.choices)
+    # Foto opcional da condição (README, decisão 16): envelhece junto com o registro.
+    foto_objeto = models.CharField("foto", max_length=200, blank=True)
+    foto_texto_alternativo = models.CharField(
+        "texto alternativo da foto", max_length=250, blank=True
+    )
     # default (e não auto_now_add) permite informar a data em testes e importações.
     registrado_em = models.DateTimeField("registrado em", default=timezone.now)
 
@@ -162,6 +183,18 @@ class RegistroCondicao(models.Model):
         verbose_name = "registro de condição"
         verbose_name_plural = "registros de condição"
         ordering = ["-registrado_em"]
+        constraints = [
+            # CLAUDE.md: foto exige texto alternativo, garantido no banco.
+            models.CheckConstraint(
+                condition=(Q(foto_objeto="") & Q(foto_texto_alternativo=""))
+                | (~Q(foto_objeto="") & ~Q(foto_texto_alternativo="")),
+                name="registro_foto_com_texto_alternativo",
+                violation_error_message=(
+                    "Descreva a foto no texto alternativo, para quem usa leitor de "
+                    "tela. Envie o texto junto com a foto, e só quando houver foto."
+                ),
+            ),
+        ]
         indexes = [
             # Sustenta a busca do registro mais recente de cada equipamento.
             models.Index(
@@ -205,6 +238,9 @@ class AvaliacaoLocal(models.Model):
             models.CheckConstraint(
                 condition=~Q(faixa_horario=FaixaHorario.NOITE) | ~Q(iluminacao=""),
                 name="avaliacao_iluminacao_obrigatoria_noite",
+                violation_error_message=(
+                    "Na avaliação noturna, informe também como está a iluminação."
+                ),
             ),
         ]
         indexes = [
@@ -216,3 +252,37 @@ class AvaliacaoLocal(models.Model):
 
     def __str__(self):
         return f"{self.local}, {self.get_faixa_horario_display()}"
+
+
+class FotoLocal(models.Model):
+    """Uma foto por local (README, decisão 17), para reconhecer o lugar."""
+
+    local = models.OneToOneField(Local, on_delete=models.CASCADE, related_name="foto")
+    objeto = models.CharField("arquivo", max_length=200)
+    # CLAUDE.md: texto alternativo obrigatório no modelo, não só no formulário.
+    texto_alternativo = models.CharField("texto alternativo", max_length=250)
+    enviada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="fotos_enviadas",
+        verbose_name="enviada por",
+    )
+    enviada_em = models.DateTimeField("enviada em", default=timezone.now)
+
+    class Meta:
+        verbose_name = "foto do local"
+        verbose_name_plural = "fotos dos locais"
+        constraints = [
+            models.CheckConstraint(
+                condition=~Q(texto_alternativo=""),
+                name="foto_local_texto_alternativo_obrigatorio",
+                violation_error_message=(
+                    "Descreva a foto no texto alternativo, para quem usa leitor de "
+                    "tela. Exemplo: barras paralelas ao lado de bancos, sob árvores."
+                ),
+            ),
+        ]
+
+    def __str__(self):
+        return f"Foto de {self.local}"

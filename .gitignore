@@ -12,3 +12,6 @@ __pycache__/
 
 # Sistema operacional
 .DS_Store
+
+# Fotos enviadas no desenvolvimento
+media/

@@ -38,6 +38,19 @@ class Denuncia(models.Model):
         verbose_name = "denúncia"
         verbose_name_plural = "denúncias"
         ordering = ["-criada_em"]
+        constraints = [
+            # Índice único parcial: só vale enquanto a denúncia está aberta. Depois
+            # da análise, a mesma pessoa pode denunciar de novo se o problema voltar.
+            models.UniqueConstraint(
+                fields=["local", "autor", "motivo"],
+                condition=models.Q(status=StatusDenuncia.ABERTA),
+                name="denuncia_aberta_unica_por_autor",
+                violation_error_message=(
+                    "Você já tem uma denúncia aberta por este motivo para este local. "
+                    "Aguarde a análise da moderação."
+                ),
+            ),
+        ]
 
     def __str__(self):
         return f"{self.get_motivo_display()}: {self.local}"

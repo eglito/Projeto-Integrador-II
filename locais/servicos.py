@@ -11,7 +11,16 @@ from django.contrib.gis.measure import D
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 from django.utils import timezone
 
-from .models import AvaliacaoLocal, Equipamento, FaixaHorario, Local, RegistroCondicao
+from fotos.armazenamento import armazenamento
+
+from .models import (
+    AvaliacaoLocal,
+    Equipamento,
+    FaixaHorario,
+    FotoLocal,
+    Local,
+    RegistroCondicao,
+)
 
 # Decisão de projeto: cobre a área urbana de uma cidade média e impede
 # consultas que varreriam a base inteira.
@@ -19,6 +28,11 @@ RAIO_MAXIMO_M = 10_000
 
 # Decisão de projeto: avaliação de segurança envelhece como a condição (RN-02).
 JANELA_AVALIACOES = timedelta(days=90)
+
+# RN-01, com dados reais: duas marcações do Parque Infantil ficaram a 84 m uma da
+# outra; o par de locais distintos mais próximo (Parque Infantil e Praça Pedro
+# de Toledo) está a 1.252 m. 150 m pega o mesmo lugar sem confundir vizinhos.
+RAIO_DUPLICATA_M = 150
 
 
 def filtrar_por_equipamento(
@@ -68,7 +82,18 @@ def com_condicao_atual(equipamentos: QuerySet[Equipamento]) -> QuerySet[Equipame
     return equipamentos.annotate(
         condicao_atual=Subquery(mais_recente.values("condicao")[:1]),
         condicao_registrada_em=Subquery(mais_recente.values("registrado_em")[:1]),
+        # A foto mostrada é a do registro mais recente: envelhece com ele (decisão 16).
+        condicao_foto_objeto=Subquery(mais_recente.values("foto_objeto")[:1]),
+        condicao_foto_texto_alternativo=Subquery(
+            mais_recente.values("foto_texto_alternativo")[:1]
+        ),
     )
+
+
+def avaliacoes_recentes(local: Local) -> QuerySet[AvaliacaoLocal]:
+    """Avaliações dentro da janela de validade, da mais nova à mais antiga."""
+    desde = timezone.now() - JANELA_AVALIACOES
+    return AvaliacaoLocal.objects.filter(local=local, registrado_em__gte=desde)
 
 
 def resumo_seguranca(local: Local) -> dict[str, dict]:
@@ -77,8 +102,7 @@ def resumo_seguranca(local: Local) -> dict[str, dict]:
     Segurança é propriedade do par local e horário: cada faixa tem seu próprio
     resumo de movimento e iluminação.
     """
-    desde = timezone.now() - JANELA_AVALIACOES
-    recentes = AvaliacaoLocal.objects.filter(local=local, registrado_em__gte=desde)
+    recentes = avaliacoes_recentes(local)
 
     resumo = {
         faixa.value: {"avaliacoes": 0, "movimento": {}, "iluminacao": {}}
@@ -111,5 +135,62 @@ def possiveis_duplicatas(nome: str, ponto: Point) -> QuerySet[Local]:
     Chamada antes de criar um Local: a API mostra os candidatos e pede
     confirmação, em vez de recusar o cadastro.
     """
-    # TODO(human): devolver os locais candidatos a duplicata, do mais perto ao mais longe.
-    raise NotImplementedError
+    # Mesmo lugar com outro nome: "Parque Infantil" e "Praça Major Abel Fortes".
+    perto = Q(ponto__dwithin=(ponto, D(m=RAIO_DUPLICATA_M)))
+    # Mesmo nome com o ponto marcado longe por engano, dentro da mesma região.
+    mesmo_nome = Q(
+        nome__iexact=nome.strip(), ponto__dwithin=(ponto, D(m=RAIO_MAXIMO_M))
+    )
+    return (
+        Local.objects.filter(perto | mesmo_nome)
+        .annotate(distancia=Distance("ponto", ponto))
+        .order_by("distancia")
+    )
+
+
+class PossivelDuplicata(Exception):
+    """Há locais que podem ser o mesmo lugar que se quer cadastrar (RN-01)."""
+
+    def __init__(self, candidatos: QuerySet[Local]):
+        super().__init__("Possível duplicata de local já cadastrado.")
+        self.candidatos = candidatos
+
+
+def cadastrar_local(autor, *, nome: str, ponto: Point, confirmar_novo=False, **dados):
+    """Cadastra um local, avisando antes se ele pode já existir (RN-01).
+
+    Com candidatos e sem `confirmar_novo`, nada é gravado: quem cadastra vê os
+    candidatos e decide se é mesmo outro lugar.
+    """
+    if not confirmar_novo:
+        candidatos = possiveis_duplicatas(nome, ponto)
+        if candidatos.exists():
+            raise PossivelDuplicata(candidatos)
+    return Local.objects.create(nome=nome, ponto=ponto, criado_por=autor, **dados)
+
+
+def definir_foto_local(local: Local, autor, *, objeto: str, texto_alternativo: str):
+    """Define ou troca a única foto do local (decisão 17).
+
+    Na troca, o arquivo antigo é removido do armazenamento para não ficar órfão.
+    Devolve a foto e se ela foi criada (True) ou trocada (False).
+    """
+    anterior = FotoLocal.objects.filter(local=local).first()
+    if anterior is None:
+        foto = FotoLocal.objects.create(
+            local=local,
+            objeto=objeto,
+            texto_alternativo=texto_alternativo,
+            enviada_por=autor,
+        )
+        return foto, True
+
+    objeto_antigo = anterior.objeto
+    anterior.objeto = objeto
+    anterior.texto_alternativo = texto_alternativo
+    anterior.enviada_por = autor
+    anterior.enviada_em = timezone.now()
+    anterior.save()
+    if objeto_antigo != objeto:
+        armazenamento().remover(objeto_antigo)
+    return anterior, False

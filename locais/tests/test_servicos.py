@@ -8,6 +8,7 @@ Jardim Botânico ~2,85 km.
 from datetime import timedelta
 
 import pytest
+from django.contrib.gis.geos import Point
 from django.utils import timezone
 
 from locais.models import (
@@ -25,6 +26,7 @@ from locais.servicos import (
     RAIO_MAXIMO_M,
     buscar_proximos,
     com_condicao_atual,
+    possiveis_duplicatas,
     resumo_seguranca,
 )
 
@@ -154,3 +156,37 @@ def test_resumo_de_seguranca_separa_faixas_e_ignora_avaliacoes_antigas(
         "iluminacao": {},
     }
     assert resumo["manha"]["avaliacoes"] == 0
+
+
+# Ponto real marcado no admin para o Parque Infantil, a 84 m do ponto do OSM.
+PARQUE_INFANTIL_MARCADO_NO_ADMIN = Point(
+    -48.17859112312939, -21.78252490771411, srid=4326
+)
+# Centro de Araraquara segundo o OpenStreetMap: a mais de 600 m de todos os locais.
+CENTRO_DE_ARARAQUARA = Point(-48.1773096, -21.7886713, srid=4326)
+
+
+def test_mesmo_lugar_com_outro_nome_e_candidato_a_duplicata(locais_araraquara):
+    candidatos = possiveis_duplicatas(
+        "Praça Major Abel Fortes", PARQUE_INFANTIL_MARCADO_NO_ADMIN
+    )
+
+    # A Praça Pedro de Toledo, vizinha real a 1,25 km, não entra.
+    assert nomes(candidatos) == ["Parque Infantil"]
+    assert candidatos[0].distancia.m == pytest.approx(84, abs=5)
+
+
+def test_mesmo_nome_marcado_longe_do_lugar_e_candidato(locais_araraquara):
+    candidatos = possiveis_duplicatas("  PARQUE INFANTIL ", CENTRO_DE_ARARAQUARA)
+
+    assert nomes(candidatos) == ["Parque Infantil"]
+
+
+def test_lugar_sem_vizinho_proximo_nem_nome_igual_nao_tem_candidatos(
+    locais_araraquara,
+):
+    candidatos = possiveis_duplicatas(
+        "Local ainda não cadastrado", CENTRO_DE_ARARAQUARA
+    )
+
+    assert nomes(candidatos) == []

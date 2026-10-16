@@ -35,6 +35,7 @@ erDiagram
         geography ponto "Point, SRID 4326, índice GiST"
         boolean tem_bebedouro "nulo = não informado"
         boolean tem_sanitario "nulo = não informado"
+        boolean tem_bancos "nulo = não informado"
         bigint criado_por_id FK
         timestamptz criado_em
     }
@@ -53,6 +54,8 @@ erDiagram
         bigint equipamento_id FK
         bigint autor_id FK
         varchar condicao
+        varchar foto_objeto "opcional"
+        varchar foto_texto_alternativo "obrigatório com foto"
         timestamptz registrado_em
     }
     AVALIACAO_LOCAL {
@@ -101,7 +104,7 @@ Lugar público com equipamentos, identificado pelo nome que os praticantes usam.
 | `municipio_ibge` | inteiro, código IBGE de 7 dígitos | RN-09: a cidade é atributo, não constante do código |
 | `endereco` | texto, opcional | RN-10: descrição legível para a lista textual |
 | `ponto` | `PointField(geography=True)` | RN-06: busca por raio é a consulta principal |
-| `tem_bebedouro`, `tem_sanitario` | booleano, nulo = não informado | RN-07: presença de comodidade |
+| `tem_bebedouro`, `tem_sanitario`, `tem_bancos` | booleano, nulo = não informado | RN-07: presença de comodidade. Bancos citados na proposta do README |
 | `criado_por`, `criado_em` | FK Usuario, data | RN-08: autoria visível |
 
 Sobre `municipio_ibge`: Araraquara é `3503208`. Os dois primeiros dígitos identificam a UF (`35` = SP), por isso a UF não tem campo próprio. Os municípios atendidos ficam numa lista de opções no código (`IntegerChoices`), que dá o nome a ser exibido. No MVP a lista tem só Araraquara; atender outra cidade é acrescentar uma linha, sem refatoração (RN-09).
@@ -132,6 +135,7 @@ Observação datada do estado de um equipamento. A condição exibida é a do re
 | `equipamento` | FK Equipamento | RN-02 |
 | `autor` | FK Usuario | RN-02, RN-08 |
 | `condicao` | escolha fixa | RN-02 |
+| `foto_objeto`, `foto_texto_alternativo` | texto, opcionais juntos | README, decisão 16: a foto envelhece com o registro |
 | `registrado_em` | data e hora | RN-02 |
 
 Escala proposta, a partir das palavras usadas nas entrevistas:
@@ -170,7 +174,7 @@ Uma foto por local (README, seção 3). O arquivo vai direto ao Cloud Storage po
 | `texto_alternativo` | texto, obrigatório e não vazio | CLAUDE.md, WCAG 2.2 |
 | `enviada_por`, `enviada_em` | FK Usuario, data | RN-08 |
 
-**Implementação adiada** para a etapa de nuvem: depende de bucket e signed URL.
+O upload segue o fluxo de URL assinada do app `fotos` (README, seção 10). No desenvolvimento, o armazenamento é simulado em disco; o Cloud Storage entra na Fase 5.
 
 ### Denuncia
 
@@ -200,6 +204,8 @@ Regras simples o bastante para virar `CONSTRAINT` no PostgreSQL. Valem mesmo par
 | `Equipamento`: dimensões maiores que zero | Decisão de projeto |
 | `AvaliacaoLocal`: `iluminacao` obrigatória quando `faixa_horario = noite` | RN-05 |
 | `FotoLocal`: `texto_alternativo` não vazio | CLAUDE.md |
+| `RegistroCondicao`: foto e texto alternativo juntos, ou nenhum dos dois | CLAUDE.md |
+| `Denuncia`: uma aberta por pessoa, local e motivo (índice único parcial, só com `status = aberta`) | RN-08 |
 
 ---
 
@@ -222,6 +228,8 @@ Parâmetros definidos como **decisão de projeto**:
 |---|---|---|
 | Raio máximo da busca | 10 km | Cobre a área urbana de uma cidade média e impede consultas que varreriam a base inteira |
 | Janela das avaliações de segurança | 90 dias | Avaliação envelhece como a condição do equipamento (RN-02) |
+| Raio de possível duplicata | 150 m | Duas marcações reais do Parque Infantil ficaram a 84 m; o par de locais distintos mais próximo está a 1.252 m |
+| Mesmo nome como possível duplicata | até 10 km | Pega o ponto marcado longe por engano, dentro da mesma região |
 
 ---
 

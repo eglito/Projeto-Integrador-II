@@ -55,6 +55,25 @@ def api_logado(api_com_csrf, usuario):
 
 
 @pytest.fixture
+def outro_usuario(django_user_model):
+    return django_user_model.objects.create_user(username="outra_praticante")
+
+
+@pytest.fixture
+def cliente_logado():
+    """Fábrica de clientes com CSRF e sessão, para simular pessoas diferentes."""
+
+    def criar(pessoa):
+        cliente = APIClient(enforce_csrf_checks=True)
+        cliente.get("/api/auth/sessao/")
+        cliente.credentials(HTTP_X_CSRFTOKEN=cliente.cookies["csrftoken"].value)
+        cliente.force_login(pessoa)
+        return cliente
+
+    return criar
+
+
+@pytest.fixture
 def locais_araraquara(usuario):
     """Os cinco locais citados nas entrevistas, com seus equipamentos."""
     locais = {}
@@ -76,3 +95,36 @@ def locais_araraquara(usuario):
 @pytest.fixture
 def parque_infantil(locais_araraquara):
     return locais_araraquara["Parque Infantil"]
+
+
+@pytest.fixture
+def png_1x1():
+    """Imagem PNG real e válida, de 1 por 1 pixel."""
+    return (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\x00\x01"
+        b"\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+
+
+@pytest.fixture
+def midia_temporaria(settings, tmp_path):
+    """Fotos dos testes vão para uma pasta temporária, apagada ao fim do teste."""
+    settings.MEDIA_ROOT = tmp_path
+    return tmp_path
+
+
+@pytest.fixture
+def enviar_foto(midia_temporaria, png_1x1):
+    """Faz os passos 1 e 2 do upload e devolve o objeto, pronto para anexar."""
+
+    def enviar(cliente):
+        upload = cliente.post(
+            "/api/uploads/",
+            {"tipo_conteudo": "image/png", "tamanho": len(png_1x1)},
+            format="json",
+        ).json()
+        cliente.put(upload["url"], png_1x1, content_type="image/png")
+        return upload["objeto"]
+
+    return enviar
