@@ -20,6 +20,11 @@ RAIO_MAXIMO_M = 10_000
 # Decisão de projeto: avaliação de segurança envelhece como a condição (RN-02).
 JANELA_AVALIACOES = timedelta(days=90)
 
+# RN-01, com dados reais: duas marcações do Parque Infantil ficaram a 84 m uma da
+# outra; o par de locais distintos mais próximo (Parque Infantil e Praça Pedro
+# de Toledo) está a 1.252 m. 150 m pega o mesmo lugar sem confundir vizinhos.
+RAIO_DUPLICATA_M = 150
+
 
 def filtrar_por_equipamento(
     locais: QuerySet[Local],
@@ -111,5 +116,14 @@ def possiveis_duplicatas(nome: str, ponto: Point) -> QuerySet[Local]:
     Chamada antes de criar um Local: a API mostra os candidatos e pede
     confirmação, em vez de recusar o cadastro.
     """
-    # TODO(human): devolver os locais candidatos a duplicata, do mais perto ao mais longe.
-    raise NotImplementedError
+    # Mesmo lugar com outro nome: "Parque Infantil" e "Praça Major Abel Fortes".
+    perto = Q(ponto__dwithin=(ponto, D(m=RAIO_DUPLICATA_M)))
+    # Mesmo nome com o ponto marcado longe por engano, dentro da mesma região.
+    mesmo_nome = Q(
+        nome__iexact=nome.strip(), ponto__dwithin=(ponto, D(m=RAIO_MAXIMO_M))
+    )
+    return (
+        Local.objects.filter(perto | mesmo_nome)
+        .annotate(distancia=Distance("ponto", ponto))
+        .order_by("distancia")
+    )
