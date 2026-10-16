@@ -2,7 +2,7 @@
 
 A seguir, encontram-se relatórios que serão utilizados para a criação de personas e mapas de empatia.
 
-## J. A. M.
+## E01
 
 ```
 ENTREVISTA Nº 01        DATA 25/09/2026        DURAÇÃO 22 min
@@ -19,16 +19,16 @@ FRASES LITERAIS (transcreva exatamente, sem corrigir)
 3. "nem sempre é fácil encontrar um lugar para treinar. eu sou mulher e não gosto de ficar sozinha durante a noite em uma praça escura. aqui é um exemplo de espaço público para treinar. a iluminação é boa, sempre tem gente por perto e estamos no centro da cidade, né, então fica mais fácil qualquer coisa"
 
 EPISÓDIOS CONCRETOS RELATADOS
-J. A. M. relatou que sua profissão exige viagens frequentes e nem sempre é fácil encontrar, nas cidades, um local para treinar calistenia. Aplicativos de academia permitem encontrar com facilidade locais para treinar, mas, muitas vezes, ela está em uma cidade diferente e gostaria de saber onde há um espaço público com equipamentos apropriados para a prática esportiva.
+E01 relatou que sua profissão exige viagens frequentes e nem sempre é fácil encontrar, nas cidades, um local para treinar calistenia. Aplicativos de academia permitem encontrar com facilidade locais para treinar, mas, muitas vezes, ela está em uma cidade diferente e gostaria de saber onde há um espaço público com equipamentos apropriados para a prática esportiva.
 
 CRITÉRIOS DE ESCOLHA DE LOCAL (na ordem que a pessoa citou)
 1. Segurança                    2. Equipamentos                    3. Localização em relação à casa ou hotel
 
 BARREIRAS E FRUSTRAÇÕES
-J. A. M. ressalta que sua frustração ocorre quando não consegue encontrar locais apropriados para treinar nas cidades pelas quais passa.
+E01 ressalta que sua frustração ocorre quando não consegue encontrar locais apropriados para treinar nas cidades pelas quais passa.
 
 CONTORNOS QUE A PESSOA INVENTOU
-J. A. M. acaba recorrendo a academias privadas quando não encontra locais apropriados para treinar.
+E01 acaba recorrendo a academias privadas quando não encontra locais apropriados para treinar.
 
 SOBRE CONFIANÇA EM INFORMAÇÃO DE TERCEIROS
 É comum descobrir locais para treinar em Araraquara ou em outras cidades conversando com atletas e pessoas que praticam a modalidade.
@@ -39,7 +39,7 @@ EQUIPAMENTOS OBSERVADOS NO LOCAL
 Tipo: barra fixa, barra australiana e barras paralelas  Estado: condição precária  Foto: ( ) sim ( ) não
 ```
 
-## N. V.
+## E02
 
 ```
 ENTREVISTA Nº 02        DATA 25/09/2026        DURAÇÃO 20 min
@@ -56,28 +56,28 @@ FRASES LITERAIS (transcreva exatamente, sem corrigir)
 3. "n'so [mulheres] precisamos escolher bem os locais onde vamos treinar. infelizmente não posso fazer calistenia em qualquer espaço público"
 
 EPISÓDIOS CONCRETOS RELATADOS
-Ainda quando era iniciante, N. V. disse que conseguiu aprender muito com pessoas desconhecidas em praças e parques.
+Ainda quando era iniciante, E02 disse que conseguiu aprender muito com pessoas desconhecidas em praças e parques.
 
 CRITÉRIOS DE ESCOLHA DE LOCAL (na ordem que a pessoa citou)
 1. Socialização                    2. Segurança                    3. Presença de equipamentos
 
 BARREIRAS E FRUSTRAÇÕES
-N. V. relatou a falta de banheiros limpos e bebedouros no parque. Para ela, esse é um grande ponto que diferencia a experiência de treinar em uma academia de crossfit, que possui uma infraestrutura mais preparada.
+E02 relatou a falta de banheiros limpos e bebedouros no parque. Para ela, esse é um grande ponto que diferencia a experiência de treinar em uma academia de crossfit, que possui uma infraestrutura mais preparada.
 
 CONTORNOS QUE A PESSOA INVENTOU
-Há um grupo no WhatsApp em que N. V. pergunta aos membros quem está disponível para um treino, principalmente em horários noturnos. N. V. reforçou como o grupo ajuda a manter a prática esportiva. Devido ao trabalho, a praticante tem horários limitados para treinar e não se sente segura para treinar à noite no parque, mesmo sendo um local movimentado.
+Há um grupo no WhatsApp em que E02 pergunta aos membros quem está disponível para um treino, principalmente em horários noturnos. E02 reforçou como o grupo ajuda a manter a prática esportiva. Devido ao trabalho, a praticante tem horários limitados para treinar e não se sente segura para treinar à noite no parque, mesmo sendo um local movimentado.
 
 SOBRE CONFIANÇA EM INFORMAÇÃO DE TERCEIROS
-N. V. reforçou o grupo no WhatsApp como um espaço seguro para solicitar a indicação de outros locais para a prática esportiva no município de Araraquara. Por meio do grupo, por exemplo, N. V. descobriu a existência de equipamentos para a prática esportiva em outras praças da cidade.
+E02 reforçou o grupo no WhatsApp como um espaço seguro para solicitar a indicação de outros locais para a prática esportiva no município de Araraquara. Por meio do grupo, por exemplo, E02 descobriu a existência de equipamentos para a prática esportiva em outras praças da cidade.
 
 O QUE ME SURPREENDEU (contrariou o que eu esperava)
-N. V. relatou casos de assédio que fizeram com que ela nunca mais buscasse se exercitar em outros espaços. Ainda consegue treinar sozinha em praças e parques, mas apenas quando há movimento.
+E02 relatou casos de assédio que fizeram com que ela nunca mais buscasse se exercitar em outros espaços. Ainda consegue treinar sozinha em praças e parques, mas apenas quando há movimento.
 
 EQUIPAMENTOS OBSERVADOS NO LOCAL
 Tipo: barra fixa, barra australiana e barras paralelas  Estado: condição precária  Foto: ( ) sim ( ) não
 ```
 
-## A. L. A. J.
+## E03
 
 ```
 ENTREVISTA Nº 03        DATA 26/09/2026        DURAÇÃO 30 min
@@ -94,7 +94,7 @@ FRASES LITERAIS (transcreva exatamente, sem corrigir)
 3. "aqui tinha qque ter mais equipamentos, esse é um espaço pública e o nosso poder público não se importa com a prática esportiva, basta ver as condições dos equipamentos. é plenamente possível investir em infraestrutura necessária para a população"
 
 EPISÓDIOS CONCRETOS RELATADOS
-A. L. A. J. relatou que, em fevereiro, estava apenas fazendo barra fixa quando dois praticantes o abordaram e lhe ensinaram vários exercícios. Para A. L. A. J., esse foi um ponto de inflexão em sua prática esportiva, visto que passou a também ter uma relação de troca com os demais participantes.
+E03 relatou que, em fevereiro, estava apenas fazendo barra fixa quando dois praticantes o abordaram e lhe ensinaram vários exercícios. Para E03, esse foi um ponto de inflexão em sua prática esportiva, visto que passou a também ter uma relação de troca com os demais participantes.
 
 CRITÉRIOS DE ESCOLHA DE LOCAL (na ordem que a pessoa citou)
 1. Equipamentos                    2. Espaço público                    3. Pelo menos uma barra fixa
@@ -106,7 +106,7 @@ CONTORNOS QUE A PESSOA INVENTOU
 Realizar treinos mais intensos e com mais repetições utilizando os equipamentos que tem à disposição.
 
 SOBRE CONFIANÇA EM INFORMAÇÃO DE TERCEIROS
-Em muitas situações, A. L. A. J. soube da existência de equipamentos pela cidade apenas por causa de informações de terceiros.
+Em muitas situações, E03 soube da existência de equipamentos pela cidade apenas por causa de informações de terceiros.
 
 O QUE ME SURPREENDEU (contrariou o que eu esperava)
 Trouxe a perspectiva de que pessoas de diferentes tamanhos, idades e gêneros não conseguem utilizar os equipamentos da mesma forma.
@@ -115,7 +115,7 @@ EQUIPAMENTOS OBSERVADOS NO LOCAL
 Tipo: barra fixa, barra australiana e barras paralelas  Estado: condição precária  Foto: ( ) sim ( ) não
 ```
 
-## F. A. A.
+## E04
 
 ```
 ENTREVISTA Nº 04        DATA 30/09/2026        DURAÇÃO 15 min
@@ -144,7 +144,7 @@ CONTORNOS QUE A PESSOA INVENTOU
 Realiza adaptações com os equipamentos que tem para conseguir realizar um trieno de perna.
 
 SOBRE CONFIANÇA EM INFORMAÇÃO DE TERCEIROS
-F. A. A. não chegoua to car nesse ponto.
+E04 não chegoua to car nesse ponto.
 
 O QUE ME SURPREENDEU (contrariou o que eu esperava)
 Mesmo sem muitos equipamentos para a realização do treino perna, F.A.A. consegue realizar adaptações com os equiapamentos presentes para que seja possível treinar perna.
@@ -153,7 +153,7 @@ EQUIPAMENTOS OBSERVADOS NO LOCAL
 Tipo: barra australiana e barra fixa  Estado: condição boa, apenas precisando de pintura e acabamento  Foto: ( ) sim (x) não
 ```
 
-## M. H. P.
+## E05
 
 ```
 ENTREVISTA Nº 05        DATA 30/09/2026        DURAÇÃO 22 min
@@ -170,19 +170,19 @@ FRASES LITERAIS (transcreva exatamente, sem corrigir)
 3. "
 
 EPISÓDIOS CONCRETOS RELATADOS
-Quase diariamente, M. H. P. frequenta a Praça dos Advogados, no município de Araraquara, para realizar atividades físicas. A pritcante relata que gosta de se exercitar enquanto aguarda o horário do filho sair da escola. Além de se exercitar, M. H. P. relata que gosta de encontrar os responsáveis de outras crianças na praça. 
+Quase diariamente, E05 frequenta a Praça dos Advogados, no município de Araraquara, para realizar atividades físicas. A pritcante relata que gosta de se exercitar enquanto aguarda o horário do filho sair da escola. Além de se exercitar, E05 relata que gosta de encontrar os responsáveis de outras crianças na praça. 
 
 CRITÉRIOS DE ESCOLHA DE LOCAL (na ordem que a pessoa citou)
 1. Localização. 2. Equiapmentos básico 3.
 
 BARREIRAS E FRUSTRAÇÕES
-M. H. P. relata que muitas vezes fica incomada com a quantidade de lixo e folhas secas jogas pela praça, algo que diz respeito à zeladoria do município.
+E05 relata que muitas vezes fica incomada com a quantidade de lixo e folhas secas jogas pela praça, algo que diz respeito à zeladoria do município.
 
 CONTORNOS QUE A PESSOA INVENTOU
 
 
 SOBRE CONFIANÇA EM INFORMAÇÃO DE TERCEIROS
-M. H. P. relatou que já conversou com outros responsáveis sobre locais apropriados para treinar, além de trocarem experiências de trieno.
+E05 relatou que já conversou com outros responsáveis sobre locais apropriados para treinar, além de trocarem experiências de trieno.
 
 O QUE ME SURPREENDEU (contrariou o que eu esperava)
 O fato da proximidade com a escola ser um motivo que agregou na prática de calistenia na praça. Aqui conseguimos ver um reforçom da praça e de parques como equiapmentos de sociabilidade.
@@ -191,7 +191,7 @@ EQUIPAMENTOS OBSERVADOS NO LOCAL
 Tipo: espaldar, barra paralela, barra fixa  Estado: bom estado de conservação  Foto: ( ) sim ( ) não
 ```
 
-# G. F. S.
+# E06
 
 ```
 ENTREVISTA Nº 06        DATA 01/10/2026        DURAÇÃO 30 min
@@ -208,13 +208,13 @@ FRASES LITERAIS (transcreva exatamente, sem corrigir)
 3. "às vezes vou no Parque Infatil e Praça Pedro de Toledo"
 
 EPISÓDIOS CONCRETOS RELATADOS
-G. F. S. relatou que já presenciou equipamentos quebrados nas praças e que houve uma demora do poder público para arrumar o que estava danificado.
+E06 relatou que já presenciou equipamentos quebrados nas praças e que houve uma demora do poder público para arrumar o que estava danificado.
 
 CRITÉRIOS DE ESCOLHA DE LOCAL (na ordem que a pessoa citou)
 1. Proximidade com sua residêndia  2.                    3.
 
 BARREIRAS E FRUSTRAÇÕES
-G. F. S. relatou que se sente incomodado com a falta de zeladoria em praças e parques da cidade. Também relatou que quando vai para cidades como São Paulo tem amis facilidade para encontrar equipamentos para treinar calistenia.
+E06 relatou que se sente incomodado com a falta de zeladoria em praças e parques da cidade. Também relatou que quando vai para cidades como São Paulo tem amis facilidade para encontrar equipamentos para treinar calistenia.
 
 CONTORNOS QUE A PESSOA INVENTOU
 A partir da falta de variedades de equipamentos para a prática de calistenia, F. G. S. relata que muitas vezes precisou recorrer a busca por outros lugares na cidade para realizar a prática esportiva.
@@ -223,7 +223,7 @@ SOBRE CONFIANÇA EM INFORMAÇÃO DE TERCEIROS
 Não houveram informações suficientes para preencher esse campo.
 
 O QUE ME SURPREENDEU (contrariou o que eu esperava)
-G. F. S. possui uma série de estratégias para contornar a falta de equiapmentos de qualidade, como a busca por outros locais para a prática da calistenia no município.
+E06 possui uma série de estratégias para contornar a falta de equiapmentos de qualidade, como a busca por outros locais para a prática da calistenia no município.
 
 EQUIPAMENTOS OBSERVADOS NO LOCAL
 Tipo: Barra Fixa e Barra Australiana  Estado: condição precária  Foto: ( ) sim ( ) não
