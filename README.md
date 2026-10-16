@@ -82,6 +82,10 @@ Registro do que foi decidido e por quê. Decisão nova entra no fim da lista.
 | 15 | Upload de foto por URL assinada, com simulação local no desenvolvimento | O front faz o mesmo fluxo em desenvolvimento e em produção, sem recurso no GCP até a Fase 5. |
 | 16 | Foto de equipamento dentro do registro de condição | A foto envelhece como a condição (decisão 04): nasce datada e com autor. |
 | 17 | Uma foto por local | Escopo do MVP. Serve para reconhecer o lugar; a condição vem das fotos dos equipamentos. |
+| 18 | Só o autor corrige local e equipamento; registros e avaliações são imutáveis | Preserva a autoria (RN-08) e o histórico (RN-02). Quem não é autor contribui com registros novos ou abre denúncia. |
+| 19 | Possível duplicata responde `409` com os candidatos e pede confirmação | O cadastro se protege sozinho, sem rota extra. Candidato: local a até 150 m, ou de mesmo nome a até 10 km (RN-01). |
+| 20 | Uma denúncia aberta por pessoa, local e motivo | Índice único parcial no banco: evita denúncias repetidas, mas permite denunciar de novo depois da análise. |
+| 21 | Foto de até 2 MB, conferida pelos primeiros bytes e com nome gerado pelo servidor | O front redimensiona a imagem e descarta os metadados de localização (EXIF) antes do envio, redesenhando-a num `<canvas>`: o arquivo vai direto ao armazenamento, sem passar pela aplicação. |
 
 ## 6. Acessibilidade
 
@@ -143,7 +147,8 @@ Copie `.env.example` para `.env` e preencha os valores.
 ├── usuarios/             Modelo de usuário e API de autenticação por sessão
 ├── locais/               Locais, equipamentos, condição e avaliações
 ├── moderacao/            Denúncias, analisadas no admin
-├── tests/                Testes de infraestrutura: PostGIS, cabeçalhos HTTP, OpenAPI
+├── fotos/                Upload de fotos por URL assinada e simulação local do bucket
+├── tests/                Testes de infraestrutura: PostGIS, cabeçalhos HTTP, OpenAPI, opções
 ├── docker/postgis/       Imagem do banco: PostgreSQL 16 + PostGIS
 ├── Docs/                 Pesquisa de campo, modelo de dados e guias de uso
 ├── conftest.py           Fixtures dos testes, com locais reais de Araraquara
@@ -155,7 +160,7 @@ Copie `.env.example` para `.env` e preencha os valores.
 └── requirements-dev.txt  Dependências de desenvolvimento: testes e lint
 ```
 
-Cada app do Django (`usuarios`, `locais`, `moderacao`) segue a mesma divisão de arquivos:
+Cada app do Django (`usuarios`, `locais`, `moderacao`, `fotos`) segue a mesma divisão de arquivos, conforme o que ele precisa:
 
 | Arquivo | Papel |
 |---|---|
@@ -164,6 +169,8 @@ Cada app do Django (`usuarios`, `locais`, `moderacao`) segue a mesma divisão de
 | `serializers.py` | Validação da entrada e conversão de e para JSON |
 | `views.py` | Views finas da API: validam a entrada, chamam o serviço, devolvem a resposta |
 | `urls.py` | Rotas do app |
+| `permissoes.py` | Regras de quem pode alterar o quê (em `locais`) |
+| `armazenamento.py` | Interface com o armazenamento de arquivos (em `fotos`) |
 | `admin.py` | Telas de cadastro e moderação no admin |
 | `migrations/` | Histórico das mudanças no banco |
 | `tests/` | Testes do app |
@@ -190,11 +197,25 @@ Consultas são abertas. Rotas que alteram dados exigem sessão autenticada e o c
 | POST | `/api/auth/cadastro/` | Livre, com CSRF | Cria o usuário (nome e senha) e abre a sessão |
 | POST | `/api/auth/login/` | Livre, com CSRF | Abre a sessão |
 | POST | `/api/auth/logout/` | Autenticado | Encerra a sessão |
+| GET | `/api/opcoes/` | Livre | Vocabulário dos formulários e filtros (tipos, escalas, motivos), com rótulos, e os limites da busca |
 | GET | `/api/locais/` | Livre | Lista os locais com equipamentos e condição atual. Serve o mapa e a lista textual |
-| GET | `/api/locais/{id}/` | Livre | Detalhe do local, com autor e resumo de segurança por faixa de horário |
+| POST | `/api/locais/` | Autenticado | Cadastra um local. Responde `409` com `possiveis_duplicatas` se ele pode já existir (RN-01) |
+| GET | `/api/locais/{id}/` | Livre | Detalhe do local, com foto, autor e resumo de segurança por faixa de horário |
+| PATCH | `/api/locais/{id}/` | Autor do local | Corrige nome, endereço, localização ou comodidades |
+| PUT | `/api/locais/{id}/foto/` | Autenticado | Define (`201`) ou troca (`200`) a foto do local, com texto alternativo |
+| POST | `/api/locais/{id}/equipamentos/` | Autenticado | Acrescenta um equipamento ao local |
+| GET | `/api/locais/{id}/avaliacoes/` | Livre | Avaliações dos últimos 90 dias, paginadas |
+| POST | `/api/locais/{id}/avaliacoes/` | Autenticado | Avalia segurança e limpeza numa faixa de horário |
+| POST | `/api/locais/{id}/denuncias/` | Autenticado | Abre uma denúncia para a moderação |
+| GET | `/api/equipamentos/{id}/` | Livre | Equipamento, com a condição atual e a foto mais recente |
+| PATCH | `/api/equipamentos/{id}/` | Autor do equipamento | Corrige tipo ou dimensões, como a altura medida (RN-03) |
+| GET | `/api/equipamentos/{id}/registros-condicao/` | Livre | Histórico de condição, do mais recente ao mais antigo, paginado (RN-02) |
+| POST | `/api/equipamentos/{id}/registros-condicao/` | Autenticado | Registra a condição, com foto opcional |
+| POST | `/api/uploads/` | Autenticado | Passo 1 do envio de foto: devolve o `objeto` e uma URL assinada, válida por 10 minutos |
+| PUT | `/armazenamento-local/{token}/` | URL assinada | Passo 2, só no desenvolvimento: recebe o arquivo (no lugar do Cloud Storage) |
 | GET | `/api/schema/` | Livre | Esquema OpenAPI 3 |
 | GET | `/api/docs/` | Livre | Documentação navegável (Swagger UI) |
-| — | `/admin/` | Equipe | Cadastro e moderação |
+| — | `/admin/` | Equipe | Cadastro e moderação, inclusive de denúncias e fotos |
 
 Parâmetros de `GET /api/locais/`:
 
@@ -205,7 +226,19 @@ Parâmetros de `GET /api/locais/`:
 | `tipo` | Tipo de equipamento: `barra_fixa`, `barras_paralelas`, `espaldar`, `barra_australiana`, `outro` |
 | `altura_maxima` | Altura máxima do equipamento, em centímetros. Combinado com `tipo`, vale para o mesmo equipamento (RN-03) |
 
-Rotas de escrita (cadastro de locais, condição, avaliações, denúncias e fotos) entram nas próximas etapas da Fase 3.
+Convenções:
+
+- **Sem PUT nem DELETE em locais e equipamentos.** O autor corrige com PATCH; a exclusão é feita pela moderação, no admin.
+- **Registros de condição e avaliações são imutáveis** (só GET e POST). Um erro se corrige com um registro novo, sem apagar o histórico.
+- **Criação responde `201`** com o recurso criado e, quando ele tem endereço próprio, o cabeçalho `Location`.
+- **Erros de validação respondem `400`** com a explicação de como corrigir. Erros de campo vêm na chave do campo; erros que envolvem mais de um campo, em `non_field_errors`.
+- **Listas de histórico são paginadas** (20 por página), no formato `{"count", "next", "previous", "results"}`.
+
+Envio de foto, em três passos:
+
+1. `POST /api/uploads/` com `tipo_conteudo` (JPEG, PNG ou WebP) e `tamanho` (até 2 MB).
+2. `PUT` do arquivo na `url` devolvida, com o `Content-Type` indicado.
+3. Anexar o `objeto` devolvido no passo 1: `PUT /api/locais/{id}/foto/` ou `POST /api/equipamentos/{id}/registros-condicao/`, sempre com o texto alternativo.
 
 ## 11. Modelo de dados
 
