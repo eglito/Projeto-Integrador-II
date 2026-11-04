@@ -101,7 +101,7 @@ Dados de `GET /api/locais/{id}/` (LocalDetalhe):
 
 ## 5. Decisões
 
-Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 38.
+Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 40.
 
 | # | Pergunta | Resposta | README |
 |---|---|---|---|
@@ -110,7 +110,7 @@ Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). 
 | 5.3 | Agrupar marcadores próximos? | Não no MVP. Reavaliar quando o volume de locais pesar na ordem de Tab | 24 |
 | 5.4 | De onde vem o centro padrão do mapa? | Do back: constante comentada, exposta em `/api/opcoes/` como `busca.centro_padrao` | 25 |
 | 5.5 | Como servir as páginas, origem do jQuery e do Leaflet, Nominatim | App `paginas`; jQuery e Leaflet copiados em `static/`; Nominatim chamado direto do navegador | 26, 27 e 28 |
-| 5.6 | Testar o protótipo de baixa fidelidade antes do HTML? | Sim, em paralelo às etapas que não dependem do layout (plano, etapas 1 a 3). O layout (etapa 4) espera as conclusões do autor | Processo; fica no plano |
+| 5.6 | Testar o protótipo de baixa fidelidade antes do HTML? | Sim, em paralelo às etapas que não dependem do layout (plano, etapas 1 a 3). O layout (etapa 4) espera as conclusões do autor. Revista em 04/11/2026: o layout veio antes do teste, e o HTML da etapa 4 vira o protótipo testado | 39 |
 
 Decididas na mesma entrevista:
 
@@ -124,6 +124,16 @@ Decididas na mesma entrevista:
 | Como organizar o JavaScript sem build step? | Módulos ES nativos | 34 |
 | Como testar o JavaScript? | QUnit para as funções puras; interação pela seção 6, com evidência | 35 |
 | Como povoar o banco local? | Fixture com os 5 locais do `conftest.py`, carregada com `loaddata`. Revista na implementação: um comando que pode rodar várias vezes, porque a fixture conflitava com os locais já cadastrados | 36, substituída pela 37 |
+
+Decididas na entrevista de 04/11/2026, antes da etapa 4 (decisões de projeto do autor, sem teste com usuários; decisão 39):
+
+| Pergunta | Resposta | README |
+|---|---|---|
+| Como se organizam mapa, menu e painel em tela larga? | Painel à esquerda, sempre visível; mapa ao lado; menu como gaveta por cima, fechada no início | 40 |
+| O menu é navegação ou tem conteúdo? | Navegação: cada item abre uma visão do painel (Buscar, Lista de locais). "Entrar" entra na etapa 9 | 40 |
+| Onde ficam título, menu e anúncios? | Barra superior com "☰ Menu" e o título; a região de anúncios numa faixa logo abaixo, visível em qualquer visão | 40 |
+| E em tela estreita? | Barra inferior com Mapa e Lista; o Mapa abre na frente. Escolher um local na lista leva ao Mapa, com o foco no marcador | 40 |
+| Depois de aplicar os filtros? | O painel volta para a lista, com o foco no título e uma linha com os filtros ativos | 40 |
 
 ---
 

@@ -1,7 +1,7 @@
 # Plano: front-end do mapa (Fase 4)
 
 Etapas para entregar o que pede `Docs/especificacao_mapa.md`. Aprovado em 03/11/2026.
-As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 38).
+As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 40).
 
 > Regras de cada etapa: branch própria, commits por unidade lógica e PR aberta pelo autor (`CLAUDE.md`, Git). `pytest` e `ruff` rodam antes de cada commit, então o item 9 da verificação vale para todas as etapas e não é repetido. Cada etapa termina com evidência (screenshot, saída de comando), não com "pronto".
 
@@ -15,7 +15,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 1 | Centro padrão e dados de desenvolvimento no back | `feat/centro-padrao-e-dados-dev` | — | Concluída (PR #20) |
 | 2 | Página com o mapa | `feat/pagina-mapa` | 1 | Concluída (PR #21) |
 | 3 | Locais no mapa e na lista | `feat/locais-mapa-lista` | 2 | Concluída (PR #22) |
-| 4 | Layout responsivo | `feat/layout-responsivo` | 0 e 3 | Pendente |
+| 4 | Layout responsivo | `feat/layout-responsivo` | 3 (a 0 virou validação depois; decisão 39) | Pendente |
 | 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 3 (a 4 reposiciona a interface) | Pendente |
 | 6 | Busca por endereço | `feat/busca-endereco` | 5 | Pendente |
 | 7 | Geolocalização | `feat/geolocalizacao` | 6 | Pendente |
@@ -69,7 +69,7 @@ paginas/
 
 - **Entrega:** teste com 2 ou 3 pessoas, incluindo o perfil de E04, e as conclusões em `Docs/teste_prototipo.md`.
 - **Quem faz:** o autor. Claude pode revisar o roteiro, mas não gera resultados (`CLAUDE.md`, Limite ético).
-- **Bloqueia:** a etapa 4. O layout espera as conclusões.
+- **Bloqueava** a etapa 4. Mudou em 04/11/2026 (decisão 39): o layout veio antes, a partir de uma entrevista com o autor, e o teste passa a usar o próprio HTML da etapa 4 como protótipo. As conclusões continuam indo para `Docs/teste_prototipo.md` e podem mudar o layout.
 
 ### Etapa 1: centro padrão e dados de desenvolvimento no back
 
@@ -133,9 +133,22 @@ paginas/
 
 ### Etapa 4: layout responsivo
 
-Começa só com as conclusões da etapa 0.
+Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo autor em entrevista (decisão 40; especificação, seção 5).
 
-- **Entrega:**
+- **Como ficou:**
+  - Barra superior com "☰ Menu" (ícone com texto visível) e o título "Mapa de Calistenia"; faixa de anúncios logo abaixo, visível e lida em qualquer visão.
+  - Painel à esquerda, sempre visível em tela larga, com uma visão por vez: Lista (com a linha dos filtros ativos e "Alterar filtros") e Buscar (os filtros da etapa 5, mais "Voltar à lista"). Aplicar filtros volta para a lista, com o foco no título; Esc na visão Buscar volta para a lista.
+  - Menu como gaveta de navegação, igual em toda largura, fechada no início. Ao abrir, o resto da página recebe `inert`, menos a faixa de anúncios. Itens: Buscar e Lista de locais; "Entrar" fica para a etapa 9, quando funcionar.
+  - Abaixo de 48em, barra inferior Mapa/Lista com `aria-current`, o Mapa na frente. Escolher um local na lista leva ao Mapa, centraliza sem animação e põe o foco no marcador. O `moveend` do `invalidateSize()` não oferece "Buscar nesta área".
+  - Dois links de pular: "Pular para a lista" e "Pular para o mapa". Com o painel à esquerda, a lista vem antes do mapa no Tab; o segundo link evita atravessá-la.
+  - A página é uma grade da altura da tela, sem `position: fixed` sobre o conteúdo, e o painel rola por dentro: as barras não encobrem o foco (WCAG 2.4.11).
+  - Achados na verificação e na revisão:
+    - Os cliques da lista estavam ligados a um id que deixou de existir. Um teste novo confere que todo id usado como seletor nos módulos existe na página.
+    - O Esc só sai da visão Buscar com o foco dentro dela; com o foco num marcador, só esconde o nome sobre o local.
+    - "Buscar nesta área" foi para o canto superior esquerdo do mapa, com largura limitada: centralizado, cobria os rótulos do zoom em 320 px.
+    - O mapa é medido de novo por `ajustarTamanho()` no resize da janela (`trackResize` desligado), e só quando está visível: girar o celular ou cruzar 48em não oferece "Buscar nesta área".
+    - O `runserver` não manda cabeçalho de cache, e o navegador pode manter módulos antigos: a dica de recarregar ignorando o cache está em `Docs/comandos_de_teste.md`.
+- **Entrega prevista no plano original:**
   - Menu lateral recolhível. O botão tem `aria-expanded` e `aria-controls`, e Esc fecha o menu e devolve o foco ao botão. Itens: Buscar, Lista de locais e Entrar; os outros entram nas etapas que os implementam.
   - Painel de resultados.
   - Abaixo de 48em, um botão alterna entre Mapa e Lista (decisão 29). O limite é em `em` para valer também com zoom de 400%.

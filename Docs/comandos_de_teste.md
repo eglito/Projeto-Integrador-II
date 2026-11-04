@@ -136,7 +136,9 @@ As regras ativas estão no [pyproject.toml](../pyproject.toml).
 
 A página do mapa fica em http://localhost:8000/. Ela abre no centro padrão, com os tiles do OpenStreetMap, e mostra no mapa e na lista os locais a até 2 km desse centro. Para ter locais, carregue os dados de desenvolvimento (seção 1). Se o mapa não aparecer, o console do navegador (F12) mostra o erro.
 
-Pelo teclado: o primeiro Tab mostra "Pular para a lista"; depois vêm o mapa, os marcadores (na ordem da lista), os filtros e os itens da lista. Enter ou Espaço num marcador destaca o item da lista; Enter num item leva o mapa até o local.
+Pelo teclado: os primeiros Tabs mostram "Pular para a lista" e "Pular para o mapa"; depois vêm o botão "Menu", o painel (filtros ativos e lista) e o mapa, com os marcadores na ordem da lista. Enter ou Espaço num marcador destaca o item da lista; Enter num item leva o mapa até o local. O menu abre com Enter no botão e fecha com Esc. Em tela estreita (abaixo de 48em, inclusive com zoom), a barra inferior alterna Mapa e Lista.
+
+> **JavaScript em cache.** O `runserver` não manda cabeçalho de cache, e o navegador pode continuar usando um módulo JavaScript antigo depois de uma mudança. Se a página se comportar como antes da mudança, recarregue ignorando o cache (Cmd+Shift+R no macOS, Ctrl+Shift+R no Windows) ou marque "Disable cache" na aba Network do DevTools.
 
 Filtros: escolha tipo, altura máxima e raio e use "Aplicar filtros" (ou Enter num campo); mapa e lista mudam juntos. Depois de mover o mapa, aparece "Buscar nesta área", que busca a partir do centro do mapa com o raio da área visível. Com os dados de desenvolvimento, o tipo "Espaldar" com raio de 10 km traz só a Praça dos Advogados, e qualquer altura máxima não traz nada, porque nenhum equipamento tem altura cadastrada.
 
