@@ -14,6 +14,8 @@
   --cor-marcador: #00695c;
   --cor-marcador-escolhido: #003d33;
   --cor-escolhido-fundo: #e6f2f0;
+  /* Contraste de 7:1 com o branco (WCAG 1.4.3). */
+  --cor-erro: #a4161a;
 }
 
 * {
@@ -75,10 +77,35 @@ body {
   height: 100dvh;
 }
 
+/* Mapa e o botão "Buscar nesta área", que flutua sobre ele. */
+.area-mapa {
+  position: relative;
+  min-height: 0;
+}
+
 #mapa {
   height: 100%;
   /* As camadas do Leaflet (z-index até 1000) ficam contidas no mapa. */
   isolation: isolate;
+}
+
+/* Sem "display" aqui: ele anularia o atributo hidden. */
+.buscar-na-area {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 1;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--cor-marcador-escolhido);
+  border-radius: 1.25rem;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  transform: translateX(-50%);
+  cursor: pointer;
 }
 
 /*
@@ -182,6 +209,74 @@ body {
 .painel h2 {
   margin: 0 0 0.5rem;
   font-size: 1.25rem;
+}
+
+/* Filtros (provisório: a etapa 4 os leva para o item Buscar do menu). */
+#painel-busca {
+  margin-bottom: 1.5rem;
+}
+
+#filtros fieldset {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem 0.25rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.25rem;
+}
+
+#filtros legend {
+  padding: 0 0.25rem;
+  font-weight: 700;
+}
+
+.campo {
+  margin-bottom: 0.75rem;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.campo select,
+.campo input {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.25rem;
+  font: inherit;
+}
+
+.campo input[aria-invalid="true"] {
+  border: 2px solid var(--cor-erro);
+}
+
+.ajuda,
+.erro {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
+.ajuda {
+  color: var(--cor-texto-secundario);
+}
+
+.erro {
+  color: var(--cor-erro);
+  font-weight: 600;
+}
+
+.acoes-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.acoes-filtros button {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem;
+  font: inherit;
 }
 
 /* Região de anúncios: no fluxo do painel, nunca por cima de algo com foco (WCAG 2.4.11). */

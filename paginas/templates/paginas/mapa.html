@@ -12,19 +12,57 @@
     <p class="aviso">O mapa precisa de JavaScript. Ative o JavaScript no navegador e recarregue a página.</p>
   </noscript>
 
-  {# O Leaflet torna o mapa focável pelo Tab; a instrução é lida quando ele recebe o foco. #}
-  <div id="mapa" role="region" aria-label="Mapa dos locais" aria-describedby="mapa-instrucoes"></div>
-  <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar. A tecla Tab passa pelos locais, na ordem da lista, e Enter escolhe o local. Esc esconde o nome que aparece sobre o local.</p>
+  <div class="area-mapa">
+    {# Aparece depois de a pessoa mover o mapa. Fica antes do mapa no Tab: com o mapa em foco, Shift+Tab chega aqui. #}
+    <button type="button" id="buscar-na-area" class="buscar-na-area" hidden>Buscar nesta área</button>
+    {# O Leaflet torna o mapa focável pelo Tab; a instrução é lida quando ele recebe o foco. #}
+    <div id="mapa" role="region" aria-label="Mapa dos locais" aria-describedby="mapa-instrucoes"></div>
+  </div>
+  <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar. A tecla Tab passa pelos locais, na ordem da lista, e Enter escolhe o local. Esc esconde o nome que aparece sobre o local. Depois de mover o mapa, o botão Buscar nesta área fica logo antes do mapa.</p>
 
-  {# Lista textual equivalente ao mapa (RN-10). Layout provisório; o definitivo vem na etapa 4. #}
-  <section id="painel-locais" class="painel" aria-labelledby="titulo-lista">
-    <h2 id="titulo-lista" tabindex="-1">Locais</h2>
-    {# Região aria-live: anuncia resultados, erros e confirmações (especificação, 2.1). #}
-    <div id="anuncio" role="status"></div>
-    {# role="list": o Safari tira a semântica de lista quando o CSS remove os marcadores. #}
-    <ol id="lista-locais" class="lista-locais" role="list"></ol>
-    <div id="acoes-lista"></div>
-  </section>
+  {# Layout provisório: a etapa 4 leva a busca para o menu e define o painel (Docs/plano_front.md). #}
+  <div class="painel">
+    <section id="painel-busca" aria-labelledby="titulo-busca">
+      <h2 id="titulo-busca">Buscar</h2>
+      {# novalidate: as mensagens de erro são as nossas, em português e dizendo como corrigir. #}
+      <form id="filtros" novalidate>
+        <fieldset>
+          <legend>Filtros</legend>
+          <div class="campo">
+            <label for="filtro-tipo">Tipo de equipamento</label>
+            <select id="filtro-tipo" name="tipo">
+              <option value="">Qualquer tipo</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="filtro-altura">Altura máxima, em centímetros</label>
+            {# Texto com teclado numérico: um campo number aceitaria "e" e esconderia o erro. #}
+            <input id="filtro-altura" name="altura_maxima" type="text" inputmode="numeric" autocomplete="off" aria-describedby="filtro-altura-ajuda">
+            <p id="filtro-altura-ajuda" class="ajuda">Opcional. Com um tipo escolhido, vale para o mesmo equipamento.</p>
+            <p id="filtro-altura-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="filtro-raio">Raio da busca</label>
+            <select id="filtro-raio" name="raio"></select>
+          </div>
+        </fieldset>
+        <div class="acoes-filtros">
+          <button type="submit">Aplicar filtros</button>
+          <button type="button" id="limpar-filtros">Limpar filtros</button>
+        </div>
+      </form>
+    </section>
+
+    {# Lista textual equivalente ao mapa (RN-10). #}
+    <section id="painel-locais" aria-labelledby="titulo-lista">
+      <h2 id="titulo-lista" tabindex="-1">Locais</h2>
+      {# Região aria-live: anuncia resultados, filtros, erros e confirmações (especificação, 2.1). #}
+      <div id="anuncio" role="status"></div>
+      {# role="list": o Safari tira a semântica de lista quando o CSS remove os marcadores. #}
+      <ol id="lista-locais" class="lista-locais" role="list"></ol>
+      <div id="acoes-lista"></div>
+    </section>
+  </div>
 </main>
 {% endblock %}
 

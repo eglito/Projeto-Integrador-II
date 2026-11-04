@@ -15,6 +15,11 @@ let camadaLocais = null;
 // id do local -> marcador, para destacar o escolhido.
 const marcadores = new Map();
 let idDestacado = null;
+// Quantos movimentos do próprio código (centralizar no local escolhido) ainda
+// vão terminar: esses não oferecem "Buscar nesta área". É um contador, e não um
+// sim ou não, porque cada setView termina num moveend, mesmo quando interrompe
+// a animação do anterior; duas escolhas rápidas geram dois.
+let movimentosDoCodigo = 0;
 
 /** Lido na criação do mapa: com movimento reduzido, nada de animação (CLAUDE.md). */
 export function reduzirMovimento() {
@@ -154,7 +159,37 @@ export function destacarNoMapa(id, { centralizar = false } = {}) {
   idDestacado = id;
 
   if (centralizar) {
+    movimentosDoCodigo += 1;
     // Com movimento reduzido, troca de posição sem animação (especificação, 6, item 7).
     mapa.setView(marcador.getLatLng(), mapa.getZoom(), { animate: animar });
   }
+}
+
+/**
+ * `callback` roda quando a pessoa termina de mover ou de aproximar o mapa
+ * (evento moveend do Leaflet). Os movimentos do próprio código não contam.
+ */
+export function aoMoverPelaPessoa(callback) {
+  mapa.on("moveend", function () {
+    if (movimentosDoCodigo > 0) {
+      movimentosDoCodigo -= 1;
+      return;
+    }
+    callback();
+  });
+}
+
+/**
+ * Centro da área visível, nos nomes que a API usa. O wrap() traz a longitude
+ * de volta para -180 a 180 quando a pessoa arrasta o mapa além do meridiano
+ * 180; a API recusaria o valor fora dessa faixa (Docs/API.md, 5.3).
+ */
+export function centroDoMapa() {
+  const centro = mapa.getCenter().wrap();
+  return { latitude: centro.lat, longitude: centro.lng };
+}
+
+/** Distância, em metros, do centro ao canto da área visível. */
+export function distanciaAoCanto() {
+  return mapa.getCenter().distanceTo(mapa.getBounds().getNorthEast());
 }

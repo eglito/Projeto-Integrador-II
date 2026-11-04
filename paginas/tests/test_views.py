@@ -63,3 +63,15 @@ def test_pular_para_a_lista_aponta_para_um_destino_existente(pagina):
     assert f'id="{destino.group(1)}"' in html
     # O destino recebe o foco: sem tabindex, alguns navegadores só rolam a página.
     assert re.search(rf'id="{destino.group(1)}"[^>]*tabindex="-1"', html)
+
+
+def test_todo_campo_do_formulario_tem_rotulo(pagina):
+    # WCAG 1.3.1 e 4.1.2: cada campo dos filtros tem um <label for> que o nomeia.
+    html = pagina.content.decode()
+    campos = re.findall(r"<(?:input|select|textarea)\b[^>]*>", html)
+    ids = [re.search(r'\bid="([^"]+)"', campo) for campo in campos]
+
+    assert campos, "A página deveria ter os campos dos filtros."
+    assert all(ids), "Todo campo precisa de id para o <label for> apontar."
+    rotulos = set(re.findall(r'<label for="([^"]+)"', html))
+    assert [id_.group(1) for id_ in ids if id_.group(1) not in rotulos] == []
