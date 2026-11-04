@@ -102,6 +102,7 @@ Registro do que foi decidido e por quê. Decisão nova entra no fim da lista.
 | 35 | QUnit para as funções puras do JavaScript | Framework de testes do projeto jQuery, roda no navegador sem build. A interação é verificada pela especificação do mapa, seção 6, com evidência. |
 | 36 | Dados de desenvolvimento por fixture (`loaddata`) | Os 5 locais reais do `conftest.py` no banco local, para desenvolver e verificar o mapa sem cadastro à mão. Substituída pela 37. |
 | 37 | Dados de desenvolvimento por um comando que pode rodar várias vezes (`carregar_locais_araraquara`), no lugar da fixture | Reabre a 36: o banco local já tinha locais, e a fixture, com ids fixos, falharia na restrição de nome único ou sobrescreveria o local de mesmo id. O comando usa a regra de duplicata da API (RN-01), pula o que já existe e lê `locais/dados_araraquara.py`, a mesma fonte do `conftest.py`. |
+| 38 | Troca de nome por `PUT /api/auth/conta/`, e não PATCH | O corpo traz inteiro o único campo editável, junto com a senha atual, e os dois são obrigatórios. O drf-spectacular marca como opcionais os campos de todo PATCH, o que deixaria impreciso o esquema OpenAPI, fonte de verdade dos campos (`Docs/API.md`). |
 
 ## 6. Acessibilidade
 
@@ -216,6 +217,8 @@ Consultas são abertas. Rotas que alteram dados exigem sessão autenticada e o c
 | POST | `/api/auth/cadastro/` | Livre, com CSRF | Cria o usuário (nome e senha) e abre a sessão |
 | POST | `/api/auth/login/` | Livre, com CSRF | Abre a sessão |
 | POST | `/api/auth/logout/` | Autenticado | Encerra a sessão |
+| PUT | `/api/auth/conta/` | Autenticado | Configurações: troca o nome de usuário, com a senha atual |
+| POST | `/api/auth/conta/senha/` | Autenticado | Configurações: troca a senha, com a atual; encerra as outras sessões da conta |
 | GET | `/api/opcoes/` | Livre | Vocabulário dos formulários e filtros (tipos, escalas, motivos), com rótulos, e os limites da busca |
 | GET | `/api/locais/` | Livre | Lista os locais com equipamentos e condição atual. Serve o mapa e a lista textual |
 | POST | `/api/locais/` | Autenticado | Cadastra um local. Responde `409` com `possiveis_duplicatas` se ele pode já existir (RN-01) |

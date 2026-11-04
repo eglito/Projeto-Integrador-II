@@ -114,7 +114,63 @@ Resultado esperado: `{"id":...,"username":"testadora"}` e `HTTP 200`. Confirme c
 | Senha errada | 400, `Usuário ou senha incorretos. Confira os dois campos e tente de novo.` |
 | Usuário que não existe | A mesma mensagem: a API não revela quais usuários existem |
 
-### 3.4 POST `/api/auth/logout/`
+### 3.4 PUT `/api/auth/conta/`
+
+Troca o nome de usuário (Configurações, README, decisões 23 e 38). Exige sessão aberta e a senha atual. É PUT, e não PATCH: os dois campos são obrigatórios.
+
+```bash
+api -X PUT -d '{"username": "testadora_nova", "senha_atual": "Barra-fixa-2026"}' $BASE/api/auth/conta/
+```
+
+Resultado esperado: `{"id":...,"username":"testadora_nova"}` e `HTTP 200`. A sessão continua aberta, já com o nome novo (seção 3.1).
+
+| Teste | Comando (troque o `-d`) | Esperado |
+|---|---|---|
+| Senha atual errada | `'{"username": "outro", "senha_atual": "errada"}'` | 400, `Senha atual incorreta. Digite a senha que você usa para entrar.` |
+| Sem a senha atual | `'{"username": "outro"}'` | 400, `Informe a sua senha atual para confirmar a troca.` |
+| Nome de outra conta | `'{"username": "<nome que já existe>", "senha_atual": "Barra-fixa-2026"}'` | 400, `Este nome de usuário já está em uso. Escolha outro.` |
+| PATCH no lugar de PUT | `api -X PATCH -d '{}' $BASE/api/auth/conta/` | 405, `Método "PATCH" não é permitido.` |
+| Nome com letras de largura total | `'{"username": "ｔｅｓｔａｄｏｒａ_ｎｏｖａ", "senha_atual": "Barra-fixa-2026"}'` | 200, gravado como `testadora_nova`: o nome é normalizado antes de conferir se está livre |
+
+Para seguir o roteiro com os exemplos das outras seções, volte ao nome original:
+
+```bash
+api -X PUT -d '{"username": "testadora", "senha_atual": "Barra-fixa-2026"}' $BASE/api/auth/conta/
+```
+
+### 3.5 POST `/api/auth/conta/senha/`
+
+Troca a senha. Mantém a sessão atual e encerra as outras sessões da mesma conta.
+
+Para ver as outras sessões caírem, abra antes uma segunda sessão, como se fosse outro aparelho:
+
+```bash
+JAR=outra.txt api $BASE/api/auth/sessao/
+JAR=outra.txt api -X POST -d '{"username": "testadora", "password": "Barra-fixa-2026"}' $BASE/api/auth/login/
+```
+
+Depois, troque a senha pela sessão principal:
+
+```bash
+api -X POST -d '{"senha_atual": "Barra-fixa-2026", "nova_senha": "Paralelas-baixas-2026"}' $BASE/api/auth/conta/senha/
+```
+
+Resultado esperado: corpo vazio e `HTTP 204`. Confira as duas sessões com a seção 3.1: `api` continua com `autenticado: true`, e `JAR=outra.txt api` passa a `autenticado: false`.
+
+Depois dos casos de erro abaixo, volte à senha dos exemplos, que as outras seções usam:
+
+```bash
+api -X POST -d '{"senha_atual": "Paralelas-baixas-2026", "nova_senha": "Barra-fixa-2026"}' $BASE/api/auth/conta/senha/
+```
+
+| Teste | Comando (troque o `-d`) | Esperado |
+|---|---|---|
+| Senha atual errada | `'{"senha_atual": "errada", "nova_senha": "Paralelas-baixas-2026"}'` | 400, em `senha_atual` |
+| Nova igual à atual | `'{"senha_atual": "<atual>", "nova_senha": "<atual>"}'` | 400, `A nova senha precisa ser diferente da atual.` |
+| Nova senha fraca | `'{"senha_atual": "<atual>", "nova_senha": "123"}'` | 400, com as três explicações do cadastro |
+| Sem login | `curl -s -X POST -d '{}' $BASE/api/auth/conta/senha/` | 403 |
+
+### 3.6 POST `/api/auth/logout/`
 
 ```bash
 api -X POST $BASE/api/auth/logout/
@@ -430,18 +486,20 @@ Para conferir tudo depois de uma mudança, sem repetir cada caso de erro:
 | 2 | POST `/api/auth/cadastro/` | 201 |
 | 3 | POST `/api/auth/logout/` | 204 |
 | 4 | POST `/api/auth/login/` | 200 |
-| 5 | GET `/api/opcoes/` | 200 |
-| 6 | GET `/api/locais/` e com `latitude`, `longitude` e `raio` | 200 |
-| 7 | POST `/api/locais/` | 201 (ou 409 com candidatos) |
-| 8 | GET e PATCH `/api/locais/{id}/` | 200 e 200 |
-| 9 | POST `/api/locais/{id}/equipamentos/` | 201 |
-| 10 | GET e PATCH `/api/equipamentos/{id}/` | 200 e 200 |
-| 11 | POST e GET `/api/equipamentos/{id}/registros-condicao/` | 201 e 200 |
-| 12 | POST e GET `/api/locais/{id}/avaliacoes/` | 201 e 200 |
-| 13 | POST `/api/locais/{id}/denuncias/` | 201 |
-| 14 | POST `/api/uploads/`, PUT na URL e PUT `/api/locais/{id}/foto/` | 201, 200 e 201 |
-| 15 | GET `/api/schema/` e `/api/docs/` | 200 e 200 |
-| 16 | GET `/admin/` sem login | 302 |
+| 5 | PUT `/api/auth/conta/` | 200 |
+| 6 | POST `/api/auth/conta/senha/` | 204 |
+| 7 | GET `/api/opcoes/` | 200 |
+| 8 | GET `/api/locais/` e com `latitude`, `longitude` e `raio` | 200 |
+| 9 | POST `/api/locais/` | 201 (ou 409 com candidatos) |
+| 10 | GET e PATCH `/api/locais/{id}/` | 200 e 200 |
+| 11 | POST `/api/locais/{id}/equipamentos/` | 201 |
+| 12 | GET e PATCH `/api/equipamentos/{id}/` | 200 e 200 |
+| 13 | POST e GET `/api/equipamentos/{id}/registros-condicao/` | 201 e 200 |
+| 14 | POST e GET `/api/locais/{id}/avaliacoes/` | 201 e 200 |
+| 15 | POST `/api/locais/{id}/denuncias/` | 201 |
+| 16 | POST `/api/uploads/`, PUT na URL e PUT `/api/locais/{id}/foto/` | 201, 200 e 201 |
+| 17 | GET `/api/schema/` e `/api/docs/` | 200 e 200 |
+| 18 | GET `/admin/` sem login | 302 |
 
 ---
 

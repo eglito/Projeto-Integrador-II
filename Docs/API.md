@@ -78,6 +78,12 @@ Só os históricos são paginados: `GET .../registros-condicao/` e `GET .../aval
 | POST | `/api/auth/cadastro/` | Livre + CSRF | `username*`, `password*` | 201 Usuario, já com sessão aberta |
 | POST | `/api/auth/login/` | Livre + CSRF | `username*`, `password*` | 200 Usuario |
 | POST | `/api/auth/logout/` | Autenticado | — | 204 |
+| PUT | `/api/auth/conta/` | Autenticado | `username*`, `senha_atual*` | 200 Usuario. A sessão continua, com o nome novo |
+| POST | `/api/auth/conta/senha/` | Autenticado | `senha_atual*`, `nova_senha*` | 204. Mantém esta sessão e encerra as outras sessões da conta |
+
+Configurações (decisões 23 e 38): as duas trocas pedem a senha atual. A nova senha passa pelos mesmos validadores do cadastro e precisa ser diferente da atual. O token CSRF não muda na troca de senha.
+
+Nome de usuário: no cadastro, no login e na troca, ele é normalizado (Unicode NFKC) antes de qualquer conferência. Letras de largura total, como `ｐｒａｔｉｃａｎｔｅ`, viram letras comuns; assim um nome não imita outro visualmente.
 
 ### 5.2 Vocabulário
 

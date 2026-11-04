@@ -101,7 +101,7 @@ Dados de `GET /api/locais/{id}/` (LocalDetalhe):
 
 ## 5. Decisões
 
-Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 37.
+Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 38.
 
 | # | Pergunta | Resposta | README |
 |---|---|---|---|
