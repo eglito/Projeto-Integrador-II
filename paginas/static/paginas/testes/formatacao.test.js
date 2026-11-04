@@ -6,6 +6,7 @@ import {
   textoComodidades,
   textoDistancia,
   textoEquipamentos,
+  textoFiltrosAtivos,
 } from "../js/formatacao.js";
 
 // Rótulos como /api/opcoes/ devolve (tipos_equipamento).
@@ -83,6 +84,29 @@ QUnit.module("formatacao.js: filtros no texto", function () {
     assert.strictEqual(descricaoFiltros("Espaldar", null), " com equipamento do tipo Espaldar");
     assert.strictEqual(descricaoFiltros(null, 90), " com equipamento de até 90 cm");
     assert.strictEqual(descricaoFiltros(null, null), "");
+  });
+});
+
+QUnit.module("formatacao.js: filtros ativos no topo da lista", function () {
+  QUnit.test("tipo, altura e raio", function (assert) {
+    assert.strictEqual(
+      textoFiltrosAtivos("Espaldar", 90, 10000, false),
+      "Tipo: Espaldar. Altura máxima: 90 cm. Raio: 10 km.",
+    );
+  });
+
+  QUnit.test("sem filtros de equipamento, diz isso e mostra o raio", function (assert) {
+    assert.strictEqual(
+      textoFiltrosAtivos(null, null, 2000, false),
+      "Sem filtros de equipamento. Raio: 2 km.",
+    );
+  });
+
+  QUnit.test("raio da área visível vem marcado", function (assert) {
+    assert.strictEqual(
+      textoFiltrosAtivos(null, null, 3400, true),
+      "Sem filtros de equipamento. Raio: 3,4 km (área visível do mapa).",
+    );
   });
 });
 

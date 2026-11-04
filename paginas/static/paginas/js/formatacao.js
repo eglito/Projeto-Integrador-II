@@ -65,6 +65,26 @@ export function textoEquipamentos(equipamentos, tiposEquipamento) {
 }
 
 /**
+ * Linha do topo da lista que diz quais filtros estão valendo (decisão 40):
+ * "Tipo: Espaldar. Altura máxima: 90 cm. Raio: 10 km."
+ */
+export function textoFiltrosAtivos(rotuloTipo, alturaMaxima, raio, raioDaArea) {
+  const partes = [];
+  if (rotuloTipo) {
+    partes.push(`Tipo: ${rotuloTipo}.`);
+  }
+  if (alturaMaxima) {
+    partes.push(`Altura máxima: ${alturaMaxima} cm.`);
+  }
+  if (partes.length === 0) {
+    partes.push("Sem filtros de equipamento.");
+  }
+  const area = raioDaArea ? " (área visível do mapa)" : "";
+  partes.push(`Raio: ${formatarDistancia(raio)}${area}.`);
+  return partes.join(" ");
+}
+
+/**
  * Filtros ativos, para entrar no meio do resumo da busca:
  * " com equipamento do tipo Espaldar de até 90 cm", ou "" sem filtros.
  */

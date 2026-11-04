@@ -46,7 +46,8 @@ def test_html_traz_o_basico_de_acessibilidade(pagina):
 
     assert '<html lang="pt-BR">' in html
     assert "<main" in html
-    assert "<h1" in html
+    # Título visível na barra superior (decisão 40), e não só para leitor de tela.
+    assert "<h1>Mapa de Calistenia</h1>" in html
     assert 'role="status"' in html  # região aria-live
     assert 'aria-label="Mapa dos locais"' in html
     # WCAG 1.4.4: o viewport não pode bloquear o zoom do navegador.
@@ -54,15 +55,17 @@ def test_html_traz_o_basico_de_acessibilidade(pagina):
     assert "maximum-scale" not in html
 
 
-def test_pular_para_a_lista_aponta_para_um_destino_existente(pagina):
-    # README, decisão 30: o link evita atravessar todos os marcadores (WCAG 2.4.1).
+def test_links_de_pular_apontam_para_destinos_existentes(pagina):
+    # README, decisão 30, e WCAG 2.4.1: pular para a lista e para o mapa.
     html = pagina.content.decode()
-    destino = re.search(r'<a class="pular" href="#([^"]+)"', html)
+    destinos = re.findall(r'<a class="pular" href="#([^"]+)"', html)
 
-    assert destino, "A página deveria ter o link 'Pular para a lista'."
-    assert f'id="{destino.group(1)}"' in html
-    # O destino recebe o foco: sem tabindex, alguns navegadores só rolam a página.
-    assert re.search(rf'id="{destino.group(1)}"[^>]*tabindex="-1"', html)
+    assert destinos == ["titulo-lista", "mapa"]
+    for destino in destinos:
+        assert f'id="{destino}"' in html
+    # O título recebe o foco: sem tabindex, alguns navegadores só rolam a página.
+    # O mapa fica focável pelo Leaflet, que lhe dá tabindex="0".
+    assert re.search(r'id="titulo-lista"[^>]*tabindex="-1"', html)
 
 
 def test_todo_campo_do_formulario_tem_rotulo(pagina):
@@ -75,3 +78,40 @@ def test_todo_campo_do_formulario_tem_rotulo(pagina):
     assert all(ids), "Todo campo precisa de id para o <label for> apontar."
     rotulos = set(re.findall(r'<label for="([^"]+)"', html))
     assert [id_.group(1) for id_ in ids if id_.group(1) not in rotulos] == []
+
+
+def test_botao_do_menu_controla_a_gaveta_e_comeca_fechado(pagina):
+    # Padrão disclosure do WAI-ARIA (especificação, 2.5): aria-expanded e aria-controls.
+    html = pagina.content.decode()
+    botao = re.search(r'<button[^>]*id="botao-menu"[^>]*>', html)
+
+    assert botao, "A barra superior deveria ter o botão do menu."
+    assert 'aria-expanded="false"' in botao.group(0)
+    controlado = re.search(r'aria-controls="([^"]+)"', botao.group(0)).group(1)
+    gaveta = re.search(rf'<nav[^>]*id="{controlado}"[^>]*>', html)
+    assert gaveta, "aria-controls deveria apontar para a gaveta do menu."
+    assert "hidden" in gaveta.group(0)
+
+
+def test_barra_inferior_alterna_mapa_e_lista_com_o_mapa_na_frente(pagina):
+    # README, decisão 29: em tela estreita, Mapa e Lista se alternam; o Mapa abre na frente.
+    html = pagina.content.decode()
+    botoes = re.findall(r'<button[^>]*data-tela="(mapa|lista)"[^>]*>', html)
+    atual = re.search(r'<button[^>]*data-tela="(\w+)"[^>]*aria-current="true"', html)
+
+    assert botoes == ["mapa", "lista"]
+    assert atual and atual.group(1) == "mapa"
+    assert 'data-tela="mapa"' in re.search(r"<main[^>]*>", html).group(0)
+
+
+def test_ids_usados_como_seletor_no_javascript_existem_na_pagina(pagina):
+    # Um $("#id") que não acha nada falha calado: o clique simplesmente não faz nada.
+    html = pagina.content.decode()
+    ids_da_pagina = set(re.findall(r'\bid="([^"]+)"', html))
+    citados = set()
+    for modulo in PASTA_JS.glob("*.js"):
+        citados |= set(re.findall(r'"#([\w-]+)', modulo.read_text()))
+
+    # Controle: a expressão regular achou seletores, e o teste não passou vazio.
+    assert citados
+    assert sorted(citados - ids_da_pagina) == []
