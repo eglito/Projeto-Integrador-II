@@ -25,7 +25,9 @@ import {
 } from "./formatacao.js";
 import { iniciarLayout, listaVisivel, mostrarTela, mostrarVisao, telaEstreita } from "./layout.js";
 import { iniciarLista, marcarNaLista, mostrarLista } from "./lista.js";
+import { iniciarLocalizacao, localizar, verificarPermissao } from "./localizacao.js";
 import {
+  adicionarBotaoLocalizacao,
   ajustarTamanho,
   aoMoverPelaPessoa,
   centralizarEm,
@@ -36,6 +38,7 @@ import {
   distanciaAoCanto,
   focarMarcador,
   marcarPontoDeReferencia,
+  marcarPosicao,
   removerPontoDeReferencia,
 } from "./mapa.js";
 
@@ -43,12 +46,19 @@ let opcoes = null;
 /**
  * Estado da busca: ponto, origem da distância, raio e filtros. Cada ação muda
  * uma parte dele e repete a mesma chamada, que alimenta mapa e lista juntos.
- * O ponto só muda com "Buscar nesta área" e com a escolha de um endereço:
- * escolher um local na lista move o mapa, mas não muda de onde as distâncias
- * são medidas.
+ * O ponto só muda com "Buscar nesta área", com a escolha de um endereço e com
+ * a posição da pessoa: escolher um local na lista move o mapa, mas não muda de
+ * onde as distâncias são medidas.
  */
 let busca = null;
 let locaisAtuais = [];
+/**
+ * Sobe a cada escolha da pessoa sobre o que o mapa mostra: mover o mapa,
+ * escolher um endereço ou um local da lista. A posição que chega depois de uma
+ * dessas escolhas não tira a vista do lugar (plano, etapa 7). É a ideia do
+ * @Version do JPA: quem guardou um número antigo sabe que alguém mexeu depois.
+ */
+let geracaoDaVista = 0;
 
 // Grava o cookie csrftoken. O estado da sessão ganha interface na etapa 9.
 obter("/api/auth/sessao/");
@@ -68,7 +78,12 @@ obter("/api/opcoes/")
     });
     iniciarBuscaNaArea({ aoBuscar: buscarNaArea });
     iniciarBuscaEndereco({ centroPadrao: centro, aoEscolher: escolherEndereco });
-    aoMoverPelaPessoa(oferecerBuscaNaArea);
+    iniciarLocalizacao({ aoPedir: () => pedirLocalizacao(), aoIrParaEndereco: irParaEndereco });
+    adicionarBotaoLocalizacao(() => pedirLocalizacao());
+    aoMoverPelaPessoa(function () {
+      geracaoDaVista += 1;
+      oferecerBuscaNaArea();
+    });
     // Sem a posição da pessoa, a busca parte do centro do mapa (decisão 31).
     buscar({
       latitude: centro.latitude,
@@ -80,6 +95,15 @@ obter("/api/opcoes/")
       tipo: "",
       alturaMaxima: null,
       limitado: false,
+    }).done(function () {
+      // A permissão só é consultada depois da primeira busca: as duas juntas
+      // poderiam terminar fora de ordem, e a do centro apagaria a de "você".
+      // Se a primeira busca falhar, a API está fora do ar, e a posição não ajudaria.
+      verificarPermissao().then(function (concedida) {
+        if (concedida) {
+          pedirLocalizacao({ automatico: true });
+        }
+      });
     });
   })
   .fail(function () {
@@ -188,34 +212,77 @@ function buscarNaArea() {
 }
 
 /**
- * Endereço escolhido na visão Buscar: ele vira o ponto da busca, com a
- * distância "do endereço buscado" (decisão 31). Raio e filtros continuam; o
- * raio da área visível, que valia para outra área, volta ao padrão. Com a busca
- * feita, o mapa vai até o endereço, que ganha o marcador, e o painel volta para
- * a lista, como nos filtros (decisão 40).
+ * Novo ponto de partida, o endereço escolhido ou a posição da pessoa: as
+ * distâncias passam a sair dele (decisão 31). Raio e filtros continuam; o raio
+ * da área visível, que valia para outra área, volta ao padrão. Com a busca
+ * feita, o mapa vai até o ponto. Devolve o jqXHR, para quem chama completar.
  */
-function escolherEndereco({ latitude, longitude, rotulo }) {
+function buscarAPartirDe({ latitude, longitude, origem, endereco }) {
   const raio = busca.raioDaArea ? opcoes.busca.raio_padrao_m : busca.raio;
   const novaBusca = {
     ...busca,
     latitude,
     longitude,
-    origem: "endereco",
-    endereco: rotulo,
+    origem,
+    endereco,
     raio,
     raioDaArea: false,
     limitado: false,
   };
-  buscar(novaBusca).done(function () {
+  return buscar(novaBusca).done(function () {
     marcarRaio(raio);
-    esconderEnderecos();
     // O mapa sai de onde a pessoa o deixou: "Buscar nesta área" ofereceria a área
-    // antiga e trocaria o endereço pelo centro do mapa sem ela ter mexido nele.
+    // antiga e trocaria o ponto pelo centro do mapa sem ela ter mexido nele.
     esconderBuscaNaArea();
-    marcarPontoDeReferencia(latitude, longitude, "Endereço buscado");
     centralizarEm(latitude, longitude);
+  });
+}
+
+/**
+ * Endereço escolhido na visão Buscar: ele vira o ponto da busca, com a
+ * distância "do endereço buscado", e ganha o marcador. O painel volta para a
+ * lista, como nos filtros (decisão 40).
+ */
+function escolherEndereco({ latitude, longitude, rotulo }) {
+  geracaoDaVista += 1;
+  buscarAPartirDe({ latitude, longitude, origem: "endereco", endereco: rotulo }).done(function () {
+    esconderEnderecos();
+    marcarPontoDeReferencia(latitude, longitude, "Endereço buscado");
     mostrarVisao("lista");
   });
+}
+
+/**
+ * Pede a posição da pessoa, pelo clique ou, com a permissão já dada, na
+ * abertura (`automatico`). Com ela, o mapa vai até a pessoa e a busca mede
+ * "de você". Se a pessoa mudou o mapa enquanto a posição não chegava, a vista
+ * dela fica onde está: só o marcador "Você está aqui" aparece (plano, etapa 7).
+ */
+function pedirLocalizacao({ automatico = false } = {}) {
+  const geracao = geracaoDaVista;
+  localizar({ automatico }).then(function (posicao) {
+    // null: a falha já foi explicada, ou já havia um pedido em curso.
+    if (!posicao) {
+      return;
+    }
+    marcarPosicao(posicao.latitude, posicao.longitude);
+    if (geracao !== geracaoDaVista) {
+      anunciar(
+        "Sua localização está marcada no mapa como Você está aqui. Como você mudou o mapa enquanto ela chegava, mapa e lista ficaram onde estavam. Para buscar perto de você, use Minha localização.",
+      );
+      return;
+    }
+    buscarAPartirDe({ ...posicao, origem: "voce", endereco: null }).done(function () {
+      // As distâncias passam a sair da pessoa, e não do endereço buscado.
+      removerPontoDeReferencia();
+    });
+  });
+}
+
+/** "Buscar por endereço", oferecido quando a localização não deu certo: o foco vai para o campo. */
+function irParaEndereco(botao) {
+  mostrarVisao("buscar", { focar: false, origem: botao });
+  $("#campo-endereco").trigger("focus");
 }
 
 /** "Buscar até 10 km", oferecido quando a busca não acha nada. */
@@ -238,6 +305,7 @@ function localPorId(id) {
  * marcador, porque centralizar um mapa escondido não teria efeito (decisão 40).
  */
 function escolherNaLista(id) {
+  geracaoDaVista += 1;
   marcarNaLista(id);
   if (telaEstreita()) {
     mostrarTela("mapa");

@@ -17,7 +17,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 3 | Locais no mapa e na lista | `feat/locais-mapa-lista` | 2 | Concluída (PR #22) |
 | 4 | Layout responsivo | `feat/layout-responsivo` | 3 (a 0 virou validação depois; decisão 39) | Concluída (PR #25) |
 | 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 3 (a 4 reposiciona a interface) | Concluída (PR #24) |
-| 6 | Busca por endereço | `feat/busca-endereco` | 5 | Pendente |
+| 6 | Busca por endereço | `feat/busca-endereco` | 5 | Concluída (PR #26) |
 | 7 | Geolocalização | `feat/geolocalizacao` | 6 | Pendente |
 | 8 | Painel de detalhes. **Marco:** fecha a entrega só de leitura | `feat/painel-detalhes` | 7 | Pendente |
 | 9 | Sessão no painel | `feat/sessao-front` | 8 | Pendente |
@@ -209,6 +209,16 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - O navegador só pede a permissão no clique. A página usa `getCurrentPosition`, não `watchPosition`.
   - Botão "Minha localização" com texto, e marcador "Você está aqui" distinto dos locais.
   - Se a pessoa moveu o mapa ou buscou um endereço antes da resposta, a vista dela não é tirada do lugar; só o marcador "Você está aqui" aparece.
+  - Na implementação:
+    - A permissão só é consultada depois da primeira busca, a do centro: as duas buscas juntas poderiam terminar fora de ordem, e a do centro apagaria a de "você". Se a primeira busca falhar, a localização não é tentada.
+    - Navegador sem Permissions API conta como `prompt`. Bloqueada na abertura, a explicação fica no painel, sem anúncio, para não apagar o anúncio dos resultados.
+    - O convite fica no topo da visão Lista, escondido até a página saber o estado da permissão. Ele some quando a posição chega, e o foco que estava nele vai para o título da lista. Numa falha, mostra a mensagem, "Usar minha localização" (menos sem suporte) e "Buscar por endereço", que abre a visão Buscar com o foco no campo.
+    - Uma mensagem por motivo: bloqueada (na abertura), negada, indisponível, tempo e sem suporte (sem geolocalização ou fora de contexto seguro). Todas dizem o que fazer e terminam na busca por endereço.
+    - `getCurrentPosition` com limite de 10 s, posição de até 1 minuto e sem alta precisão (constantes comentadas em `localizacao.js`). Um pedido de cada vez; o pedido vira uma Promise.
+    - A posição vira o ponto da busca, com origem "você", pelo mesmo caminho do endereço da etapa 6 (`buscarAPartirDe` em `principal.js`); o marcador do endereço sai.
+    - Um contador (`geracaoDaVista`) sobe quando a pessoa move o mapa, escolhe um endereço ou um local da lista. A resposta que encontra o contador mudado só marca a posição, e o anúncio explica por que o mapa ficou onde estava.
+    - "Você está aqui" é um alvo, com o rótulo sempre visível acima. Tem camada própria, e não a do endereço, como previa a etapa 6: com a resposta atrasada, os dois aparecem juntos. Continua no mapa depois de "Buscar nesta área", porque marca onde a pessoa está.
+    - "◎ Minha localização" fica abaixo do zoom. No Tab, vem depois dos marcadores, como o zoom (o Leaflet põe os controles depois das camadas); o convite do painel vem antes deles, e as instruções do mapa dizem a ordem.
 - **Arquivos:** `js/localizacao.js`, `js/mapa.js` e o teste das mensagens por código de erro.
 - **Conceitos novos:**
   - Geolocation API com callbacks, e Permissions API com Promise.

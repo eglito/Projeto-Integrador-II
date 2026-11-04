@@ -12,11 +12,14 @@ const ATRIBUICAO_OSM =
 let mapa = null;
 let animar = true;
 let camadaLocais = null;
-// Ponto de onde as distâncias são medidas, quando não é o centro do mapa:
-// o endereço buscado (etapa 6) e, na etapa 7, a posição da pessoa.
+// O endereço buscado, quando ele é o ponto de onde as distâncias são medidas.
 let camadaReferencia = null;
-// Zoom mínimo ao ir para um endereço: o de um bairro, como o do centro padrão.
-const ZOOM_MINIMO_ENDERECO = 14;
+// A posição da pessoa ("Você está aqui"). Camada própria, e não a do endereço:
+// quando a posição chega depois de a pessoa escolher um endereço, os dois
+// aparecem juntos (plano, etapa 7).
+let camadaPosicao = null;
+// Zoom mínimo ao ir para um endereço ou para a pessoa: o de um bairro, como o do centro padrão.
+const ZOOM_MINIMO_PONTO = 14;
 // id do local -> marcador, para destacar o escolhido.
 const marcadores = new Map();
 let idDestacado = null;
@@ -84,6 +87,7 @@ export function criarMapa(idElemento, centro) {
 
   camadaLocais = L.layerGroup().addTo(mapa);
   camadaReferencia = L.layerGroup().addTo(mapa);
+  camadaPosicao = L.layerGroup().addTo(mapa);
   permitirDispensarNomes($(mapa.getContainer()));
 
   // Girar o celular, cruzar 48em ou mudar o zoom do navegador muda o tamanho do
@@ -205,40 +209,83 @@ export function focarMarcador(id) {
 }
 
 /**
- * Leva o mapa até um ponto, como o endereço buscado, sem oferecer "Buscar nesta
- * área": é movimento do código. Aproxima até o zoom de um bairro, se preciso.
+ * Leva o mapa até um ponto, como o endereço buscado ou a pessoa, sem oferecer
+ * "Buscar nesta área": é movimento do código. Aproxima até o zoom de um bairro,
+ * se preciso.
  */
 export function centralizarEm(latitude, longitude) {
   movimentosDoCodigo += 1;
-  const zoom = Math.max(mapa.getZoom(), ZOOM_MINIMO_ENDERECO);
+  const zoom = Math.max(mapa.getZoom(), ZOOM_MINIMO_PONTO);
   mapa.setView([latitude, longitude], zoom, { animate: animar });
 }
 
 /**
- * Marca o ponto de onde as distâncias são medidas, com o rótulo sempre visível
- * ("Endereço buscado"). Forma própria, diferente dos locais. Não recebe foco:
- * não há o que fazer nele, e o anúncio já diz o endereço.
+ * Marcador de um ponto que não é local, com o rótulo sempre visível. A forma
+ * vem do CSS de `classe`. Não recebe foco nem clique: não há o que fazer nele,
+ * e o anúncio já diz o que ele marca.
  */
-export function marcarPontoDeReferencia(latitude, longitude, rotulo) {
-  camadaReferencia.clearLayers();
+function pontoFixo(latitude, longitude, classe, rotulo) {
   const conteudo = document.createElement("span");
   const forma = document.createElement("span");
-  forma.className = "referencia__forma";
+  forma.className = `${classe}__forma`;
   const nome = document.createElement("span");
-  nome.className = "referencia__nome";
+  nome.className = `${classe}__nome`;
   nome.textContent = rotulo;
   conteudo.append(forma, nome);
-  L.marker([latitude, longitude], {
-    icon: L.divIcon({ className: "referencia", html: conteudo, iconSize: null }),
+  return L.marker([latitude, longitude], {
+    icon: L.divIcon({ className: classe, html: conteudo, iconSize: null }),
     interactive: false,
     keyboard: false,
     // Atrás dos locais: um local no mesmo ponto continua visível e clicável.
     zIndexOffset: -1000,
-  }).addTo(camadaReferencia);
+  });
+}
+
+/**
+ * Marca o ponto de onde as distâncias são medidas ("Endereço buscado"): um
+ * losango, diferente dos locais.
+ */
+export function marcarPontoDeReferencia(latitude, longitude, rotulo) {
+  camadaReferencia.clearLayers();
+  pontoFixo(latitude, longitude, "referencia", rotulo).addTo(camadaReferencia);
 }
 
 export function removerPontoDeReferencia() {
   camadaReferencia.clearLayers();
+}
+
+/**
+ * Marca a posição da pessoa, "Você está aqui": um alvo, diferente do círculo
+ * dos locais e do losango do endereço (especificação, 2.2). Fica no mapa depois
+ * de "Buscar nesta área", porque marca onde a pessoa está, e não a origem da busca.
+ */
+export function marcarPosicao(latitude, longitude) {
+  camadaPosicao.clearLayers();
+  pontoFixo(latitude, longitude, "posicao", "Você está aqui").addTo(camadaPosicao);
+}
+
+/**
+ * Botão "Minha localização", abaixo do zoom (especificação, 2.1). Como o zoom,
+ * vem depois dos marcadores no Tab; o convite do painel vem antes deles.
+ * `aoClicar` roda no clique, no Enter e no Espaço, que o <button> já atende.
+ */
+export function adicionarBotaoLocalizacao(aoClicar) {
+  // L.Control.extend cria uma subclasse de L.Control, como um "extends" em Java;
+  // onAdd é o método sobrescrito, que devolve o elemento posto no canto do mapa.
+  const ControleLocalizacao = L.Control.extend({
+    options: { position: "topright" },
+    onAdd: function () {
+      const container = $("<div>", { class: "leaflet-bar controle-localizacao" });
+      $("<button>", { type: "button" })
+        .append($("<span>", { "aria-hidden": "true" }).text("◎"), " Minha localização")
+        .on("click", aoClicar)
+        .appendTo(container);
+      // Sem isso, o clique no botão também chegaria ao mapa (arrastar, duplo clique).
+      L.DomEvent.disableClickPropagation(container[0]);
+      return container[0];
+    },
+  });
+  new ControleLocalizacao().addTo(mapa);
 }
 
 /**

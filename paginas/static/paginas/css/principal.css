@@ -203,6 +203,23 @@ body {
   text-align: left;
 }
 
+/* "Minha localização", abaixo do zoom e com o mesmo visual. Alvo de 30 px de altura (WCAG 2.5.8). */
+.controle-localizacao button {
+  display: block;
+  min-height: 30px;
+  padding: 0 0.6rem;
+  border: 0;
+  border-radius: 4px;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font: 600 0.95rem system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  cursor: pointer;
+}
+
+.controle-localizacao button:hover {
+  background: #f4f4f4;
+}
+
 /*
  * Marcadores. Normal: círculo de 18 px numa área de toque de 28 px (WCAG 2.5.8).
  * Escolhido: pino maior e mais escuro, que muda forma e tamanho, não só a cor.
@@ -306,9 +323,72 @@ body {
   transform: translateX(-50%);
 }
 
+/*
+ * Posição da pessoa ("Você está aqui"): um alvo, anel com ponto no meio, forma
+ * diferente do círculo cheio e do pino dos locais e do losango do endereço. O
+ * rótulo fica sempre visível, acima, para não cobrir o do endereço, que fica abaixo.
+ */
+.posicao {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+}
+
+.posicao__forma {
+  position: absolute;
+  inset: 0;
+  border: 4px solid var(--cor-texto);
+  border-radius: 50%;
+  background: var(--cor-fundo);
+  box-shadow: 0 0 0 2px var(--cor-fundo), 0 1px 4px rgb(0 0 0 / 0.4);
+}
+
+.posicao__forma::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--cor-texto);
+}
+
+.posicao__nome {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  padding: 2px 6px;
+  border: 1px solid var(--cor-texto);
+  border-radius: 4px;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
 /* Depois do Esc, somem os nomes de hover e foco; o do escolhido fica (WCAG 1.4.13). */
 .mapa--nomes-dispensados .marcador:not(.marcador--escolhido) .marcador__nome {
   display: none;
+}
+
+/* Visão Lista: convite da localização. Sem "display" aqui: ele anularia o atributo hidden. */
+.convite-localizacao {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem 0.75rem;
+  border: 1px solid var(--cor-borda);
+  border-left: 4px solid var(--cor-topo);
+  border-radius: 0.25rem;
+}
+
+.convite-localizacao p {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.acoes-convite {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 /* Visão Lista: filtros ativos e a lista textual. */
@@ -468,6 +548,7 @@ body {
 
 /* Botões do painel: alvo de pelo menos 24 × 24 px (WCAG 2.5.8). */
 .acoes-filtros button,
+.acoes-convite button,
 .filtros-ativos button,
 #acoes-lista button {
   min-height: 2.25rem;
