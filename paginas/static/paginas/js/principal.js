@@ -16,6 +16,7 @@ import {
   parametrosDaBusca,
   raioDaArea,
 } from "./busca.js";
+import { esconderResultados as esconderEnderecos, iniciarBuscaEndereco } from "./endereco.js";
 import {
   descricaoFiltros,
   resumoBusca,
@@ -27,20 +28,24 @@ import { iniciarLista, marcarNaLista, mostrarLista } from "./lista.js";
 import {
   ajustarTamanho,
   aoMoverPelaPessoa,
+  centralizarEm,
   centroDoMapa,
   criarMapa,
   desenharLocais,
   destacarNoMapa,
   distanciaAoCanto,
   focarMarcador,
+  marcarPontoDeReferencia,
+  removerPontoDeReferencia,
 } from "./mapa.js";
 
 let opcoes = null;
 /**
  * Estado da busca: ponto, origem da distância, raio e filtros. Cada ação muda
  * uma parte dele e repete a mesma chamada, que alimenta mapa e lista juntos.
- * O ponto só muda com "Buscar nesta área": escolher um local na lista move o
- * mapa, mas não muda de onde as distâncias são medidas.
+ * O ponto só muda com "Buscar nesta área" e com a escolha de um endereço:
+ * escolher um local na lista move o mapa, mas não muda de onde as distâncias
+ * são medidas.
  */
 let busca = null;
 let locaisAtuais = [];
@@ -62,12 +67,14 @@ obter("/api/opcoes/")
       aoAplicar: aplicarFiltros,
     });
     iniciarBuscaNaArea({ aoBuscar: buscarNaArea });
+    iniciarBuscaEndereco({ centroPadrao: centro, aoEscolher: escolherEndereco });
     aoMoverPelaPessoa(oferecerBuscaNaArea);
     // Sem a posição da pessoa, a busca parte do centro do mapa (decisão 31).
     buscar({
       latitude: centro.latitude,
       longitude: centro.longitude,
       origem: "centro",
+      endereco: null,
       raio: opcoes.busca.raio_padrao_m,
       raioDaArea: false,
       tipo: "",
@@ -98,19 +105,26 @@ function buscar(novaBusca) {
         raio: busca.raio,
         raioMaximo: opcoes.busca.raio_maximo_m,
       });
+      // O endereço só aparece enquanto ele é o ponto de onde as distâncias são medidas.
+      const endereco = busca.origem === "endereco" ? busca.endereco : null;
       // No topo da lista, quais filtros estão valendo.
       $("#resumo-filtros").text(
-        textoFiltrosAtivos(rotuloDoTipo(busca.tipo), busca.alturaMaxima, busca.raio, busca.raioDaArea),
+        textoFiltrosAtivos(
+          rotuloDoTipo(busca.tipo),
+          busca.alturaMaxima,
+          busca.raio,
+          busca.raioDaArea,
+          endereco,
+        ),
       );
-      anunciar(
-        resumoBusca(locais.length, {
-          raio: busca.raio,
-          raioMaximo: opcoes.busca.raio_maximo_m,
-          origem: busca.origem,
-          filtros: descricaoFiltros(rotuloDoTipo(busca.tipo), busca.alturaMaxima),
-          limitado: busca.limitado,
-        }),
-      );
+      const resumo = resumoBusca(locais.length, {
+        raio: busca.raio,
+        raioMaximo: opcoes.busca.raio_maximo_m,
+        origem: busca.origem,
+        filtros: descricaoFiltros(rotuloDoTipo(busca.tipo), busca.alturaMaxima),
+        limitado: busca.limitado,
+      });
+      anunciar(endereco ? `Endereço: ${endereco}. ${resumo}` : resumo);
     })
     .fail(function (resposta) {
       if (resposta.status === 400) {
@@ -153,13 +167,54 @@ function focarResultado() {
 /** "Buscar nesta área": o ponto vira o centro do mapa, e o raio cobre a área visível. */
 function buscarNaArea() {
   const { raio, limitado } = raioDaArea(distanciaAoCanto(), opcoes.busca.raio_maximo_m);
-  const novaBusca = { ...busca, ...centroDoMapa(), origem: "centro", raio, raioDaArea: true, limitado };
+  const novaBusca = {
+    ...busca,
+    ...centroDoMapa(),
+    origem: "centro",
+    endereco: null,
+    raio,
+    raioDaArea: true,
+    limitado,
+  };
   buscar(novaBusca).done(function () {
     marcarRaio(raio, { daArea: true });
+    // As distâncias voltam a sair do centro do mapa, e não do endereço buscado.
+    removerPontoDeReferencia();
     // O botão some, e o foco vai para o resultado, sem se perder. Se a busca
     // falhar, nada disso acontece: botão e foco ficam para nova tentativa.
     esconderBuscaNaArea();
     focarResultado();
+  });
+}
+
+/**
+ * Endereço escolhido na visão Buscar: ele vira o ponto da busca, com a
+ * distância "do endereço buscado" (decisão 31). Raio e filtros continuam; o
+ * raio da área visível, que valia para outra área, volta ao padrão. Com a busca
+ * feita, o mapa vai até o endereço, que ganha o marcador, e o painel volta para
+ * a lista, como nos filtros (decisão 40).
+ */
+function escolherEndereco({ latitude, longitude, rotulo }) {
+  const raio = busca.raioDaArea ? opcoes.busca.raio_padrao_m : busca.raio;
+  const novaBusca = {
+    ...busca,
+    latitude,
+    longitude,
+    origem: "endereco",
+    endereco: rotulo,
+    raio,
+    raioDaArea: false,
+    limitado: false,
+  };
+  buscar(novaBusca).done(function () {
+    marcarRaio(raio);
+    esconderEnderecos();
+    // O mapa sai de onde a pessoa o deixou: "Buscar nesta área" ofereceria a área
+    // antiga e trocaria o endereço pelo centro do mapa sem ela ter mexido nele.
+    esconderBuscaNaArea();
+    marcarPontoDeReferencia(latitude, longitude, "Endereço buscado");
+    centralizarEm(latitude, longitude);
+    mostrarVisao("lista");
   });
 }
 

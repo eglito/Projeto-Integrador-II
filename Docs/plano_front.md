@@ -15,13 +15,13 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 1 | Centro padrão e dados de desenvolvimento no back | `feat/centro-padrao-e-dados-dev` | — | Concluída (PR #20) |
 | 2 | Página com o mapa | `feat/pagina-mapa` | 1 | Concluída (PR #21) |
 | 3 | Locais no mapa e na lista | `feat/locais-mapa-lista` | 2 | Concluída (PR #22) |
-| 4 | Layout responsivo | `feat/layout-responsivo` | 3 (a 0 virou validação depois; decisão 39) | Pendente |
-| 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 3 (a 4 reposiciona a interface) | Pendente |
+| 4 | Layout responsivo | `feat/layout-responsivo` | 3 (a 0 virou validação depois; decisão 39) | Concluída (PR #25) |
+| 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 3 (a 4 reposiciona a interface) | Concluída (PR #24) |
 | 6 | Busca por endereço | `feat/busca-endereco` | 5 | Pendente |
 | 7 | Geolocalização | `feat/geolocalizacao` | 6 | Pendente |
 | 8 | Painel de detalhes. **Marco:** fecha a entrega só de leitura | `feat/painel-detalhes` | 7 | Pendente |
 | 9 | Sessão no painel | `feat/sessao-front` | 8 | Pendente |
-| 10 | Configurações no back | `feat/api-conta` | — | Pendente |
+| 10 | Configurações no back | `feat/api-conta` | — | Concluída (PR #23) |
 | 11 | Configurações no front | `feat/configuracoes-front` | 9 e 10 | Pendente |
 | 12 | Adicionar local: escolha do ponto | `feat/cadastro-local-ponto` | 9 | Pendente |
 | 13 | Adicionar local: formulário em etapas | `feat/cadastro-local-formulario` | 12 | Pendente |
@@ -188,6 +188,13 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - Quando o endereço é ambíguo, até 5 resultados aparecem como botões.
   - Depois da escolha, o mapa recentraliza, a busca roda e a distância passa a ser "do endereço buscado".
   - O erro diz como corrigir. Exemplo: "Nenhum endereço encontrado para 'X'. Inclua o bairro e a cidade."
+  - Na implementação:
+    - A seção "Endereço ou lugar" fica na visão Buscar, acima dos filtros. O campo é `type="text"`: num `type="search"`, o Esc do Chrome apagaria o texto e fecharia a visão ao mesmo tempo. A ajuda avisa que o texto vai para o Nominatim.
+    - O `viewbox` tem ±0,2° em volta do centro padrão, com `bounded=0`: dá preferência à região sem impedir outra cidade.
+    - Dentro de 1 s, o pedido espera o que falta em vez de ser recusado; um pedido em curso ignora novos envios; a mesma busca usa o cache em memória, como pede a política do Nominatim.
+    - Os rótulos tiram "Região …" e "Brasil" e mantêm o CEP, que distingue os trechos de uma mesma rua.
+    - O ponto escolhido vira o ponto da busca, com origem "endereço"; raio e filtros continuam, menos o raio da área visível, que volta ao padrão. O painel volta para a lista, e o anúncio e a linha dos filtros citam o endereço.
+    - Marcador "Endereço buscado" (decisão do autor): losango com rótulo sempre visível, sem foco nem clique e atrás dos locais. "Buscar nesta área" o remove. A etapa 7 reaproveita a mesma camada para "Você está aqui".
 - **Arquivos:** `js/endereco.js`, `testes/endereco.test.js` (montagem dos parâmetros e trava) e o template.
 - **Conceitos novos:** requisição para outra origem (CORS), sem CSRF, e limite de requisições no cliente.
 - **Verificação:** item 5, e a metade "negada" do item 2, completada na etapa 7.

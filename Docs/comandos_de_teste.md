@@ -140,6 +140,8 @@ Pelo teclado: os primeiros Tabs mostram "Pular para a lista" e "Pular para o map
 
 > **JavaScript em cache.** O `runserver` não manda cabeçalho de cache, e o navegador pode continuar usando um módulo JavaScript antigo depois de uma mudança. Se a página se comportar como antes da mudança, recarregue ignorando o cache (Cmd+Shift+R no macOS, Ctrl+Shift+R no Windows) ou marque "Disable cache" na aba Network do DevTools.
 
+Endereço: na visão Buscar (menu, Buscar), digite um endereço ou lugar e use "Buscar endereço" ou Enter. Com mais de um resultado, escolha um; a lista passa a medir as distâncias "do endereço buscado", e o mapa o marca. A busca vai ao Nominatim, do OpenStreetMap: precisa de internet e aceita uma busca por segundo. "Praça da Matriz, Araraquara" traz um resultado; "Rua São Bento, Araraquara", cinco.
+
 Filtros: escolha tipo, altura máxima e raio e use "Aplicar filtros" (ou Enter num campo); mapa e lista mudam juntos. Depois de mover o mapa, aparece "Buscar nesta área", que busca a partir do centro do mapa com o raio da área visível. Com os dados de desenvolvimento, o tipo "Espaldar" com raio de 10 km traz só a Praça dos Advogados, e qualquer altura máxima não traz nada, porque nenhum equipamento tem altura cadastrada.
 
 Para o admin do Django, crie um usuário administrador; o comando pede nome, e-mail e senha:

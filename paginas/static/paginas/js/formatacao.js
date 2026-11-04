@@ -66,17 +66,21 @@ export function textoEquipamentos(equipamentos, tiposEquipamento) {
 
 /**
  * Linha do topo da lista que diz quais filtros estão valendo (decisão 40):
- * "Tipo: Espaldar. Altura máxima: 90 cm. Raio: 10 km."
+ * "Endereço: Praça da Matriz, Araraquara. Tipo: Espaldar. Raio: 10 km."
+ * `endereco` é o rótulo do endereço buscado, quando ele é o ponto da busca.
  */
-export function textoFiltrosAtivos(rotuloTipo, alturaMaxima, raio, raioDaArea) {
+export function textoFiltrosAtivos(rotuloTipo, alturaMaxima, raio, raioDaArea, endereco = null) {
   const partes = [];
+  if (endereco) {
+    partes.push(`Endereço: ${endereco}.`);
+  }
   if (rotuloTipo) {
     partes.push(`Tipo: ${rotuloTipo}.`);
   }
   if (alturaMaxima) {
     partes.push(`Altura máxima: ${alturaMaxima} cm.`);
   }
-  if (partes.length === 0) {
+  if (!rotuloTipo && !alturaMaxima) {
     partes.push("Sem filtros de equipamento.");
   }
   const area = raioDaArea ? " (área visível do mapa)" : "";
