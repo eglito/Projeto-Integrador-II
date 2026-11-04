@@ -86,6 +86,21 @@ Registro do que foi decidido e por quê. Decisão nova entra no fim da lista.
 | 19 | Possível duplicata responde `409` com os candidatos e pede confirmação | O cadastro se protege sozinho, sem rota extra. Candidato: local a até 150 m, ou de mesmo nome a até 10 km (RN-01). |
 | 20 | Uma denúncia aberta por pessoa, local e motivo | Índice único parcial no banco: evita denúncias repetidas, mas permite denunciar de novo depois da análise. |
 | 21 | Foto de até 2 MB, conferida pelos primeiros bytes e com nome gerado pelo servidor | O front redimensiona a imagem e descarta os metadados de localização (EXIF) antes do envio, redesenhando-a num `<canvas>`: o arquivo vai direto ao armazenamento, sem passar pela aplicação. |
+| 22 | Mapa aberto a visitantes; login só para contribuir | A API já libera a consulta (acesso "Livre"). Exigir conta antes de ver o mapa poria atrito na consulta principal (RN-06). |
+| 23 | Configurações troca o nome de usuário e a senha, e as duas trocas pedem a senha atual | Quem achar uma sessão aberta não toma a conta, e o nome aparece na autoria (RN-08). A sessão atual continua e as outras são encerradas (`update_session_auth_hash`). Excluir a conta fica fora do MVP. |
+| 24 | Marcadores sem agrupamento no MVP | São poucos locais, e o agrupamento (Leaflet.markercluster) exigiria tornar os grupos acessíveis por teclado e leitor de tela. Reavaliar quando o volume pesar na ordem de Tab. |
+| 25 | Centro padrão do mapa em `/api/opcoes/` (`busca.centro_padrao`) | Constante comentada no back, como o raio. O front não fixa cidade (RN-09) nem repete dado do back. |
+| 26 | Páginas servidas por um app `paginas` | Os apps da API continuam só API, e a interface, que é uma tela só, fica num lugar só. |
+| 27 | jQuery, Leaflet e QUnit copiados em `static/`, com as licenças | Versão travada no Git, funciona sem internet no desenvolvimento e o carregamento não passa por terceiro. Os tiles continuam vindo do OSM. |
+| 28 | Nominatim chamado direto do navegador | Sem rota nova. Segue a política de uso: busca só no Enter ou no botão, no máximo 1 requisição por segundo, sem autocompletar. A referência geográfica é o centro padrão, nunca a posição da pessoa. |
+| 29 | Em tela estreita, um botão alterna entre Mapa e Lista | Sem gesto de arrastar e sem conteúdo coberto pela metade: atende WCAG 1.4.10, 2.4.11 e 2.5.7 com menos código que uma folha inferior. |
+| 30 | Marcadores na ordem de Tab, na mesma ordem da lista, com o link "Pular para a lista" | Operáveis por teclado, e o link evita atravessar todos (WCAG 2.4.1). Um só ponto de Tab com setas disputaria as setas com o mapa. |
+| 31 | Sem a posição da pessoa, a busca parte do centro do mapa | Um caminho de código só. A distância diz de onde é medida: "de você", "do centro do mapa" ou "do endereço buscado". |
+| 32 | Login, cadastro de conta e Configurações no painel lateral da mesma página | Mapa, filtros e posição ficam em memória, e a pessoa volta ao local e à ação sem recarregar. Não há redirecionamento por `?proximo=` a validar. |
+| 33 | A URL guarda só o local aberto (`?local=id`), pela History API | Link compartilhável para um local, e o Voltar do navegador fecha o painel. A posição fica fora da URL para não ir ao histórico nem a links compartilhados. |
+| 34 | JavaScript em módulos ES nativos | Dependências explícitas e escopo por arquivo, sem build step. jQuery e Leaflet continuam globais. |
+| 35 | QUnit para as funções puras do JavaScript | Framework de testes do projeto jQuery, roda no navegador sem build. A interação é verificada pela especificação do mapa, seção 6, com evidência. |
+| 36 | Dados de desenvolvimento por fixture (`loaddata`) | Os 5 locais reais do `conftest.py` no banco local, para desenvolver e verificar o mapa sem cadastro à mão. |
 
 ## 6. Acessibilidade
 
