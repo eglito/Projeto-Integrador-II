@@ -30,6 +30,14 @@
       {# Lista textual equivalente ao mapa (RN-10). #}
       <section id="visao-lista" class="visao" aria-labelledby="titulo-lista">
         <h2 id="titulo-lista" tabindex="-1">Locais</h2>
+        {# Geolocalização (especificação, 2.2): convite antes do primeiro pedido, ou o que deu errado e como mudar. Escondido até a página saber o estado da permissão. #}
+        <div id="convite-localizacao" class="convite-localizacao" hidden>
+          <p id="convite-localizacao-texto"></p>
+          <div class="acoes-convite">
+            <button type="button" id="usar-localizacao">Usar minha localização</button>
+            <button type="button" id="ir-para-endereco" hidden>Buscar por endereço</button>
+          </div>
+        </div>
         <div class="filtros-ativos">
           <p id="resumo-filtros"></p>
           <button type="button" id="alterar-filtros">Alterar filtros</button>
