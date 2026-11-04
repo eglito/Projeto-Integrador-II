@@ -136,7 +136,9 @@ As regras ativas estão no [pyproject.toml](../pyproject.toml).
 
 A página do mapa fica em http://localhost:8000/. Ela abre no centro padrão, com os tiles do OpenStreetMap, e mostra no mapa e na lista os locais a até 2 km desse centro. Para ter locais, carregue os dados de desenvolvimento (seção 1). Se o mapa não aparecer, o console do navegador (F12) mostra o erro.
 
-Pelo teclado: o primeiro Tab mostra "Pular para a lista"; depois vêm o mapa, os marcadores (na ordem da lista) e os itens da lista. Enter ou Espaço num marcador destaca o item da lista; Enter num item leva o mapa até o local.
+Pelo teclado: o primeiro Tab mostra "Pular para a lista"; depois vêm o mapa, os marcadores (na ordem da lista), os filtros e os itens da lista. Enter ou Espaço num marcador destaca o item da lista; Enter num item leva o mapa até o local.
+
+Filtros: escolha tipo, altura máxima e raio e use "Aplicar filtros" (ou Enter num campo); mapa e lista mudam juntos. Depois de mover o mapa, aparece "Buscar nesta área", que busca a partir do centro do mapa com o raio da área visível. Com os dados de desenvolvimento, o tipo "Espaldar" com raio de 10 km traz só a Praça dos Advogados, e qualquer altura máxima não traz nada, porque nenhum equipamento tem altura cadastrada.
 
 Para o admin do Django, crie um usuário administrador; o comando pede nome, e-mail e senha:
 

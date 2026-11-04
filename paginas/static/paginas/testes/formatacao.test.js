@@ -1,4 +1,5 @@
 import {
+  descricaoFiltros,
   formatarDistancia,
   resumoBusca,
   rotuloComodidade,
@@ -73,29 +74,68 @@ QUnit.module("formatacao.js: equipamentos", function () {
   });
 });
 
-QUnit.module("formatacao.js: resumo da busca", function () {
-  QUnit.test("plural, singular e a origem", function (assert) {
+QUnit.module("formatacao.js: filtros no texto", function () {
+  QUnit.test("tipo, altura, os dois ou nenhum", function (assert) {
     assert.strictEqual(
-      resumoBusca(2, 2000, "centro", 10000),
-      "2 locais a até 2 km do centro do mapa.",
+      descricaoFiltros("Espaldar", 90),
+      " com equipamento do tipo Espaldar de até 90 cm",
     );
+    assert.strictEqual(descricaoFiltros("Espaldar", null), " com equipamento do tipo Espaldar");
+    assert.strictEqual(descricaoFiltros(null, 90), " com equipamento de até 90 cm");
+    assert.strictEqual(descricaoFiltros(null, null), "");
+  });
+});
+
+QUnit.module("formatacao.js: resumo da busca", function () {
+  // Raio padrão e máximo de /api/opcoes/.
+  const BUSCA = { raio: 2000, raioMaximo: 10000, origem: "centro" };
+
+  QUnit.test("plural, singular e a origem", function (assert) {
+    assert.strictEqual(resumoBusca(2, BUSCA), "2 locais a até 2 km do centro do mapa.");
+    assert.strictEqual(resumoBusca(1, BUSCA), "1 local a até 2 km do centro do mapa.");
+  });
+
+  QUnit.test("cita os filtros ativos", function (assert) {
+    const filtros = descricaoFiltros("Espaldar", null);
     assert.strictEqual(
-      resumoBusca(1, 2000, "centro", 10000),
-      "1 local a até 2 km do centro do mapa.",
+      resumoBusca(1, { ...BUSCA, raio: 10000, filtros }),
+      "1 local com equipamento do tipo Espaldar a até 10 km do centro do mapa.",
+    );
+  });
+
+  QUnit.test("avisa quando a área visível passou do raio máximo", function (assert) {
+    assert.strictEqual(
+      resumoBusca(6, { ...BUSCA, raio: 10000, limitado: true }),
+      "6 locais a até 10 km do centro do mapa. A área visível passa desse raio, o maior da busca: os locais mais longe do centro ficaram de fora.",
     );
   });
 
   QUnit.test("sem resultados, diz o que fazer", function (assert) {
     assert.strictEqual(
-      resumoBusca(0, 2000, "centro", 10000),
+      resumoBusca(0, BUSCA),
       "Nenhum local a até 2 km do centro do mapa. Aumente o raio ou cadastre um local.",
     );
   });
 
-  QUnit.test("no raio máximo, não pede para aumentar o raio", function (assert) {
+  QUnit.test("sem resultados com filtros, sugere mudar os filtros", function (assert) {
+    const filtros = descricaoFiltros(null, 90);
     assert.strictEqual(
-      resumoBusca(0, 10000, "centro", 10000),
-      "Nenhum local a até 10 km do centro do mapa. Esse é o maior raio da busca: ainda não há locais cadastrados nesta região.",
+      resumoBusca(0, { ...BUSCA, filtros }),
+      "Nenhum local com equipamento de até 90 cm a até 2 km do centro do mapa. Mude os filtros, aumente o raio ou cadastre um local.",
+    );
+  });
+
+  QUnit.test("área cortada sem resultados sugere aproximar o mapa", function (assert) {
+    assert.strictEqual(
+      resumoBusca(0, { ...BUSCA, raio: 10000, limitado: true }),
+      "Nenhum local a até 10 km do centro do mapa. A área visível passa desse raio, o maior da busca: aproxime o mapa da região que quer ver e use Buscar nesta área.",
+    );
+  });
+
+  QUnit.test("no raio máximo, sugere mudar de área, e não aumentar o raio", function (assert) {
+    assert.strictEqual(
+      resumoBusca(0, { ...BUSCA, raio: 10000 }),
+      "Nenhum local a até 10 km do centro do mapa. Esse é o maior raio da busca: mova o mapa para outra região e use Buscar nesta área.",
     );
   });
 });

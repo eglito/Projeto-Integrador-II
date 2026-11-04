@@ -16,7 +16,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 2 | Página com o mapa | `feat/pagina-mapa` | 1 | Concluída (PR #21) |
 | 3 | Locais no mapa e na lista | `feat/locais-mapa-lista` | 2 | Concluída (PR #22) |
 | 4 | Layout responsivo | `feat/layout-responsivo` | 0 e 3 | Pendente |
-| 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 4 | Pendente |
+| 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 3 (a 4 reposiciona a interface) | Pendente |
 | 6 | Busca por endereço | `feat/busca-endereco` | 5 | Pendente |
 | 7 | Geolocalização | `feat/geolocalizacao` | 6 | Pendente |
 | 8 | Painel de detalhes. **Marco:** fecha a entrega só de leitura | `feat/painel-detalhes` | 7 | Pendente |
@@ -142,6 +142,7 @@ Começa só com as conclusões da etapa 0.
   - Com a gaveta aberta, o resto da tela recebe `inert`.
   - Alvos de toque com pelo menos 24 × 24 px. O foco fica sempre visível e nunca encoberto.
   - Rótulo visível nos botões de zoom ("+ Aproximar", "− Afastar"). Na etapa 2 eles já têm nome acessível em português; o texto visível muda o visual dos controles e por isso espera o layout.
+  - Mover o formulário de filtros da etapa 5, hoje na seção "Buscar" acima da lista, para o item Buscar do menu, e rever a posição do botão "Buscar nesta área".
 - **Arquivos:** o template, o CSS e `js/layout.js`.
 - **Conceitos novos:** media query em `em`, o atributo `inert` e o padrão disclosure do WAI-ARIA.
 - **Verificação:** itens 4 (menu e Esc), 6 e 8 (axe e Lighthouse na tela base).
@@ -152,6 +153,14 @@ Começa só com as conclusões da etapa 0.
   - Filtros de tipo, altura máxima e raio no item Buscar, com os limites de `opcoes.busca`. Uma chamada continua alimentando mapa e lista.
   - Depois de mover o mapa (`moveend`), aparece o botão "Buscar nesta área". O raio vai do centro ao canto da área visível, limitado ao máximo da API, e o anúncio avisa quando o limite cortou a área.
   - Sem resultados no raio máximo, a mensagem da etapa 3 ("Esse é o maior raio da busca") passa a sugerir mover o mapa e buscar nesta área.
+  - Feita antes da etapa 4, por decisão do autor em 04/11/2026, com interface provisória: os filtros ficam numa seção "Buscar" acima da lista. A lógica e os testes são definitivos; a etapa 4 só reposiciona a interface.
+  - Na implementação:
+    - O estado da busca (ponto, origem, raio e filtros) é um objeto só. Aplicar filtros mantém o ponto; "Buscar nesta área" troca o ponto pelo centro do mapa. Escolher um local na lista move o mapa, mas não muda o ponto.
+    - O seletor de raio tem os degraus de 500 m a 10 km (constante comentada em `busca.js`) e ganha a opção "Área visível do mapa (3,4 km)" depois de "Buscar nesta área".
+    - O botão só aparece depois de movimento feito pela pessoa: o `mapa.js` ignora o `moveend` do próprio código. Ele fica antes do mapa no HTML (com o mapa em foco, Shift+Tab chega nele), é anunciado na primeira vez que aparece, e depois da busca o foco vai para o título da lista.
+    - O anúncio cita os filtros ("1 local com equipamento do tipo Espaldar a até 10 km do centro do mapa."). Sem resultados com filtros, sugere mudá-los.
+    - A altura é um campo de texto com teclado numérico, validado no front com mensagem que diz como corrigir: um campo `number` esconderia o texto inválido como valor vazio.
+    - Achados na revisão: sem resultados com a área cortada, o anúncio sugere aproximar o mapa; o estado da busca, o seletor de raio e o botão só mudam quando a busca dá certo, então numa falha o foco fica no botão para tentar de novo; a longitude do centro passa por `wrap()` (o mapa pode ser arrastado além do meridiano 180); e os movimentos do código são contados, e não marcados, porque duas escolhas rápidas na lista geram dois `moveend`.
 - **Arquivos:** `js/busca.js`, `testes/busca.test.js` e o template.
 - **Conceitos novos:**
   - `fieldset` com `legend`.

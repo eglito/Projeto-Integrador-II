@@ -65,17 +65,52 @@ export function textoEquipamentos(equipamentos, tiposEquipamento) {
 }
 
 /**
- * Resultado da busca, para a região aria-live (especificação, 2.1 e 2.3).
- * Sem resultados, só sugere aumentar o raio se ele ainda puder aumentar.
+ * Filtros ativos, para entrar no meio do resumo da busca:
+ * " com equipamento do tipo Espaldar de até 90 cm", ou "" sem filtros.
  */
-export function resumoBusca(quantidade, raioMetros, origem, raioMaximo) {
-  const area = `a até ${textoDistancia(raioMetros, origem)}`;
-  if (quantidade === 0 && raioMetros < raioMaximo) {
-    return `Nenhum local ${area}. Aumente o raio ou cadastre um local.`;
+export function descricaoFiltros(rotuloTipo, alturaMaxima) {
+  if (rotuloTipo && alturaMaxima) {
+    return ` com equipamento do tipo ${rotuloTipo} de até ${alturaMaxima} cm`;
+  }
+  if (rotuloTipo) {
+    return ` com equipamento do tipo ${rotuloTipo}`;
+  }
+  if (alturaMaxima) {
+    return ` com equipamento de até ${alturaMaxima} cm`;
+  }
+  return "";
+}
+
+/**
+ * Resultado da busca, para a região aria-live (especificação, 2.1 e 2.3).
+ * Cita os filtros ativos. Sem resultados, só sugere o que dá para fazer: mudar
+ * os filtros, aumentar o raio se ele ainda puder aumentar, ou mudar de área.
+ * `limitado` diz que a área visível passava do raio máximo.
+ */
+export function resumoBusca(quantidade, { raio, raioMaximo, origem, filtros = "", limitado = false }) {
+  const area = `a até ${textoDistancia(raio, origem)}`;
+  if (quantidade === 0 && raio < raioMaximo) {
+    const sugestao = filtros
+      ? "Mude os filtros, aumente o raio ou cadastre um local."
+      : "Aumente o raio ou cadastre um local.";
+    return `Nenhum local${filtros} ${area}. ${sugestao}`;
+  }
+  if (quantidade === 0 && limitado) {
+    // A área visível passava do raio: pode haver locais na tela, longe do centro.
+    const sugestao = filtros
+      ? "mude os filtros ou aproxime o mapa da região que quer ver e use Buscar nesta área."
+      : "aproxime o mapa da região que quer ver e use Buscar nesta área.";
+    return `Nenhum local${filtros} ${area}. A área visível passa desse raio, o maior da busca: ${sugestao}`;
   }
   if (quantidade === 0) {
-    return `Nenhum local ${area}. Esse é o maior raio da busca: ainda não há locais cadastrados nesta região.`;
+    const sugestao = filtros
+      ? "mude os filtros ou mova o mapa para outra região e use Buscar nesta área."
+      : "mova o mapa para outra região e use Buscar nesta área.";
+    return `Nenhum local${filtros} ${area}. Esse é o maior raio da busca: ${sugestao}`;
   }
   const locais = quantidade === 1 ? "1 local" : `${quantidade} locais`;
-  return `${locais} ${area}.`;
+  const corte = limitado
+    ? ` A área visível passa desse raio, o maior da busca: os locais mais longe do centro ficaram de fora.`
+    : "";
+  return `${locais}${filtros} ${area}.${corte}`;
 }
