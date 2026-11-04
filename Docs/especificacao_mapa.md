@@ -35,7 +35,7 @@ Painel ou menu abertos não podem esconder o elemento com foco (WCAG 2.4.11). Al
 4. Se for negada, indisponível ou demorar demais, mantém o centro padrão, explica em `aria-live` o que aconteceu e como mudar, e oferece a busca por endereço.
 5. A posição da pessoa tem marcador distinto dos locais, com rótulo textual.
 
-Privacidade: a posição só sai do navegador como parâmetro de `GET /api/locais/`. Não é gravada nem enviada a terceiros.
+Privacidade: as coordenadas da pessoa só saem do navegador como parâmetro de `GET /api/locais/` e não são gravadas. Nenhum terceiro recebe as coordenadas, mas os tiles da área visível vêm do servidor do OSM, que assim vê a região exibida no mapa. Por isso a busca por endereço usa o centro padrão como referência, nunca a posição (decisão 28).
 A geolocalização exige contexto seguro: funciona em `localhost`, não pelo IP da rede local. Em produção, HTTPS (Fase 5).
 
 ### 2.3 Locais no mapa e na lista
@@ -93,24 +93,37 @@ Dados de `GET /api/locais/{id}/` (LocalDetalhe):
 ## 4. Fora de escopo
 
 - Rotas e navegação até o local, feed social, ranking, segmentos e mapas de calor (Strava), modo offline.
-- Rota nova no back-end sem combinar antes, incluindo Configurações.
+- Rota nova no back-end sem combinar antes. Já combinados: o campo `busca.centro_padrao` em `/api/opcoes/` (decisão 25) e as rotas de Configurações (decisão 23).
 - Tudo o que a seção "Fora de escopo" do `CLAUDE.md` já lista.
 - Avaliação, registro de condição, denúncia e envio de foto: etapas seguintes, na ordem do HANDOFF, seção 5.
 
 ---
 
-## 5. Decisões em aberto
+## 5. Decisões
 
-Resolver antes do plano. As escolhas entram no README, seção 5, a partir da decisão 22.
+Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 36.
 
-| # | Pergunta | Opções | Observação |
+| # | Pergunta | Resposta | README |
 |---|---|---|---|
-| 5.1 | O mapa só aparece depois do login? | (a) só após o login; (b) aberto a visitantes, com login só para contribuir | A API já libera consulta sem login (`Docs/API.md`, acesso "Livre"), e o HANDOFF começa por uma entrega só de leitura |
-| 5.2 | O que é "Configurações" no MVP? | Preferências guardadas no navegador (raio, filtros, animações), dados da conta ou adiar | Não existe rota de configurações na API |
-| 5.3 | Agrupar marcadores próximos? | Leaflet.markercluster sem build step, ou não agrupar no MVP | Avaliar se o volume de locais justifica e se o agrupamento continua acessível |
-| 5.4 | De onde vem o centro padrão do mapa? | Constante comentada no front ou dado vindo do back | `/api/opcoes/` não traz coordenadas de município; RN-09 pede não fixar Araraquara |
-| 5.5 | Como servir as páginas, origem do jQuery e do Leaflet, Nominatim | `Docs/HANDOFF.md`, seção 2 | Decisões já listadas lá |
-| 5.6 | Testar o protótipo de baixa fidelidade antes do HTML? | Sim, com 2 ou 3 participantes, ou seguir sem | O teste e as conclusões são do autor; Claude não gera resultados de pesquisa (`CLAUDE.md`, Limite ético) |
+| 5.1 | O mapa só aparece depois do login? | Não. O mapa é aberto a visitantes, e o login só é pedido para contribuir | 22 |
+| 5.2 | O que é "Configurações" no MVP? | Troca do nome de usuário e da senha. As duas trocas pedem a senha atual; a sessão atual continua e as outras são encerradas. Pede duas rotas novas no back (plano, etapa 10) | 23 |
+| 5.3 | Agrupar marcadores próximos? | Não no MVP. Reavaliar quando o volume de locais pesar na ordem de Tab | 24 |
+| 5.4 | De onde vem o centro padrão do mapa? | Do back: constante comentada, exposta em `/api/opcoes/` como `busca.centro_padrao` | 25 |
+| 5.5 | Como servir as páginas, origem do jQuery e do Leaflet, Nominatim | App `paginas`; jQuery e Leaflet copiados em `static/`; Nominatim chamado direto do navegador | 26, 27 e 28 |
+| 5.6 | Testar o protótipo de baixa fidelidade antes do HTML? | Sim, em paralelo às etapas que não dependem do layout (plano, etapas 1 a 3). O layout (etapa 4) espera as conclusões do autor | Processo; fica no plano |
+
+Decididas na mesma entrevista:
+
+| Pergunta | Resposta | README |
+|---|---|---|
+| O que o painel de resultados vira em tela estreita? | Um botão alterna entre Mapa e Lista, cada um na tela inteira | 29 |
+| Como os marcadores entram na ordem de Tab? | Todos, na ordem da lista, com o link "Pular para a lista" antes do mapa | 30 |
+| O que a lista mostra sem a posição da pessoa? | A busca por proximidade a partir do centro do mapa, com a origem da distância no texto | 31 |
+| Onde ficam login, cadastro de conta e Configurações? | No painel lateral, na mesma página | 32 |
+| A URL acompanha o estado da tela? | Só o local aberto (`?local=id`) | 33 |
+| Como organizar o JavaScript sem build step? | Módulos ES nativos | 34 |
+| Como testar o JavaScript? | QUnit para as funções puras; interação pela seção 6, com evidência | 35 |
+| Como povoar o banco local? | Fixture com os 5 locais do `conftest.py`, carregada com `loaddata` | 36 |
 
 ---
 
