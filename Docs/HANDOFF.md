@@ -14,7 +14,7 @@ Atualizado em 03/11/2026, com a `main` no merge da PR #16.
 | Pesquisa de campo e síntese | `Docs/sintese-pesquisa.md`, `Docs/entrevistas.md` (anonimizadas) | Regras RN-01 a RN-10 rastreáveis a E01–E06 |
 | Modelo de dados | `Docs/modelo_dados.md`; migrations em `locais/` (0001–0004) e `moderacao/` (0001–0002) | Diagrama ER validado; `makemigrations --check` sem pendências |
 | Regras de negócio | `locais/servicos.py` | Busca por raio, filtros por equipamento, condição atual, resumo de segurança, duplicatas, cadastro e troca de foto |
-| API REST | 23 rotas; `Docs/API.md` | OpenAPI validado sem avisos (`spectacular --validate --fail-on-warn`) |
+| API REST | 25 rotas, com as duas de Configurações da Fase 4; `Docs/API.md` | OpenAPI validado sem avisos (`spectacular --validate --fail-on-warn`) |
 | Autenticação | `usuarios/` | Sessão + CSRF, inclusive no login e no cadastro |
 | Fotos | `fotos/` | Fluxo de URL assinada com armazenamento simulado em disco |
 | Moderação | `*/admin.py` | Locais com mapa, denúncias com status editável, fotos com link para abrir |

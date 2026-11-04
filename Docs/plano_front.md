@@ -1,7 +1,7 @@
 # Plano: front-end do mapa (Fase 4)
 
 Etapas para entregar o que pede `Docs/especificacao_mapa.md`. Aprovado em 03/11/2026.
-As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 37).
+As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 38).
 
 > Regras de cada etapa: branch própria, commits por unidade lógica e PR aberta pelo autor (`CLAUDE.md`, Git). `pytest` e `ruff` rodam antes de cada commit, então o item 9 da verificação vale para todas as etapas e não é repetido. Cada etapa termina com evidência (screenshot, saída de comando), não com "pronto".
 
@@ -14,7 +14,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 0 | Teste do protótipo de baixa fidelidade (autor) | — | — | Pendente |
 | 1 | Centro padrão e dados de desenvolvimento no back | `feat/centro-padrao-e-dados-dev` | — | Concluída (PR #20) |
 | 2 | Página com o mapa | `feat/pagina-mapa` | 1 | Concluída (PR #21) |
-| 3 | Locais no mapa e na lista | `feat/locais-mapa-lista` | 2 | Pendente |
+| 3 | Locais no mapa e na lista | `feat/locais-mapa-lista` | 2 | Concluída (PR #22) |
 | 4 | Layout responsivo | `feat/layout-responsivo` | 0 e 3 | Pendente |
 | 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 4 | Pendente |
 | 6 | Busca por endereço | `feat/busca-endereco` | 5 | Pendente |
@@ -222,11 +222,14 @@ Começa só com as conclusões da etapa 0.
 
   | Método | Rota | Entrada | Resposta |
   |---|---|---|---|
-  | PATCH | `/api/auth/conta/` | `username`, `senha_atual*` | 200 Usuario |
+  | PUT | `/api/auth/conta/` | `username*`, `senha_atual*` | 200 Usuario |
   | POST | `/api/auth/conta/senha/` | `senha_atual*`, `nova_senha*` | 204 |
 
-  - Senha atual errada responde 400 em `senha_atual`, com orientação.
-  - A nova senha passa pelos `AUTH_PASSWORD_VALIDATORS`.
+  - PUT, e não PATCH como estava previsto: os dois campos são obrigatórios, e o drf-spectacular marcaria como opcionais os campos de um PATCH (decisão 38).
+  - Senha atual errada ou ausente responde 400 em `senha_atual`, com orientação.
+  - A nova senha passa pelos `AUTH_PASSWORD_VALIDATORS` e precisa ser diferente da atual.
+  - Nome em uso responde "Este nome de usuário já está em uso. Escolha outro.", também no cadastro.
+  - Achado na revisão: o nome passa a ser normalizado (Unicode NFKC) antes dos validadores, no cadastro, no login e na troca. Sem isso, a troca aceitava uma imitação em letras de largura total do nome de outra conta, e o cadastro respondia 500 nesse caso.
   - Depois da troca de senha, `update_session_auth_hash` mantém a sessão atual e derruba as outras.
   - As regras são validação de serializer, sem `servicos.py` novo, porque CRUD é CRUD.
 - **Arquivos:** `usuarios/serializers.py`, `views.py` e `urls.py`; `usuarios/tests/test_api_conta.py`; `Docs/API.md` e `Docs/testes_das_rotas.md`.

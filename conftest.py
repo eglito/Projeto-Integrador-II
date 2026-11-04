@@ -56,6 +56,23 @@ def cliente_logado():
 
 
 @pytest.fixture
+def em_largura_total():
+    """Troca as letras pelas de largura total ("praticante" vira "ｐｒａｔｉｃａｎｔｅ").
+
+    A normalização Unicode (NFKC) as devolve às letras comuns: serve para testar
+    nomes de usuário que imitam outro visualmente.
+    """
+
+    def converter(texto):
+        return "".join(
+            chr(ord(letra) + 0xFEE0) if letra.isascii() and letra.isalpha() else letra
+            for letra in texto
+        )
+
+    return converter
+
+
+@pytest.fixture
 def locais_araraquara(usuario):
     """Os cinco locais citados nas entrevistas, com seus equipamentos."""
     locais = {}

@@ -1,10 +1,10 @@
 """Autenticação por sessão para o front-end jQuery (mesmo domínio).
 
 Fluxo: GET /api/auth/sessao/ entrega o cookie csrftoken; o jQuery o envia no
-cabeçalho X-CSRFToken em todo POST.
+cabeçalho X-CSRFToken em toda escrita (POST e PUT).
 """
 
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from drf_spectacular.utils import extend_schema
@@ -16,8 +16,10 @@ from rest_framework.views import APIView
 
 from .serializers import (
     CadastroSerializer,
+    ContaSerializer,
     LoginSerializer,
     SessaoSerializer,
+    TrocaSenhaSerializer,
     UsuarioSerializer,
 )
 
@@ -76,4 +78,37 @@ class LogoutView(APIView):
     @extend_schema(request=None, responses={204: None})
     def post(self, request):
         logout(request)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ContaView(APIView):
+    """Configurações: troca do nome de usuário (README, decisões 23 e 38).
+
+    PUT, e não PATCH: o corpo traz inteiro o único campo editável, junto com a
+    senha atual. Com sessão aberta, o SessionAuthentication do DRF já cobra o CSRF.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(request=ContaSerializer, responses=UsuarioSerializer)
+    def put(self, request):
+        serializer = ContaSerializer(request.user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        usuario = serializer.save()
+        return Response(UsuarioSerializer(usuario).data)
+
+
+class SenhaView(APIView):
+    """Configurações: troca de senha (README, decisão 23)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(request=TrocaSenhaSerializer, responses={204: None})
+    def post(self, request):
+        serializer = TrocaSenhaSerializer(request.user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        usuario = serializer.save()
+        # Mantém esta sessão, com chave nova. As outras sessões da conta guardam
+        # o hash da senha antiga e caem na próxima requisição.
+        update_session_auth_hash(request, usuario)
         return Response(status=status.HTTP_204_NO_CONTENT)

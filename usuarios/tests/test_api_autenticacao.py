@@ -73,6 +73,61 @@ def test_cadastro_recusa_senha_fraca_explicando_o_motivo(api_com_csrf):
     assert any("curta" in mensagem for mensagem in resposta.json()["password"])
 
 
+def test_cadastro_com_nome_em_uso_diz_como_corrigir(api_com_csrf, praticante):
+    resposta = api_com_csrf.post(
+        "/api/auth/cadastro/",
+        {"username": "praticante", "password": SENHA},
+        format="json",
+    )
+
+    assert resposta.status_code == 400
+    assert resposta.json()["username"] == [
+        "Este nome de usuário já está em uso. Escolha outro."
+    ]
+
+
+def test_cadastro_recusa_imitacao_em_largura_total_de_nome_em_uso(
+    api_com_csrf, praticante, em_largura_total
+):
+    # Antes da normalização no serializer, este caso chegava ao banco e dava 500.
+    resposta = api_com_csrf.post(
+        "/api/auth/cadastro/",
+        {"username": em_largura_total("praticante"), "password": SENHA},
+        format="json",
+    )
+
+    assert resposta.status_code == 400
+    assert resposta.json()["username"] == [
+        "Este nome de usuário já está em uso. Escolha outro."
+    ]
+
+
+def test_login_aceita_o_nome_em_largura_total(
+    api_com_csrf, praticante, em_largura_total
+):
+    resposta = api_com_csrf.post(
+        "/api/auth/login/",
+        {"username": em_largura_total("praticante"), "password": SENHA},
+        format="json",
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.json()["username"] == "praticante"
+
+
+def test_cadastro_recusa_nome_com_caractere_invalido(api_com_csrf):
+    # Os validadores do nome foram reescritos para trocar a mensagem de nome em
+    # uso; este teste garante que o formato continua conferido.
+    resposta = api_com_csrf.post(
+        "/api/auth/cadastro/",
+        {"username": "nome com espaço", "password": SENHA},
+        format="json",
+    )
+
+    assert resposta.status_code == 400
+    assert "username" in resposta.json()
+
+
 def test_logout_encerra_a_sessao(api_logado):
     assert api_logado.post("/api/auth/logout/").status_code == 204
     assert api_logado.get("/api/auth/sessao/").json()["autenticado"] is False
