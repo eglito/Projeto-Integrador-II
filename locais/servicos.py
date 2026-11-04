@@ -26,6 +26,12 @@ from .models import (
 # consultas que varreriam a base inteira.
 RAIO_MAXIMO_M = 10_000
 
+# Decisão de projeto (README, decisão 25): onde o mapa abre antes de haver a
+# posição da pessoa. Nó place=city de Araraquara no OSM (368265865), centro da
+# relação do município (IBGE 3503208), consultado em 03/11/2026. Zoom 14: num
+# celular de 375 px mostra cerca de 3,3 km, perto do diâmetro da busca padrão.
+CENTRO_PADRAO = {"latitude": -21.7886713, "longitude": -48.1773096, "zoom": 14}
+
 # Decisão de projeto: avaliação de segurança envelhece como a condição (RN-02).
 JANELA_AVALIACOES = timedelta(days=90)
 

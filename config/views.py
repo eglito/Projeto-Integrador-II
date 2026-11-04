@@ -14,7 +14,7 @@ from locais.models import (
     TipoEquipamento,
 )
 from locais.serializers import RAIO_PADRAO_M
-from locais.servicos import RAIO_MAXIMO_M
+from locais.servicos import CENTRO_PADRAO, RAIO_MAXIMO_M
 from moderacao.models import MotivoDenuncia
 
 
@@ -46,6 +46,7 @@ class OpcoesView(APIView):
                 "busca": {
                     "raio_padrao_m": RAIO_PADRAO_M,
                     "raio_maximo_m": RAIO_MAXIMO_M,
+                    "centro_padrao": CENTRO_PADRAO,
                 },
             }
         )
