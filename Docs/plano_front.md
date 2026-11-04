@@ -12,7 +12,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | Etapa | Entrega | Branch | Depende de | Situação |
 |---|---|---|---|---|
 | 0 | Teste do protótipo de baixa fidelidade (autor) | — | — | Pendente |
-| 1 | Centro padrão e dados de desenvolvimento no back | `feat/centro-padrao-e-dados-dev` | — | Pendente |
+| 1 | Centro padrão e dados de desenvolvimento no back | `feat/centro-padrao-e-dados-dev` | — | Concluída (PR #20) |
 | 2 | Página com o mapa | `feat/pagina-mapa` | 1 | Pendente |
 | 3 | Locais no mapa e na lista | `feat/locais-mapa-lista` | 2 | Pendente |
 | 4 | Layout responsivo | `feat/layout-responsivo` | 0 e 3 | Pendente |
@@ -90,9 +90,10 @@ paginas/
   - Na abertura, a página chama `/api/auth/sessao/` e `/api/opcoes/`.
   - `api.js` lê o cookie `csrftoken` a cada requisição. O `X-CSRFToken` só vai para URLs que começam com `/api/`, e não para a URL assinada (`Docs/API.md`, 6.3). O mesmo arquivo recusa URL sem barra final (bug 1 do HANDOFF).
   - Região `aria-live` na página.
-  - jQuery 3.7.1, Leaflet 1.9.4 e QUnit copiados em `vendor/`, com as licenças (decisão 27).
+  - jQuery 3.7.1, Leaflet 1.9.4 e QUnit 3.0.0 copiados em `vendor/`, com as licenças (decisão 27), do registro do npm e conferidos pelo sha512.
   - Página do QUnit em `/static/paginas/testes/index.html`, com o teste da leitura do cookie.
-- **Arquivos:** `paginas/` com `apps.py`, `urls.py` e `views.py`; `templates/paginas/base.html` e `mapa.html`; `css/principal.css`; `js/principal.js`, `js/api.js` e `js/anuncio.js`; `vendor/`; `testes/`; `paginas/tests/test_views.py`; `config/settings.py` (`INSTALLED_APPS`) e `config/urls.py`.
+  - Adiantado da etapa 3: `js/mapa.js` cria o mapa, e com `prefers-reduced-motion` (`matchMedia`) as animações já nascem desligadas.
+- **Arquivos:** `paginas/` com `apps.py`, `urls.py` e `views.py`; `templates/paginas/base.html` e `mapa.html`; `css/principal.css`; `js/principal.js`, `js/api.js`, `js/anuncio.js` e `js/mapa.js`; `vendor/`; `testes/`; `paginas/tests/test_views.py`; `config/settings.py` (`INSTALLED_APPS`) e `config/urls.py`.
 - **Conceitos novos:**
 
   | Django ou JavaScript | Equivalente em Java/Spring |
@@ -124,7 +125,7 @@ paginas/
   - Camadas do Leaflet (`L.map`, `L.tileLayer`, `L.marker`, `L.layerGroup`).
   - Delegação de eventos no jQuery: um único listener para a lista toda.
   - `Intl.NumberFormat`, equivalente ao `NumberFormat` com o Locale pt-BR.
-  - `matchMedia`, para ler `prefers-reduced-motion`.
+  - `matchMedia` já entrou na etapa 2; aqui ele passa a valer também para o `setView`.
 - **Verificação:** itens 3 (sem filtros ainda), 4 (marcadores e lista), 5 e 7.
 
 ### Etapa 4: layout responsivo
@@ -137,6 +138,7 @@ Começa só com as conclusões da etapa 0.
   - Abaixo de 48em, um botão alterna entre Mapa e Lista (decisão 29). O limite é em `em` para valer também com zoom de 400%.
   - Com a gaveta aberta, o resto da tela recebe `inert`.
   - Alvos de toque com pelo menos 24 × 24 px. O foco fica sempre visível e nunca encoberto.
+  - Rótulo visível nos botões de zoom ("+ Aproximar", "− Afastar"). Na etapa 2 eles já têm nome acessível em português; o texto visível muda o visual dos controles e por isso espera o layout.
 - **Arquivos:** o template, o CSS e `js/layout.js`.
 - **Conceitos novos:** media query em `em`, o atributo `inert` e o padrão disclosure do WAI-ARIA.
 - **Verificação:** itens 4 (menu e Esc), 6 e 8 (axe e Lighthouse na tela base).

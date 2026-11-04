@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "locais",
     "moderacao",
     "fotos",
+    "paginas",
 ]
 
 # Modelo de usuário do projeto, no lugar do django.contrib.auth.models.User.

@@ -16,6 +16,8 @@ urlpatterns = [
     # OpenAPI: o esquema em JSON/YAML e a interface navegável que o lê.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
+    # Front-end: a página do mapa, que consome a API acima.
+    path("", include("paginas.urls")),
 ]
 
 # Serve as fotos no desenvolvimento. Em produção, quem serve é o bucket.
