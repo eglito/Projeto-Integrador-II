@@ -45,10 +45,21 @@ def test_html_traz_o_basico_de_acessibilidade(pagina):
     html = pagina.content.decode()
 
     assert '<html lang="pt-BR">' in html
-    assert "<main>" in html
+    assert "<main" in html
     assert "<h1" in html
     assert 'role="status"' in html  # região aria-live
     assert 'aria-label="Mapa dos locais"' in html
     # WCAG 1.4.4: o viewport não pode bloquear o zoom do navegador.
     assert "user-scalable=no" not in html
     assert "maximum-scale" not in html
+
+
+def test_pular_para_a_lista_aponta_para_um_destino_existente(pagina):
+    # README, decisão 30: o link evita atravessar todos os marcadores (WCAG 2.4.1).
+    html = pagina.content.decode()
+    destino = re.search(r'<a class="pular" href="#([^"]+)"', html)
+
+    assert destino, "A página deveria ter o link 'Pular para a lista'."
+    assert f'id="{destino.group(1)}"' in html
+    # O destino recebe o foco: sem tabindex, alguns navegadores só rolam a página.
+    assert re.search(rf'id="{destino.group(1)}"[^>]*tabindex="-1"', html)

@@ -13,7 +13,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 |---|---|---|---|---|
 | 0 | Teste do protótipo de baixa fidelidade (autor) | — | — | Pendente |
 | 1 | Centro padrão e dados de desenvolvimento no back | `feat/centro-padrao-e-dados-dev` | — | Concluída (PR #20) |
-| 2 | Página com o mapa | `feat/pagina-mapa` | 1 | Pendente |
+| 2 | Página com o mapa | `feat/pagina-mapa` | 1 | Concluída (PR #21) |
 | 3 | Locais no mapa e na lista | `feat/locais-mapa-lista` | 2 | Pendente |
 | 4 | Layout responsivo | `feat/layout-responsivo` | 0 e 3 | Pendente |
 | 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 4 | Pendente |
@@ -118,8 +118,11 @@ paginas/
   - A lista `<ol>` mostra nome, distância com a origem ("1,2 km do centro do mapa"), tipos de equipamento (rótulos de `/api/opcoes/`) e comodidades.
   - Lista e mapa andam juntos. O item escolhido recebe `aria-current`, e o marcador escolhido muda de forma e de tamanho, não só de cor.
   - Link "Pular para a lista" antes do mapa.
-  - O resultado é anunciado ("2 locais a até 2 km do centro do mapa", com os dados da etapa 1). Sem resultados, a mensagem diz o que fazer e oferece as duas ações.
+  - O resultado é anunciado ("2 locais a até 2 km do centro do mapa", com os dados da etapa 1). Sem resultados, a mensagem diz o que fazer e oferece "Buscar até 10 km" (o raio máximo de `/api/opcoes/`). A segunda ação, "Cadastrar um local", entra na etapa 13.
   - Com `prefers-reduced-motion`, `setView` sem animação.
+  - Descoberto na implementação, no Leaflet 1.9.4: o marcador ganha `role="button"`, mas Enter e Espaço não o ativam, e o tooltip leria o nome duas vezes (`aria-describedby`). Por isso as duas teclas são tratadas no `keydown` do marcador, o nome visível é um rótulo em CSS, que o Esc esconde (WCAG 1.4.13), e o destaque troca uma classe no mesmo elemento, porque `setIcon` recriaria o marcador e tiraria o foco.
+  - Sem resultados no raio máximo, a mensagem não pede para aumentar o raio: diz que esse é o maior raio e que ainda não há locais na região.
+  - Os rótulos das comodidades (Bebedouro, Sanitário, Bancos) ficam em `formatacao.js`: são campos fixos do contrato, e não uma lista de escolhas de `/api/opcoes/`.
 - **Arquivos:** `js/mapa.js`, `js/lista.js`, `js/formatacao.js`, `js/principal.js`, `testes/formatacao.test.js`, o template e o CSS.
 - **Conceitos novos:**
   - Camadas do Leaflet (`L.map`, `L.tileLayer`, `L.marker`, `L.layerGroup`).
@@ -148,6 +151,7 @@ Começa só com as conclusões da etapa 0.
 - **Entrega:**
   - Filtros de tipo, altura máxima e raio no item Buscar, com os limites de `opcoes.busca`. Uma chamada continua alimentando mapa e lista.
   - Depois de mover o mapa (`moveend`), aparece o botão "Buscar nesta área". O raio vai do centro ao canto da área visível, limitado ao máximo da API, e o anúncio avisa quando o limite cortou a área.
+  - Sem resultados no raio máximo, a mensagem da etapa 3 ("Esse é o maior raio da busca") passa a sugerir mover o mapa e buscar nesta área.
 - **Arquivos:** `js/busca.js`, `testes/busca.test.js` e o template.
 - **Conceitos novos:**
   - `fieldset` com `legend`.
@@ -255,6 +259,7 @@ Começa só com as conclusões da etapa 0.
   - Se o POST responder 409 (`Docs/API.md`, 6.2): "É este lugar" abre o local existente, e "É outro lugar" reenvia com `confirmar_novo`.
   - Com 201, a pessoa acrescenta os equipamentos. `nome_outro` só aparece com o tipo "outro", e largura só com barras paralelas.
   - Ao concluir, o local novo aparece no mapa e na lista, e o resultado é anunciado.
+  - Na lista vazia, o botão "Cadastrar um local", a segunda ação da especificação (2.3), ao lado de "Buscar até 10 km" (etapa 3).
 - **Arquivos:** `js/cadastro_local.js`, `testes/cadastro_local.test.js` (montagem do corpo) e o template.
 - **Verificação:** itens 3, 4 e 5.
 

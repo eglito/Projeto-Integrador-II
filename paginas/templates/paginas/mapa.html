@@ -2,7 +2,10 @@
 {% load static %}
 
 {% block conteudo %}
-<main>
+{# Primeiro item do Tab: evita atravessar todos os marcadores (README, decisão 30; WCAG 2.4.1). #}
+<a class="pular" href="#titulo-lista">Pular para a lista</a>
+
+<main class="principal">
   <h1 class="visualmente-oculto">Mapa colaborativo de calistenia</h1>
 
   <noscript>
@@ -11,10 +14,17 @@
 
   {# O Leaflet torna o mapa focável pelo Tab; a instrução é lida quando ele recebe o foco. #}
   <div id="mapa" role="region" aria-label="Mapa dos locais" aria-describedby="mapa-instrucoes"></div>
-  <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar.</p>
+  <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar. A tecla Tab passa pelos locais, na ordem da lista, e Enter escolhe o local. Esc esconde o nome que aparece sobre o local.</p>
 
-  {# Região aria-live: anuncia resultados, erros e confirmações (especificação, 2.1). #}
-  <div id="anuncio" role="status"></div>
+  {# Lista textual equivalente ao mapa (RN-10). Layout provisório; o definitivo vem na etapa 4. #}
+  <section id="painel-locais" class="painel" aria-labelledby="titulo-lista">
+    <h2 id="titulo-lista" tabindex="-1">Locais</h2>
+    {# Região aria-live: anuncia resultados, erros e confirmações (especificação, 2.1). #}
+    <div id="anuncio" role="status"></div>
+    {# role="list": o Safari tira a semântica de lista quando o CSS remove os marcadores. #}
+    <ol id="lista-locais" class="lista-locais" role="list"></ol>
+    <div id="acoes-lista"></div>
+  </section>
 </main>
 {% endblock %}
 

@@ -1,14 +1,19 @@
 /*
  * Estilos da página do mapa.
- * O layout definitivo (menu, painel, tela estreita) vem na etapa 4 do plano.
+ * Layout provisório: mapa e lista lado a lado. O definitivo (menu, painel,
+ * alternância em tela estreita) vem na etapa 4 do plano.
  */
 
 :root {
   --cor-texto: #1b1b1b;
+  --cor-texto-secundario: #444444;
   --cor-fundo: #ffffff;
   /* Contraste de pelo menos 3:1 com o branco e com os tiles do OSM (WCAG 1.4.11). */
   --cor-foco: #1a4fd6;
   --cor-borda: #6b6b6b;
+  --cor-marcador: #00695c;
+  --cor-marcador-escolhido: #003d33;
+  --cor-escolhido-fundo: #e6f2f0;
 }
 
 * {
@@ -33,16 +38,53 @@ body {
   outline-offset: 2px;
 }
 
-/* O mapa ocupa a tela inteira (especificação, 2.1). */
+/* Lido pelo leitor de tela, mas fora da tela para quem enxerga. */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* "Pular para a lista": fora da tela até receber o foco. */
+.pular {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 2000;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--cor-foco);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+}
+
+.pular:focus {
+  top: 1rem;
+}
+
+/* Mapa à esquerda, lista à direita. */
+.principal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
+  height: 100vh;
+  height: 100dvh;
+}
+
 #mapa {
-  position: fixed;
-  inset: 0;
+  height: 100%;
+  /* As camadas do Leaflet (z-index até 1000) ficam contidas no mapa. */
+  isolation: isolate;
 }
 
 /*
  * Foco do mapa. O contorno do próprio elemento ficaria escondido sob os tiles
- * (camadas do Leaflet com z-index 400) e fora da tela, já que o mapa encosta
- * nas bordas. Uma camada por cima dos tiles e dos controles desenha o foco.
+ * (camadas do Leaflet com z-index 400). Uma camada por cima dos tiles e dos
+ * controles desenha o foco.
  */
 #mapa:focus-visible {
   outline: none;
@@ -57,42 +99,158 @@ body {
   pointer-events: none;
 }
 
-/* Lido pelo leitor de tela, mas fora da tela para quem enxerga. */
-.visualmente-oculto {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 /*
- * Região de anúncios. Fica sempre na árvore de acessibilidade: com display:none,
- * o leitor de tela poderia ignorar a mensagem nova. Vazia, não ocupa espaço.
+ * Marcadores. Normal: círculo de 18 px numa área de toque de 28 px (WCAG 2.5.8).
+ * Escolhido: pino maior e mais escuro, que muda forma e tamanho, não só a cor.
+ * O ponto do local fica no centro do círculo e na ponta do pino.
  */
-#anuncio {
-  position: fixed;
-  right: 1rem;
-  bottom: 2.5rem;
-  left: 1rem;
-  z-index: 1000;
-  width: fit-content;
-  max-width: 40rem;
-  margin-inline: auto;
+.marcador {
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
 }
 
-#anuncio:not(:empty) {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--cor-borda);
-  border-radius: 0.5rem;
+.marcador__forma {
+  position: absolute;
+  inset: 5px;
+  border: 3px solid var(--cor-fundo);
+  border-radius: 50%;
+  background: var(--cor-marcador);
+  box-shadow: 0 0 0 1px var(--cor-marcador-escolhido), 0 1px 4px rgb(0 0 0 / 0.4);
+}
+
+.marcador--escolhido {
+  width: 36px;
+  height: 40px;
+  margin: -40px 0 0 -18px;
+}
+
+.marcador--escolhido .marcador__forma {
+  inset: auto;
+  top: 3px;
+  left: 3px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--cor-marcador-escolhido);
+  transform: rotate(-45deg);
+}
+
+.marcador--escolhido .marcador__forma::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
   background: var(--cor-fundo);
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+}
+
+/* Nome do local: aparece no hover, no foco e no marcador escolhido. */
+.marcador__nome {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  padding: 2px 6px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 4px;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.marcador:hover .marcador__nome,
+.marcador:focus-visible .marcador__nome,
+.marcador--escolhido .marcador__nome {
+  display: block;
+}
+
+/* Depois do Esc, somem os nomes de hover e foco; o do escolhido fica (WCAG 1.4.13). */
+.mapa--nomes-dispensados .marcador:not(.marcador--escolhido) .marcador__nome {
+  display: none;
+}
+
+/* Painel com a lista textual. */
+.painel {
+  padding: 1rem;
+  overflow-y: auto;
+  border-left: 1px solid var(--cor-borda);
+}
+
+.painel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+/* Região de anúncios: no fluxo do painel, nunca por cima de algo com foco (WCAG 2.4.11). */
+#anuncio:not(:empty) {
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.lista-locais {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.local {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #d0d0d0;
+  border-left: 4px solid transparent;
+}
+
+/* Escolhido: barra lateral e fundo, além do aria-current para o leitor de tela. */
+.local--escolhido {
+  border-left-color: var(--cor-marcador-escolhido);
+  background: var(--cor-escolhido-fundo);
+}
+
+.local__nome {
+  display: block;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.local p {
+  margin: 0.25rem 0 0;
+  color: var(--cor-texto-secundario);
+  font-size: 0.9rem;
+}
+
+#acoes-lista button {
+  min-height: 2rem;
+  padding: 0.25rem 0.75rem;
+  font: inherit;
 }
 
 .aviso {
   margin: 1rem;
+}
+
+/* Tela estreita, provisório: mapa em cima e lista embaixo. */
+@media (max-width: 48em) {
+  .principal {
+    grid-template-rows: 60vh auto;
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .painel {
+    overflow-y: visible;
+    border-top: 1px solid var(--cor-borda);
+    border-left: 0;
+  }
 }
