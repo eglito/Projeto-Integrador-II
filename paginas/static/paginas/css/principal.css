@@ -1,0 +1,98 @@
+/*
+ * Estilos da página do mapa.
+ * O layout definitivo (menu, painel, tela estreita) vem na etapa 4 do plano.
+ */
+
+:root {
+  --cor-texto: #1b1b1b;
+  --cor-fundo: #ffffff;
+  /* Contraste de pelo menos 3:1 com o branco e com os tiles do OSM (WCAG 1.4.11). */
+  --cor-foco: #1a4fd6;
+  --cor-borda: #6b6b6b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--cor-texto);
+  background: var(--cor-fundo);
+}
+
+/* Foco sempre visível (WCAG 2.4.7), inclusive no mapa e nos controles do Leaflet. */
+:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 2px;
+}
+
+/* O mapa ocupa a tela inteira (especificação, 2.1). */
+#mapa {
+  position: fixed;
+  inset: 0;
+}
+
+/*
+ * Foco do mapa. O contorno do próprio elemento ficaria escondido sob os tiles
+ * (camadas do Leaflet com z-index 400) e fora da tela, já que o mapa encosta
+ * nas bordas. Uma camada por cima dos tiles e dos controles desenha o foco.
+ */
+#mapa:focus-visible {
+  outline: none;
+}
+
+#mapa:focus-visible::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1001;
+  border: 3px solid var(--cor-foco);
+  pointer-events: none;
+}
+
+/* Lido pelo leitor de tela, mas fora da tela para quem enxerga. */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Região de anúncios. Fica sempre na árvore de acessibilidade: com display:none,
+ * o leitor de tela poderia ignorar a mensagem nova. Vazia, não ocupa espaço.
+ */
+#anuncio {
+  position: fixed;
+  right: 1rem;
+  bottom: 2.5rem;
+  left: 1rem;
+  z-index: 1000;
+  width: fit-content;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+#anuncio:not(:empty) {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
+  background: var(--cor-fundo);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+}
+
+.aviso {
+  margin: 1rem;
+}

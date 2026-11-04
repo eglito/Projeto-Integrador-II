@@ -103,6 +103,14 @@ Nome de teste longo é intencional: quando um teste falha, o nome já diz o que 
 
 > O pytest-django cria um banco separado com prefixo `test_` (por exemplo, `test_calistenia`), aplica as migrations, roda os testes e apaga esse banco no fim. O banco de desenvolvimento não é tocado.
 
+### Testes do JavaScript (QUnit)
+
+As funções puras do front-end são testadas com o QUnit, no próprio navegador e sem build step (README, decisão 35). Com os containers no ar, abra:
+
+http://localhost:8000/static/paginas/testes/index.html
+
+A página roda os testes ao carregar. O título da aba ganha um ✔ quando todos passam, e o resumo mostra `N passed, 0 failed`. Um teste que falha aparece em vermelho, com o valor esperado e o obtido. Os testes ficam em `paginas/static/paginas/testes/`, um arquivo `*.test.js` por módulo.
+
 ---
 
 ## 3. Lint e formatação
@@ -126,7 +134,9 @@ As regras ativas estão no [pyproject.toml](../pyproject.toml).
 
 ## 4. Teste no navegador
 
-Por enquanto a única tela é o admin do Django. Crie um usuário administrador; o comando pede nome, e-mail e senha:
+A página do mapa fica em http://localhost:8000/. Ela abre no centro padrão, com os tiles do OpenStreetMap; os locais entram nas próximas etapas do plano (`Docs/plano_front.md`). Se o mapa não aparecer, o console do navegador (F12) mostra o erro.
+
+Para o admin do Django, crie um usuário administrador; o comando pede nome, e-mail e senha:
 
 ```bash
 docker compose exec web python manage.py createsuperuser

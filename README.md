@@ -164,6 +164,7 @@ Copie `.env.example` para `.env` e preencha os valores.
 ├── locais/               Locais, equipamentos, condição e avaliações
 ├── moderacao/            Denúncias, analisadas no admin
 ├── fotos/                Upload de fotos por URL assinada e simulação local do bucket
+├── paginas/              Front-end: página do mapa, CSS, módulos JavaScript, bibliotecas e testes QUnit
 ├── tests/                Testes de infraestrutura: PostGIS, cabeçalhos HTTP, OpenAPI, opções
 ├── docker/postgis/       Imagem do banco: PostgreSQL 16 + PostGIS
 ├── Docs/                 Pesquisa de campo, modelo de dados e guias de uso
@@ -176,7 +177,7 @@ Copie `.env.example` para `.env` e preencha os valores.
 └── requirements-dev.txt  Dependências de desenvolvimento: testes e lint
 ```
 
-Cada app do Django (`usuarios`, `locais`, `moderacao`, `fotos`) segue a mesma divisão de arquivos, conforme o que ele precisa:
+Cada app do Django (`usuarios`, `locais`, `moderacao`, `fotos`, `paginas`) segue a mesma divisão de arquivos, conforme o que ele precisa:
 
 | Arquivo | Papel |
 |---|---|
@@ -189,6 +190,7 @@ Cada app do Django (`usuarios`, `locais`, `moderacao`, `fotos`) segue a mesma di
 | `armazenamento.py` | Interface com o armazenamento de arquivos (em `fotos`) |
 | `admin.py` | Telas de cadastro e moderação no admin |
 | `management/commands/` | Comandos do `manage.py` (em `locais`: carga dos dados de desenvolvimento) |
+| `templates/` e `static/` | HTML, CSS, módulos JavaScript, bibliotecas e testes QUnit (em `paginas`) |
 | `migrations/` | Histórico das mudanças no banco |
 | `tests/` | Testes do app |
 
