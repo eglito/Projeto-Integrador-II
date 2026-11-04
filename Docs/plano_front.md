@@ -1,7 +1,7 @@
 # Plano: front-end do mapa (Fase 4)
 
 Etapas para entregar o que pede `Docs/especificacao_mapa.md`. Aprovado em 03/11/2026.
-As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 36).
+As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 37).
 
 > Regras de cada etapa: branch própria, commits por unidade lógica e PR aberta pelo autor (`CLAUDE.md`, Git). `pytest` e `ruff` rodam antes de cada commit, então o item 9 da verificação vale para todas as etapas e não é repetido. Cada etapa termina com evidência (screenshot, saída de comando), não com "pronto".
 
@@ -76,11 +76,12 @@ paginas/
 - **Entrega:**
   - Constante `CENTRO_PADRAO` (latitude, longitude e zoom), comentada, em `locais/servicos.py`, ao lado de `RAIO_MAXIMO_M`. As coordenadas vêm do nó de Araraquara no OSM, conferidas na implementação.
   - `/api/opcoes/` passa a devolver `busca.centro_padrao` (decisão 25).
-  - Fixture `locais/fixtures/araraquara.json` com os 5 locais do `conftest.py` e seus equipamentos (decisão 36).
-  - Dois commits: um para o centro padrão, outro para a fixture.
-- **Arquivos:** `locais/servicos.py`, `config/views.py`, `tests/test_opcoes.py`, `locais/fixtures/araraquara.json`, um teste que carrega a fixture, `Docs/API.md` (Opcoes), `Docs/modelo_dados.md` (constante) e `Docs/comandos_de_teste.md` (`loaddata`).
-- **Conceito novo:** fixture com `loaddata`, equivalente ao `data.sql` ou ao `@Sql` do Spring.
-- **Verificação:** a saída do `loaddata` mostra 5 locais, e o teste da fixture falha se o model mudar e a fixture ficar para trás.
+  - Comando `manage.py carregar_locais_araraquara`, que pode rodar várias vezes: cadastra os 5 locais reais e seus equipamentos pela regra de duplicata da API e pula os que já existem (decisão 37, que substituiu a fixture da 36).
+  - `COORDENADAS` e `EQUIPAMENTOS` saem do `conftest.py` para `locais/dados_araraquara.py`, fonte única dos testes e do comando.
+  - Dois commits: um para o centro padrão, outro para o comando.
+- **Arquivos:** `locais/servicos.py`, `config/views.py`, `tests/test_opcoes.py`, `locais/dados_araraquara.py`, `conftest.py`, `locais/management/commands/carregar_locais_araraquara.py`, `locais/tests/test_comandos.py`, `Docs/API.md` (Opcoes), `Docs/testes_das_rotas.md`, `Docs/modelo_dados.md` (constante) e `Docs/comandos_de_teste.md` (dados de desenvolvimento).
+- **Conceitos novos:** comando de gerenciamento (`BaseCommand`), parecido com um `CommandLineRunner` do Spring Boot, mas executado sob demanda; `call_command` para chamá-lo no teste; `transaction.atomic`, equivalente ao `@Transactional`.
+- **Verificação:** a saída do comando no banco local, e os testes do comando com controle positivo (banco vazio, segunda execução e local já existente com outro nome).
 
 ### Etapa 2: página com o mapa
 
@@ -116,7 +117,7 @@ paginas/
   - A lista `<ol>` mostra nome, distância com a origem ("1,2 km do centro do mapa"), tipos de equipamento (rótulos de `/api/opcoes/`) e comodidades.
   - Lista e mapa andam juntos. O item escolhido recebe `aria-current`, e o marcador escolhido muda de forma e de tamanho, não só de cor.
   - Link "Pular para a lista" antes do mapa.
-  - O resultado é anunciado ("5 locais a até 2 km do centro do mapa"). Sem resultados, a mensagem diz o que fazer e oferece as duas ações.
+  - O resultado é anunciado ("2 locais a até 2 km do centro do mapa", com os dados da etapa 1). Sem resultados, a mensagem diz o que fazer e oferece as duas ações.
   - Com `prefers-reduced-motion`, `setView` sem animação.
 - **Arquivos:** `js/mapa.js`, `js/lista.js`, `js/formatacao.js`, `js/principal.js`, `testes/formatacao.test.js`, o template e o CSS.
 - **Conceitos novos:**
@@ -186,6 +187,7 @@ Começa só com as conclusões da etapa 0.
   - Condição com data ("Bom, registrado em 12/10/2026") ou "Sem registro de condição".
   - Comodidades como "Sim", "Não" e "Não informado".
   - Segurança por faixa de horário em tabela de texto.
+  - Autoria com `criado_por` nulo (conta excluída ou dado de exemplo da etapa 1): "Cadastrado em {data}", sem nome.
   - Esc ou "Voltar à lista" devolvem o foco ao item ou ao marcador de origem.
   - `?local=id` com `pushState` (decisão 33). O Voltar do navegador fecha o painel, e o link direto abre o local.
   - Um id inválido mostra mensagem própria em português, e não o 404 em inglês da API (bug 2 do HANDOFF).

@@ -230,6 +230,7 @@ Parâmetros definidos como **decisão de projeto**:
 | Janela das avaliações de segurança | 90 dias | Avaliação envelhece como a condição do equipamento (RN-02) |
 | Raio de possível duplicata | 150 m | Duas marcações reais do Parque Infantil ficaram a 84 m; o par de locais distintos mais próximo está a 1.252 m |
 | Mesmo nome como possível duplicata | até 10 km | Pega o ponto marcado longe por engano, dentro da mesma região |
+| Centro padrão do mapa (`CENTRO_PADRAO`) | -21.7886713, -48.1773096, zoom 14 | Nó `place=city` de Araraquara no OSM, centro da relação do município. Exposto em `/api/opcoes/` para o front não fixar a cidade (RN-09, README decisão 25) |
 
 ---
 

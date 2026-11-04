@@ -128,11 +128,11 @@ Resultado esperado: corpo vazio e `HTTP 204`. Sem sessão aberta, a resposta é 
 
 ## 4. Vocabulário: GET `/api/opcoes/`
 
-Valores e rótulos de todos os campos de escolha: tipos de equipamento, condições, faixas de horário, iluminação, movimento, limpeza, motivos de denúncia e municípios. Traz também os limites da busca.
+Valores e rótulos de todos os campos de escolha: tipos de equipamento, condições, faixas de horário, iluminação, movimento, limpeza, motivos de denúncia e municípios. Traz também os limites da busca e o centro padrão do mapa.
 
 **Navegador:** http://localhost:8000/api/opcoes/
 
-Confira: `{"valor": "barra_fixa", "rotulo": "Barra fixa"}` em `tipos_equipamento` e `"busca": {"raio_padrao_m": 2000, "raio_maximo_m": 10000}`. Os valores (`valor`) são os que as outras rotas aceitam.
+Confira: `{"valor": "barra_fixa", "rotulo": "Barra fixa"}` em `tipos_equipamento` e, em `busca`, `"raio_padrao_m": 2000`, `"raio_maximo_m": 10000` e `"centro_padrao": {"latitude": -21.7886713, "longitude": -48.1773096, "zoom": 14}`. Os valores (`valor`) são os que as outras rotas aceitam.
 
 ---
 

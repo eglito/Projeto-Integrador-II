@@ -150,7 +150,7 @@ Campos exatos em `locais/serializers.py`, `usuarios/serializers.py`, `moderacao/
 | Denuncia | `id`, `motivo`, `status`, `criada_em` |
 | FotoLocal | `url`, `texto_alternativo`, `enviada_por`, `enviada_em` |
 | Upload | `objeto`, `url`, `metodo`, `cabecalhos`, `expira_em` |
-| Opcoes | `municipios`, `tipos_equipamento`, `condicoes`, `faixas_horario`, `iluminacao`, `movimento`, `limpeza`, `motivos_denuncia` (listas de `{valor, rotulo}`) e `busca` (`raio_padrao_m`, `raio_maximo_m`) |
+| Opcoes | `municipios`, `tipos_equipamento`, `condicoes`, `faixas_horario`, `iluminacao`, `movimento`, `limpeza`, `motivos_denuncia` (listas de `{valor, rotulo}`) e `busca` (`raio_padrao_m`, `raio_maximo_m` e `centro_padrao`, com `latitude`, `longitude` e `zoom`) |
 
 A condição e a foto do equipamento são sempre as do **registro mais recente**, com a data (RN-02). Mostre a data junto, para quem lê saber se a informação é atual.
 
@@ -161,7 +161,7 @@ A condição e a foto do equipamento são sempre as do **registro mais recente**
 ### 6.1 Abertura da página
 
 1. `GET /api/auth/sessao/`: mostra "Entrar" ou o nome do usuário e grava o cookie CSRF.
-2. `GET /api/opcoes/`: monta seletores, filtros e rótulos.
+2. `GET /api/opcoes/`: monta seletores, filtros e rótulos, e dá o centro inicial do mapa (`busca.centro_padrao`) enquanto não há a posição da pessoa.
 3. `GET /api/locais/`: o mesmo resultado alimenta o mapa e a lista textual.
 
 ### 6.2 Cadastro de local com possível duplicata (RN-01)

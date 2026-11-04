@@ -101,7 +101,7 @@ Dados de `GET /api/locais/{id}/` (LocalDetalhe):
 
 ## 5. Decisões
 
-Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 36.
+Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 37.
 
 | # | Pergunta | Resposta | README |
 |---|---|---|---|
@@ -123,7 +123,7 @@ Decididas na mesma entrevista:
 | A URL acompanha o estado da tela? | Só o local aberto (`?local=id`) | 33 |
 | Como organizar o JavaScript sem build step? | Módulos ES nativos | 34 |
 | Como testar o JavaScript? | QUnit para as funções puras; interação pela seção 6, com evidência | 35 |
-| Como povoar o banco local? | Fixture com os 5 locais do `conftest.py`, carregada com `loaddata` | 36 |
+| Como povoar o banco local? | Fixture com os 5 locais do `conftest.py`, carregada com `loaddata`. Revista na implementação: um comando que pode rodar várias vezes, porque a fixture conflitava com os locais já cadastrados | 36, substituída pela 37 |
 
 ---
 

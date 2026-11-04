@@ -100,7 +100,8 @@ Registro do que foi decidido e por quê. Decisão nova entra no fim da lista.
 | 33 | A URL guarda só o local aberto (`?local=id`), pela History API | Link compartilhável para um local, e o Voltar do navegador fecha o painel. A posição fica fora da URL para não ir ao histórico nem a links compartilhados. |
 | 34 | JavaScript em módulos ES nativos | Dependências explícitas e escopo por arquivo, sem build step. jQuery e Leaflet continuam globais. |
 | 35 | QUnit para as funções puras do JavaScript | Framework de testes do projeto jQuery, roda no navegador sem build. A interação é verificada pela especificação do mapa, seção 6, com evidência. |
-| 36 | Dados de desenvolvimento por fixture (`loaddata`) | Os 5 locais reais do `conftest.py` no banco local, para desenvolver e verificar o mapa sem cadastro à mão. |
+| 36 | Dados de desenvolvimento por fixture (`loaddata`) | Os 5 locais reais do `conftest.py` no banco local, para desenvolver e verificar o mapa sem cadastro à mão. Substituída pela 37. |
+| 37 | Dados de desenvolvimento por um comando que pode rodar várias vezes (`carregar_locais_araraquara`), no lugar da fixture | Reabre a 36: o banco local já tinha locais, e a fixture, com ids fixos, falharia na restrição de nome único ou sobrescreveria o local de mesmo id. O comando usa a regra de duplicata da API (RN-01), pula o que já existe e lê `locais/dados_araraquara.py`, a mesma fonte do `conftest.py`. |
 
 ## 6. Acessibilidade
 
@@ -187,6 +188,7 @@ Cada app do Django (`usuarios`, `locais`, `moderacao`, `fotos`) segue a mesma di
 | `permissoes.py` | Regras de quem pode alterar o quê (em `locais`) |
 | `armazenamento.py` | Interface com o armazenamento de arquivos (em `fotos`) |
 | `admin.py` | Telas de cadastro e moderação no admin |
+| `management/commands/` | Comandos do `manage.py` (em `locais`: carga dos dados de desenvolvimento) |
 | `migrations/` | Histórico das mudanças no banco |
 | `tests/` | Testes do app |
 
