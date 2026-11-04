@@ -47,6 +47,23 @@ O `db` precisa aparecer como `healthy` e o `web` como `Up`. Lista vazia signific
 | `127.0.0.1:8000->8000/tcp` | Django publicado só para o próprio computador. Outras máquinas da rede não acessam. |
 | Tempos de `CREATED` diferentes | O Compose só recria o container cuja imagem mudou. É comum o `db` seguir intacto enquanto o `web` é recriado. |
 
+### Dados de desenvolvimento
+
+Para ter locais no mapa sem cadastrar à mão, aplique as migrations e carregue os cinco locais reais de Araraquara (`locais/dados_araraquara.py`):
+
+```bash
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py carregar_locais_araraquara
+```
+
+O comando pode rodar quantas vezes for preciso (README, decisão 37). Ele usa a mesma regra de duplicata da API (RN-01): pula o local que já existe com o mesmo nome ou a até 150 m, e não altera nada do que está no banco. Os locais criados ficam sem autor, porque são dados de exemplo, e não contribuição de uma pessoa.
+
+| Linha da saída | Significado |
+|---|---|
+| `Criado: Jardim Botânico (id 12).` | Local criado, com os equipamentos observados na pesquisa |
+| `Já existe: Parque Infantil. Encontrado “Parque Infantil” (id 7), a 84 m.` | Já havia um local que pode ser o mesmo lugar; nada foi gravado. A distância mostra qual regra o encontrou |
+| `Criados: 3. Já existiam: 2.` | Resumo. Num banco vazio, `Criados: 5. Já existiam: 0.` |
+
 ---
 
 ## 2. Testes automáticos
