@@ -1,7 +1,11 @@
 /*
- * Estilos da página do mapa.
- * Layout provisório: mapa e lista lado a lado. O definitivo (menu, painel,
- * alternância em tela estreita) vem na etapa 4 do plano.
+ * Estilos da página do mapa. Layout da etapa 4 (README, decisões 39 e 40):
+ * barra superior, faixa de anúncios, painel à esquerda e mapa; abaixo de 48em,
+ * painel e mapa se alternam pela barra inferior (decisão 29).
+ *
+ * Nada fica em position: fixed sobre o conteúdo: a página é uma grade da
+ * altura da tela e o painel rola por dentro, então as barras nunca encobrem o
+ * elemento com foco (WCAG 2.4.11).
  */
 
 :root {
@@ -14,6 +18,8 @@
   --cor-marcador: #00695c;
   --cor-marcador-escolhido: #003d33;
   --cor-escolhido-fundo: #e6f2f0;
+  /* Fundo da barra superior: texto branco com contraste acima de 12:1. */
+  --cor-topo: #003d33;
   /* Contraste de 7:1 com o branco (WCAG 1.4.3). */
   --cor-erro: #a4161a;
 }
@@ -58,7 +64,7 @@ body {
   position: absolute;
   top: -100%;
   left: 1rem;
-  z-index: 2000;
+  z-index: 3000;
   padding: 0.5rem 1rem;
   border: 2px solid var(--cor-foco);
   background: var(--cor-fundo);
@@ -69,12 +75,70 @@ body {
   top: 1rem;
 }
 
-/* Mapa à esquerda, lista à direita. */
-.principal {
+/* Grade da página: barra superior, faixa de anúncios, conteúdo e barra inferior. */
+.pagina {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   height: 100vh;
   height: 100dvh;
+}
+
+/* Barra superior. */
+.topo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--cor-topo);
+  color: var(--cor-fundo);
+}
+
+.topo h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+/* No fundo escuro, o contorno azul teria pouco contraste: o foco fica branco. */
+.topo :focus-visible {
+  outline-color: var(--cor-fundo);
+}
+
+.botao-menu {
+  min-height: 2.5rem;
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: var(--cor-fundo);
+  color: var(--cor-topo);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Faixa de anúncios: some quando vazia, mas continua na árvore de acessibilidade. */
+.faixa-anuncio:not(:empty) {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--cor-borda);
+  background: var(--cor-escolhido-fundo);
+  font-weight: 600;
+}
+
+/* Conteúdo: painel à esquerda, mapa ao lado. */
+.principal {
+  display: grid;
+  grid-template-columns: minmax(16rem, 24rem) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.painel {
+  padding: 1rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--cor-borda);
+}
+
+.painel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
 }
 
 /* Mapa e o botão "Buscar nesta área", que flutua sobre ele. */
@@ -87,25 +151,6 @@ body {
   height: 100%;
   /* As camadas do Leaflet (z-index até 1000) ficam contidas no mapa. */
   isolation: isolate;
-}
-
-/* Sem "display" aqui: ele anularia o atributo hidden. */
-.buscar-na-area {
-  position: absolute;
-  top: 0.75rem;
-  left: 50%;
-  z-index: 1;
-  min-height: 2.5rem;
-  padding: 0.5rem 1rem;
-  border: 2px solid var(--cor-marcador-escolhido);
-  border-radius: 1.25rem;
-  background: var(--cor-fundo);
-  color: var(--cor-texto);
-  font: inherit;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
-  transform: translateX(-50%);
-  cursor: pointer;
 }
 
 /*
@@ -124,6 +169,38 @@ body {
   z-index: 1001;
   border: 3px solid var(--cor-foco);
   pointer-events: none;
+}
+
+/*
+ * No canto superior esquerdo do mapa, com largura limitada: o zoom ocupa o
+ * canto direito (cerca de 7,5rem com os rótulos), e centralizado o botão o
+ * cobriria em telas estreitas. Sem "display" aqui: ele anularia o atributo hidden.
+ */
+.buscar-na-area {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1;
+  max-width: calc(100% - 10rem);
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--cor-marcador-escolhido);
+  border-radius: 1.25rem;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  cursor: pointer;
+}
+
+/* Zoom com rótulo visível ("+ Aproximar"), no canto superior direito. */
+.leaflet-container .leaflet-control-zoom a {
+  width: auto;
+  min-width: 2rem;
+  padding: 0 0.6rem;
+  font: 600 0.95rem system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-align: left;
 }
 
 /*
@@ -199,23 +276,62 @@ body {
   display: none;
 }
 
-/* Painel com a lista textual. */
-.painel {
-  padding: 1rem;
-  overflow-y: auto;
-  border-left: 1px solid var(--cor-borda);
+/* Visão Lista: filtros ativos e a lista textual. */
+.filtros-ativos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.painel h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.25rem;
+.filtros-ativos p {
+  margin: 0;
+  color: var(--cor-texto-secundario);
+  font-size: 0.9rem;
 }
 
-/* Filtros (provisório: a etapa 4 os leva para o item Buscar do menu). */
-#painel-busca {
-  margin-bottom: 1.5rem;
+.lista-locais {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
+.local {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #d0d0d0;
+  border-left: 4px solid transparent;
+}
+
+/* Escolhido: barra lateral e fundo, além do aria-current para o leitor de tela. */
+.local--escolhido {
+  border-left-color: var(--cor-marcador-escolhido);
+  background: var(--cor-escolhido-fundo);
+}
+
+.local__nome {
+  display: block;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.local p {
+  margin: 0.25rem 0 0;
+  color: var(--cor-texto-secundario);
+  font-size: 0.9rem;
+}
+
+/* Visão Buscar: os filtros. */
 #filtros fieldset {
   margin: 0 0 0.75rem;
   padding: 0.5rem 0.75rem 0.25rem;
@@ -273,79 +389,111 @@ body {
   gap: 0.5rem;
 }
 
-.acoes-filtros button {
+/* Botões do painel: alvo de pelo menos 24 × 24 px (WCAG 2.5.8). */
+.acoes-filtros button,
+.filtros-ativos button,
+#acoes-lista button {
   min-height: 2.25rem;
   padding: 0.25rem 0.75rem;
   font: inherit;
 }
 
-/* Região de anúncios: no fluxo do painel, nunca por cima de algo com foco (WCAG 2.4.11). */
-#anuncio:not(:empty) {
-  margin-bottom: 0.75rem;
-  font-weight: 600;
+/* Gaveta do menu. Sem "display" aqui: ele anularia o atributo hidden. */
+.fundo-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgb(0 0 0 / 0.4);
 }
 
-.lista-locais {
-  margin: 0;
+.menu {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2001;
+  width: min(18rem, 85vw);
+  padding: 1rem;
+  overflow-y: auto;
+  background: var(--cor-fundo);
+  box-shadow: 2px 0 8px rgb(0 0 0 / 0.3);
+}
+
+.fechar-menu {
+  min-height: 2.5rem;
+  padding: 0.25rem 0.75rem;
+  font: inherit;
+}
+
+.menu ul {
+  margin: 1rem 0 0;
   padding: 0;
   list-style: none;
 }
 
-.local {
-  padding: 0.75rem 0.5rem;
-  border-bottom: 1px solid #d0d0d0;
-  border-left: 4px solid transparent;
-}
-
-/* Escolhido: barra lateral e fundo, além do aria-current para o leitor de tela. */
-.local--escolhido {
-  border-left-color: var(--cor-marcador-escolhido);
-  background: var(--cor-escolhido-fundo);
-}
-
-.local__nome {
+.menu li button {
   display: block;
   width: 100%;
-  min-height: 2rem;
-  padding: 0.25rem 0;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
   border: 0;
+  border-bottom: 1px solid #d0d0d0;
   background: none;
   color: var(--cor-texto);
   font: inherit;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
-  text-decoration: underline;
   cursor: pointer;
 }
 
-.local p {
-  margin: 0.25rem 0 0;
-  color: var(--cor-texto-secundario);
-  font-size: 0.9rem;
-}
-
-#acoes-lista button {
-  min-height: 2rem;
-  padding: 0.25rem 0.75rem;
-  font: inherit;
+/* Barra inferior Mapa/Lista: só em tela estreita. */
+.alternancia {
+  display: none;
 }
 
 .aviso {
   margin: 1rem;
 }
 
-/* Tela estreita, provisório: mapa em cima e lista embaixo. */
+/*
+ * Tela estreita. O limite é em em para valer também com zoom de 400% (WCAG
+ * 1.4.10). A visão que não está na frente usa display: none: o Tab não entra nela.
+ */
 @media (max-width: 48em) {
   .principal {
-    grid-template-rows: 60vh auto;
     grid-template-columns: minmax(0, 1fr);
-    height: auto;
+  }
+
+  .principal[data-tela="mapa"] .painel,
+  .principal[data-tela="lista"] .area-mapa {
+    display: none;
   }
 
   .painel {
-    overflow-y: visible;
+    border-right: 0;
+  }
+
+  .alternancia {
+    display: flex;
     border-top: 1px solid var(--cor-borda);
-    border-left: 0;
+  }
+
+  .alternancia button {
+    flex: 1;
+    min-height: 3rem;
+    border: 0;
+    border-top: 4px solid transparent;
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* A tela na frente: barra no topo do botão e texto em negrito, não só cor. */
+  .alternancia [aria-current="true"] {
+    border-top-color: var(--cor-topo);
+    background: var(--cor-escolhido-fundo);
+    font-weight: 800;
   }
 }

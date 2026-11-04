@@ -16,15 +16,23 @@ import {
   parametrosDaBusca,
   raioDaArea,
 } from "./busca.js";
-import { descricaoFiltros, resumoBusca, textoDistancia } from "./formatacao.js";
+import {
+  descricaoFiltros,
+  resumoBusca,
+  textoDistancia,
+  textoFiltrosAtivos,
+} from "./formatacao.js";
+import { iniciarLayout, listaVisivel, mostrarTela, mostrarVisao, telaEstreita } from "./layout.js";
 import { iniciarLista, marcarNaLista, mostrarLista } from "./lista.js";
 import {
+  ajustarTamanho,
   aoMoverPelaPessoa,
   centroDoMapa,
   criarMapa,
   desenharLocais,
   destacarNoMapa,
   distanciaAoCanto,
+  focarMarcador,
 } from "./mapa.js";
 
 let opcoes = null;
@@ -45,6 +53,7 @@ obter("/api/opcoes/")
     opcoes = resposta;
     const centro = opcoes.busca.centro_padrao;
     criarMapa("mapa", centro);
+    iniciarLayout({ aoMostrarMapa: ajustarTamanho });
     iniciarLista({ aoEscolher: escolherNaLista, aoAmpliar: ampliarRaio });
     iniciarFiltros({
       tiposEquipamento: opcoes.tipos_equipamento,
@@ -60,6 +69,7 @@ obter("/api/opcoes/")
       longitude: centro.longitude,
       origem: "centro",
       raio: opcoes.busca.raio_padrao_m,
+      raioDaArea: false,
       tipo: "",
       alturaMaxima: null,
       limitado: false,
@@ -88,6 +98,10 @@ function buscar(novaBusca) {
         raio: busca.raio,
         raioMaximo: opcoes.busca.raio_maximo_m,
       });
+      // No topo da lista, quais filtros estão valendo.
+      $("#resumo-filtros").text(
+        textoFiltrosAtivos(rotuloDoTipo(busca.tipo), busca.alturaMaxima, busca.raio, busca.raioDaArea),
+      );
       anunciar(
         resumoBusca(locais.length, {
           raio: busca.raio,
@@ -115,22 +129,37 @@ function rotuloDoTipo(valor) {
   return opcoes.tipos_equipamento.find((tipo) => tipo.valor === valor)?.rotulo ?? null;
 }
 
-/** Filtros aplicados no formulário: mesmo ponto, novos filtros e raio. */
+/**
+ * Filtros aplicados na visão Buscar: mesmo ponto, novos filtros e raio. Com a
+ * busca feita, o painel volta para a lista, com o foco no título (decisão 40).
+ */
 function aplicarFiltros({ tipo, alturaMaxima, raio }) {
-  // O aviso de área cortada continua valendo enquanto o raio da área não mudar.
-  const limitado = raio === busca.raio && busca.limitado;
-  buscar({ ...busca, tipo, alturaMaxima, raio, limitado });
+  // O raio da área visível e o aviso de corte continuam valendo enquanto ele não mudar.
+  const mesmoRaio = raio === busca.raio;
+  const raioDaAreaAtual = mesmoRaio && busca.raioDaArea;
+  const limitado = mesmoRaio && busca.limitado;
+  buscar({ ...busca, tipo, alturaMaxima, raio, raioDaArea: raioDaAreaAtual, limitado }).done(
+    function () {
+      mostrarVisao("lista");
+    },
+  );
+}
+
+/** Depois de uma busca, o foco vai ao resultado: o título da lista, ou o mapa se ele está na frente. */
+function focarResultado() {
+  $(listaVisivel() ? "#titulo-lista" : "#mapa").trigger("focus");
 }
 
 /** "Buscar nesta área": o ponto vira o centro do mapa, e o raio cobre a área visível. */
 function buscarNaArea() {
   const { raio, limitado } = raioDaArea(distanciaAoCanto(), opcoes.busca.raio_maximo_m);
-  buscar({ ...busca, ...centroDoMapa(), origem: "centro", raio, limitado }).done(function () {
+  const novaBusca = { ...busca, ...centroDoMapa(), origem: "centro", raio, raioDaArea: true, limitado };
+  buscar(novaBusca).done(function () {
     marcarRaio(raio, { daArea: true });
-    // O botão some; o foco vai para o título da lista, e não se perde. Se a
-    // busca falhar, nada disso acontece: botão e foco ficam para nova tentativa.
+    // O botão some, e o foco vai para o resultado, sem se perder. Se a busca
+    // falhar, nada disso acontece: botão e foco ficam para nova tentativa.
     esconderBuscaNaArea();
-    $("#titulo-lista").trigger("focus");
+    focarResultado();
   });
 }
 
@@ -138,9 +167,9 @@ function buscarNaArea() {
 function ampliarRaio() {
   const raioMaximo = opcoes.busca.raio_maximo_m;
   // O botão some com a lista nova; o foco vai para o título da lista, e não se perde.
-  buscar({ ...busca, raio: raioMaximo, limitado: false }).done(function () {
+  buscar({ ...busca, raio: raioMaximo, raioDaArea: false, limitado: false }).done(function () {
     marcarRaio(raioMaximo);
-    $("#titulo-lista").trigger("focus");
+    focarResultado();
   });
 }
 
@@ -148,10 +177,21 @@ function localPorId(id) {
   return locaisAtuais.find((local) => local.id === id);
 }
 
-/** Escolha feita na lista: o mapa vai até o local, e o foco fica na lista. */
+/**
+ * Escolha feita na lista: o mapa vai até o local. Em tela larga, o foco fica
+ * na lista. Em tela estreita, o Mapa vem para a frente e o foco vai para o
+ * marcador, porque centralizar um mapa escondido não teria efeito (decisão 40).
+ */
 function escolherNaLista(id) {
-  destacarNoMapa(id, { centralizar: true });
   marcarNaLista(id);
+  if (telaEstreita()) {
+    mostrarTela("mapa");
+    // O mapa acabou de aparecer: sem animação, e o foco já encontra o marcador no lugar.
+    destacarNoMapa(id, { centralizar: true, semAnimacao: true });
+    focarMarcador(id);
+  } else {
+    destacarNoMapa(id, { centralizar: true });
+  }
   anunciar(`${localPorId(id).nome} destacado no mapa.`);
 }
 

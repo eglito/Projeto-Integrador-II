@@ -2,68 +2,101 @@
 {% load static %}
 
 {% block conteudo %}
-{# Primeiro item do Tab: evita atravessar todos os marcadores (README, decisão 30; WCAG 2.4.1). #}
-<a class="pular" href="#titulo-lista">Pular para a lista</a>
+{# Layout da etapa 4 (README, decisões 39 e 40): barra superior, faixa de anúncios, painel à esquerda e mapa. #}
+{# Com a gaveta do menu aberta, os filhos de .pagina recebem inert, menos a faixa de anúncios. #}
+<div class="pagina">
+  {# Primeiros itens do Tab (WCAG 2.4.1). A lista vem antes do mapa na ordem da tela; o segundo link evita atravessá-la toda para chegar aos marcadores (README, decisão 30). #}
+  <a class="pular" href="#titulo-lista">Pular para a lista</a>
+  <a class="pular" href="#mapa">Pular para o mapa</a>
 
-<main class="principal">
-  <h1 class="visualmente-oculto">Mapa colaborativo de calistenia</h1>
+  <header class="topo">
+    {# Padrão disclosure do WAI-ARIA: aria-expanded diz se a gaveta está aberta. #}
+    <button type="button" id="botao-menu" class="botao-menu" aria-expanded="false" aria-controls="menu">
+      <span aria-hidden="true">☰</span> Menu
+    </button>
+    <h1>Mapa de Calistenia</h1>
+  </header>
 
-  <noscript>
-    <p class="aviso">O mapa precisa de JavaScript. Ative o JavaScript no navegador e recarregue a página.</p>
-  </noscript>
+  {# Região aria-live: resultados, filtros, erros e confirmações (especificação, 2.1). Fora do painel, para ser lida e vista em qualquer visão e largura. #}
+  <div id="anuncio" class="faixa-anuncio" role="status"></div>
 
-  <div class="area-mapa">
-    {# Aparece depois de a pessoa mover o mapa. Fica antes do mapa no Tab: com o mapa em foco, Shift+Tab chega aqui. #}
-    <button type="button" id="buscar-na-area" class="buscar-na-area" hidden>Buscar nesta área</button>
-    {# O Leaflet torna o mapa focável pelo Tab; a instrução é lida quando ele recebe o foco. #}
-    <div id="mapa" role="region" aria-label="Mapa dos locais" aria-describedby="mapa-instrucoes"></div>
-  </div>
-  <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar. A tecla Tab passa pelos locais, na ordem da lista, e Enter escolhe o local. Esc esconde o nome que aparece sobre o local. Depois de mover o mapa, o botão Buscar nesta área fica logo antes do mapa.</p>
+  <main class="principal" data-tela="mapa">
+    <noscript>
+      <p class="aviso">O mapa precisa de JavaScript. Ative o JavaScript no navegador e recarregue a página.</p>
+    </noscript>
 
-  {# Layout provisório: a etapa 4 leva a busca para o menu e define o painel (Docs/plano_front.md). #}
-  <div class="painel">
-    <section id="painel-busca" aria-labelledby="titulo-busca">
-      <h2 id="titulo-busca">Buscar</h2>
-      {# novalidate: as mensagens de erro são as nossas, em português e dizendo como corrigir. #}
-      <form id="filtros" novalidate>
-        <fieldset>
-          <legend>Filtros</legend>
-          <div class="campo">
-            <label for="filtro-tipo">Tipo de equipamento</label>
-            <select id="filtro-tipo" name="tipo">
-              <option value="">Qualquer tipo</option>
-            </select>
-          </div>
-          <div class="campo">
-            <label for="filtro-altura">Altura máxima, em centímetros</label>
-            {# Texto com teclado numérico: um campo number aceitaria "e" e esconderia o erro. #}
-            <input id="filtro-altura" name="altura_maxima" type="text" inputmode="numeric" autocomplete="off" aria-describedby="filtro-altura-ajuda">
-            <p id="filtro-altura-ajuda" class="ajuda">Opcional. Com um tipo escolhido, vale para o mesmo equipamento.</p>
-            <p id="filtro-altura-erro" class="erro" hidden></p>
-          </div>
-          <div class="campo">
-            <label for="filtro-raio">Raio da busca</label>
-            <select id="filtro-raio" name="raio"></select>
-          </div>
-        </fieldset>
-        <div class="acoes-filtros">
-          <button type="submit">Aplicar filtros</button>
-          <button type="button" id="limpar-filtros">Limpar filtros</button>
+    {# Painel com uma visão de cada vez. As etapas 8, 9 e 11 acrescentam Detalhes, Entrar e Configurações. #}
+    <div id="painel" class="painel">
+      {# Lista textual equivalente ao mapa (RN-10). #}
+      <section id="visao-lista" class="visao" aria-labelledby="titulo-lista">
+        <h2 id="titulo-lista" tabindex="-1">Locais</h2>
+        <div class="filtros-ativos">
+          <p id="resumo-filtros"></p>
+          <button type="button" id="alterar-filtros">Alterar filtros</button>
         </div>
-      </form>
-    </section>
+        {# role="list": o Safari tira a semântica de lista quando o CSS remove os marcadores. #}
+        <ol id="lista-locais" class="lista-locais" role="list"></ol>
+        <div id="acoes-lista"></div>
+      </section>
 
-    {# Lista textual equivalente ao mapa (RN-10). #}
-    <section id="painel-locais" aria-labelledby="titulo-lista">
-      <h2 id="titulo-lista" tabindex="-1">Locais</h2>
-      {# Região aria-live: anuncia resultados, filtros, erros e confirmações (especificação, 2.1). #}
-      <div id="anuncio" role="status"></div>
-      {# role="list": o Safari tira a semântica de lista quando o CSS remove os marcadores. #}
-      <ol id="lista-locais" class="lista-locais" role="list"></ol>
-      <div id="acoes-lista"></div>
-    </section>
-  </div>
-</main>
+      <section id="visao-buscar" class="visao" aria-labelledby="titulo-busca" hidden>
+        <h2 id="titulo-busca" tabindex="-1">Buscar</h2>
+        {# novalidate: as mensagens de erro são as nossas, em português e dizendo como corrigir. #}
+        <form id="filtros" novalidate>
+          <fieldset>
+            <legend>Filtros</legend>
+            <div class="campo">
+              <label for="filtro-tipo">Tipo de equipamento</label>
+              <select id="filtro-tipo" name="tipo">
+                <option value="">Qualquer tipo</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="filtro-altura">Altura máxima, em centímetros</label>
+              {# Texto com teclado numérico: um campo number aceitaria "e" e esconderia o erro. #}
+              <input id="filtro-altura" name="altura_maxima" type="text" inputmode="numeric" autocomplete="off" aria-describedby="filtro-altura-ajuda">
+              <p id="filtro-altura-ajuda" class="ajuda">Opcional. Com um tipo escolhido, vale para o mesmo equipamento.</p>
+              <p id="filtro-altura-erro" class="erro" hidden></p>
+            </div>
+            <div class="campo">
+              <label for="filtro-raio">Raio da busca</label>
+              <select id="filtro-raio" name="raio"></select>
+            </div>
+          </fieldset>
+          <div class="acoes-filtros">
+            <button type="submit">Aplicar filtros</button>
+            <button type="button" id="limpar-filtros">Limpar filtros</button>
+            <button type="button" id="voltar-a-lista">Voltar à lista</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="area-mapa">
+      {# Aparece depois de a pessoa mover o mapa. Fica antes do mapa no Tab: com o mapa em foco, Shift+Tab chega aqui. #}
+      <button type="button" id="buscar-na-area" class="buscar-na-area" hidden>Buscar nesta área</button>
+      {# O Leaflet torna o mapa focável pelo Tab; a instrução é lida quando ele recebe o foco. #}
+      <div id="mapa" role="region" aria-label="Mapa dos locais" aria-describedby="mapa-instrucoes"></div>
+    </div>
+    <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar. A tecla Tab passa pelos locais, na ordem da lista, e Enter escolhe o local. Esc esconde o nome que aparece sobre o local. Depois de mover o mapa, o botão Buscar nesta área fica logo antes do mapa.</p>
+  </main>
+
+  {# Tela estreita (decisão 29): alterna Mapa e Lista. Escondida em tela larga. #}
+  <nav class="alternancia" aria-label="Mapa ou lista">
+    <button type="button" data-tela="mapa" aria-current="true">Mapa</button>
+    <button type="button" data-tela="lista">Lista</button>
+  </nav>
+</div>
+
+{# Gaveta do menu: fica fora de .pagina, que recebe inert enquanto ela está aberta. #}
+<div id="fundo-menu" class="fundo-menu" hidden></div>
+<nav id="menu" class="menu" aria-label="Menu" hidden>
+  <button type="button" id="fechar-menu" class="fechar-menu">Fechar menu</button>
+  <ul role="list">
+    <li><button type="button" data-visao="buscar">Buscar</button></li>
+    <li><button type="button" data-visao="lista">Lista de locais</button></li>
+  </ul>
+</nav>
 {% endblock %}
 
 {% block scripts %}

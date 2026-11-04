@@ -11,15 +11,15 @@ import {
 } from "./formatacao.js";
 
 /**
- * Liga os cliques do painel uma vez só. Um listener no painel atende todos os
+ * Liga os cliques da visão Lista uma vez só. Um listener nela atende todos os
  * botões, inclusive os que a lista ainda vai criar (delegação de eventos).
  */
 export function iniciarLista({ aoEscolher, aoAmpliar }) {
-  const painel = $("#painel-locais");
-  painel.on("click", "[data-local]", function () {
+  const visao = $("#visao-lista");
+  visao.on("click", "[data-local]", function () {
     aoEscolher(Number($(this).attr("data-local")));
   });
-  painel.on("click", "[data-ampliar]", aoAmpliar);
+  visao.on("click", "[data-ampliar]", aoAmpliar);
 }
 
 /**

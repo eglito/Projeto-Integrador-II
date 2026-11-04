@@ -20,6 +20,11 @@ let idDestacado = null;
 // sim ou não, porque cada setView termina num moveend, mesmo quando interrompe
 // a animação do anterior; duas escolhas rápidas geram dois.
 let movimentosDoCodigo = 0;
+let ajustandoTamanho = false;
+
+// Espera depois do último resize da janela antes de medir o mapa de novo:
+// girar o celular ou arrastar a borda da janela dispara dezenas de eventos.
+const ESPERA_RESIZE_MS = 150;
 
 /** Lido na criação do mapa: com movimento reduzido, nada de animação (CLAUDE.md). */
 export function reduzirMovimento() {
@@ -38,6 +43,10 @@ export function criarMapa(idElemento, centro) {
     fadeAnimation: animar,
     markerZoomAnimation: animar,
     inertia: animar,
+    // O Leaflet mediria o mapa sozinho a cada resize da janela, com um moveend
+    // atrasado que ofereceria "Buscar nesta área" sem a pessoa mover o mapa.
+    // Quem mede é ajustarTamanho(), abaixo.
+    trackResize: false,
   });
 
   if (!animar) {
@@ -52,14 +61,32 @@ export function criarMapa(idElemento, centro) {
 
   mapa.setView([centro.latitude, centro.longitude], centro.zoom);
 
-  // O Leaflet usa o título também como nome acessível (aria-label) do botão.
-  L.control.zoom({ zoomInTitle: "Aproximar", zoomOutTitle: "Afastar" }).addTo(mapa);
+  // Canto superior direito, longe do painel e do menu (decisão 40). O Leaflet usa
+  // o título como nome acessível; o texto visível o repete, e o sinal fica
+  // escondido do leitor de tela ("Todo ícone tem rótulo textual visível").
+  L.control
+    .zoom({
+      position: "topright",
+      zoomInTitle: "Aproximar",
+      zoomInText: '<span aria-hidden="true">+</span> Aproximar',
+      zoomOutTitle: "Afastar",
+      zoomOutText: '<span aria-hidden="true">−</span> Afastar',
+    })
+    .addTo(mapa);
   // O prefixo padrão traz um título em inglês; fica só o link.
   mapa.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
   L.tileLayer(URL_TILES, { maxZoom: 19, attribution: ATRIBUICAO_OSM }).addTo(mapa);
 
   camadaLocais = L.layerGroup().addTo(mapa);
   permitirDispensarNomes($(mapa.getContainer()));
+
+  // Girar o celular, cruzar 48em ou mudar o zoom do navegador muda o tamanho do
+  // mapa, mas não é movimento da pessoa.
+  let esperaDoResize = null;
+  $(window).on("resize", function () {
+    clearTimeout(esperaDoResize);
+    esperaDoResize = setTimeout(ajustarTamanho, ESPERA_RESIZE_MS);
+  });
   return mapa;
 }
 
@@ -146,7 +173,7 @@ function alternarDestaque(marcador, ligado) {
 }
 
 /** Destaca o marcador do local `id`; com `centralizar`, leva o mapa até ele. */
-export function destacarNoMapa(id, { centralizar = false } = {}) {
+export function destacarNoMapa(id, { centralizar = false, semAnimacao = false } = {}) {
   const anterior = marcadores.get(idDestacado);
   if (anterior) {
     alternarDestaque(anterior, false);
@@ -160,9 +187,30 @@ export function destacarNoMapa(id, { centralizar = false } = {}) {
 
   if (centralizar) {
     movimentosDoCodigo += 1;
-    // Com movimento reduzido, troca de posição sem animação (especificação, 6, item 7).
-    mapa.setView(marcador.getLatLng(), mapa.getZoom(), { animate: animar });
+    // Com movimento reduzido, troca de posição sem animação (especificação, 6,
+    // item 7). `semAnimacao` vale para o mapa que acaba de voltar à frente.
+    mapa.setView(marcador.getLatLng(), mapa.getZoom(), { animate: animar && !semAnimacao });
   }
+}
+
+/** Leva o foco ao marcador do local `id`, por exemplo depois de escolhê-lo na lista. */
+export function focarMarcador(id) {
+  marcadores.get(id)?.getElement()?.focus();
+}
+
+/**
+ * Faz o Leaflet medir de novo o mapa, que esteve escondido (tela estreita,
+ * Lista na frente). O moveend que isso dispara não é movimento da pessoa.
+ */
+export function ajustarTamanho() {
+  // Escondido (tela estreita, Lista na frente), o mapa mediria zero e perderia o
+  // centro. Ele é medido quando volta para a frente (layout.js, mostrarTela).
+  if (!mapa.getContainer().offsetWidth) {
+    return;
+  }
+  ajustandoTamanho = true;
+  mapa.invalidateSize();
+  ajustandoTamanho = false;
 }
 
 /**
@@ -171,6 +219,10 @@ export function destacarNoMapa(id, { centralizar = false } = {}) {
  */
 export function aoMoverPelaPessoa(callback) {
   mapa.on("moveend", function () {
+    // O invalidateSize dispara o moveend na hora, durante ajustarTamanho().
+    if (ajustandoTamanho) {
+      return;
+    }
     if (movimentosDoCodigo > 0) {
       movimentosDoCodigo -= 1;
       return;
