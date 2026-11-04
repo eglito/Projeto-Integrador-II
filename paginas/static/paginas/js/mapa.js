@@ -12,6 +12,11 @@ const ATRIBUICAO_OSM =
 let mapa = null;
 let animar = true;
 let camadaLocais = null;
+// Ponto de onde as distâncias são medidas, quando não é o centro do mapa:
+// o endereço buscado (etapa 6) e, na etapa 7, a posição da pessoa.
+let camadaReferencia = null;
+// Zoom mínimo ao ir para um endereço: o de um bairro, como o do centro padrão.
+const ZOOM_MINIMO_ENDERECO = 14;
 // id do local -> marcador, para destacar o escolhido.
 const marcadores = new Map();
 let idDestacado = null;
@@ -78,6 +83,7 @@ export function criarMapa(idElemento, centro) {
   L.tileLayer(URL_TILES, { maxZoom: 19, attribution: ATRIBUICAO_OSM }).addTo(mapa);
 
   camadaLocais = L.layerGroup().addTo(mapa);
+  camadaReferencia = L.layerGroup().addTo(mapa);
   permitirDispensarNomes($(mapa.getContainer()));
 
   // Girar o celular, cruzar 48em ou mudar o zoom do navegador muda o tamanho do
@@ -196,6 +202,43 @@ export function destacarNoMapa(id, { centralizar = false, semAnimacao = false } 
 /** Leva o foco ao marcador do local `id`, por exemplo depois de escolhê-lo na lista. */
 export function focarMarcador(id) {
   marcadores.get(id)?.getElement()?.focus();
+}
+
+/**
+ * Leva o mapa até um ponto, como o endereço buscado, sem oferecer "Buscar nesta
+ * área": é movimento do código. Aproxima até o zoom de um bairro, se preciso.
+ */
+export function centralizarEm(latitude, longitude) {
+  movimentosDoCodigo += 1;
+  const zoom = Math.max(mapa.getZoom(), ZOOM_MINIMO_ENDERECO);
+  mapa.setView([latitude, longitude], zoom, { animate: animar });
+}
+
+/**
+ * Marca o ponto de onde as distâncias são medidas, com o rótulo sempre visível
+ * ("Endereço buscado"). Forma própria, diferente dos locais. Não recebe foco:
+ * não há o que fazer nele, e o anúncio já diz o endereço.
+ */
+export function marcarPontoDeReferencia(latitude, longitude, rotulo) {
+  camadaReferencia.clearLayers();
+  const conteudo = document.createElement("span");
+  const forma = document.createElement("span");
+  forma.className = "referencia__forma";
+  const nome = document.createElement("span");
+  nome.className = "referencia__nome";
+  nome.textContent = rotulo;
+  conteudo.append(forma, nome);
+  L.marker([latitude, longitude], {
+    icon: L.divIcon({ className: "referencia", html: conteudo, iconSize: null }),
+    interactive: false,
+    keyboard: false,
+    // Atrás dos locais: um local no mesmo ponto continua visível e clicável.
+    zIndexOffset: -1000,
+  }).addTo(camadaReferencia);
+}
+
+export function removerPontoDeReferencia() {
+  camadaReferencia.clearLayers();
 }
 
 /**

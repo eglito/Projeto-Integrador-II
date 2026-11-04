@@ -108,6 +108,17 @@ QUnit.module("formatacao.js: filtros ativos no topo da lista", function () {
       "Sem filtros de equipamento. Raio: 3,4 km (área visível do mapa).",
     );
   });
+
+  QUnit.test("o endereço buscado vem primeiro", function (assert) {
+    assert.strictEqual(
+      textoFiltrosAtivos("Espaldar", null, 2000, false, "Praça da Matriz, Araraquara"),
+      "Endereço: Praça da Matriz, Araraquara. Tipo: Espaldar. Raio: 2 km.",
+    );
+    assert.strictEqual(
+      textoFiltrosAtivos(null, null, 2000, false, "Praça da Matriz, Araraquara"),
+      "Endereço: Praça da Matriz, Araraquara. Sem filtros de equipamento. Raio: 2 km.",
+    );
+  });
 });
 
 QUnit.module("formatacao.js: resumo da busca", function () {

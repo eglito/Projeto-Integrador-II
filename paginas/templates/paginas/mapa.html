@@ -41,6 +41,24 @@
 
       <section id="visao-buscar" class="visao" aria-labelledby="titulo-busca" hidden>
         <h2 id="titulo-busca" tabindex="-1">Buscar</h2>
+
+        {# Busca por endereço no Nominatim (README, decisão 28): só no Enter ou no botão, sem autocompletar. #}
+        <form id="form-endereco" role="search" aria-labelledby="titulo-endereco" novalidate>
+          <h3 id="titulo-endereco">Endereço ou lugar</h3>
+          <div class="campo">
+            <label for="campo-endereco">Endereço ou nome do lugar</label>
+            {# type="text": num type="search", o Esc do Chrome apagaria o texto e fecharia a visão ao mesmo tempo. #}
+            <input id="campo-endereco" name="endereco" type="text" autocomplete="off" aria-describedby="campo-endereco-ajuda">
+            <p id="campo-endereco-ajuda" class="ajuda">Exemplo: Praça da Matriz, Araraquara. O texto vai para o serviço de endereços do OpenStreetMap (Nominatim).</p>
+            <p id="campo-endereco-erro" class="erro" hidden></p>
+          </div>
+          <button type="submit">Buscar endereço</button>
+          <div id="resultados-endereco" class="resultados-endereco" hidden>
+            <h4>Escolha o endereço</h4>
+            <ul id="lista-enderecos" class="lista-enderecos" role="list"></ul>
+          </div>
+        </form>
+
         {# novalidate: as mensagens de erro são as nossas, em português e dizendo como corrigir. #}
         <form id="filtros" novalidate>
           <fieldset>
