@@ -134,7 +134,9 @@ As regras ativas estão no [pyproject.toml](../pyproject.toml).
 
 ## 4. Teste no navegador
 
-A página do mapa fica em http://localhost:8000/. Ela abre no centro padrão, com os tiles do OpenStreetMap; os locais entram nas próximas etapas do plano (`Docs/plano_front.md`). Se o mapa não aparecer, o console do navegador (F12) mostra o erro.
+A página do mapa fica em http://localhost:8000/. Ela abre no centro padrão, com os tiles do OpenStreetMap, e mostra no mapa e na lista os locais a até 2 km desse centro. Para ter locais, carregue os dados de desenvolvimento (seção 1). Se o mapa não aparecer, o console do navegador (F12) mostra o erro.
+
+Pelo teclado: o primeiro Tab mostra "Pular para a lista"; depois vêm o mapa, os marcadores (na ordem da lista) e os itens da lista. Enter ou Espaço num marcador destaca o item da lista; Enter num item leva o mapa até o local.
 
 Para o admin do Django, crie um usuário administrador; o comando pede nome, e-mail e senha:
 
