@@ -19,6 +19,7 @@ import {
 import {
   acompanharResultado,
   erroDeDetalhes,
+  focarContribuicao,
   iniciarDetalhes,
   mostrarCarregando,
   mostrarDetalhes,
@@ -50,6 +51,13 @@ import {
   temMarcador,
 } from "./mapa.js";
 import { iniciarNavegacao, registrarLocal } from "./navegacao.js";
+import {
+  carregarSessao,
+  iniciarSessao,
+  logado,
+  mensagemDeContribuicao,
+  pedirLogin,
+} from "./sessao.js";
 
 let opcoes = null;
 /**
@@ -79,9 +87,11 @@ let geracaoDaVista = 0;
 let localAberto = null;
 let origemDosDetalhes = null;
 let pedidoDeDetalhes = null;
+// Nome do local que a visão Detalhes mostra, para o contexto do login.
+let nomeDoLocalAberto = null;
 
-// Grava o cookie csrftoken. O estado da sessão ganha interface na etapa 9.
-obter("/api/auth/sessao/");
+// Visitante ou logado (especificação, 2.6); a mesma chamada grava o cookie csrftoken.
+carregarSessao();
 
 obter("/api/opcoes/")
   .done(function (resposta) {
@@ -131,7 +141,13 @@ function iniciarPagina(centro, link) {
   // local do link (decisão 28).
   iniciarBuscaEndereco({ centroPadrao: opcoes.busca.centro_padrao, aoEscolher: escolherEndereco });
   iniciarLocalizacao({ aoPedir: () => pedirLocalizacao(), aoIrParaEndereco: irParaEndereco });
-  iniciarDetalhes({ opcoes, aoVoltar: fecharDetalhes, aoMostrarNoMapa: mostrarNoMapa });
+  iniciarDetalhes({
+    opcoes,
+    aoVoltar: fecharDetalhes,
+    aoMostrarNoMapa: mostrarNoMapa,
+    aoContribuir: contribuir,
+  });
+  iniciarSessao({ aoEntrar: voltarDoLogin, aoCancelar: cancelarLogin });
   aoMoverPelaPessoa(function () {
     geracaoDaVista += 1;
     oferecerBuscaNaArea();
@@ -396,9 +412,22 @@ function escolherNoMapa(id) {
  * Abre a visão Detalhes do local `id` e cria a entrada ?local=id no histórico.
  * `origem`: quem a abriu, para o foco voltar lá. `centralizar`: leva o mapa
  * até o local. `dados` e `status`: a resposta já buscada na abertura por link,
- * o LocalDetalhe ou o código do erro.
+ * o LocalDetalhe ou o código do erro. `depois`: roda quando os detalhes chegam,
+ * por exemplo para a volta do login seguir com a ação pendente. `prefixo`: vai
+ * antes do anúncio de erro, para ele não apagar o que a pessoa precisava ouvir
+ * (como "Você entrou como…").
  */
-function abrirDetalhes(id, { origem = null, centralizar = false, dados = null, status = null } = {}) {
+function abrirDetalhes(
+  id,
+  {
+    origem = null,
+    centralizar = false,
+    dados = null,
+    status = null,
+    depois = null,
+    prefixo = "",
+  } = {},
+) {
   localAberto = id;
   origemDosDetalhes = origem;
   pedidoDeDetalhes = id;
@@ -410,13 +439,14 @@ function abrirDetalhes(id, { origem = null, centralizar = false, dados = null, s
   // Em tela estreita, o mapa está atrás do painel: sem animação.
   destacarNoMapa(id, { centralizar, semAnimacao: telaEstreita() });
   if (status !== null) {
-    exibirErroDeDetalhes(status);
+    exibirErroDeDetalhes(status, prefixo);
     mostrarVisao("detalhes");
     return;
   }
   if (dados) {
     exibirDetalhes(dados);
     mostrarVisao("detalhes");
+    depois?.();
     return;
   }
   // O painel também: o foco vai para o nome, e o conteúdo chega depois, sem
@@ -427,29 +457,96 @@ function abrirDetalhes(id, { origem = null, centralizar = false, dados = null, s
     .done(function (local) {
       if (pedidoDeDetalhes === id) {
         exibirDetalhes(local);
+        depois?.();
       }
     })
     .fail(function (resposta) {
       if (pedidoDeDetalhes === id) {
-        exibirErroDeDetalhes(resposta.status);
+        exibirErroDeDetalhes(resposta.status, prefixo);
       }
     });
 }
 
 /** Preenche a visão Detalhes; a distância vem da busca atual, quando o local está nela. */
 function exibirDetalhes(local) {
+  nomeDoLocalAberto = local.nome;
   mostrarDetalhes(local, noResultado(localPorId(local.id)));
   anunciar(`Detalhes de ${local.nome}.`);
+}
+
+/**
+ * Botão de contribuição nos detalhes (especificação, 2.4). Com login, avisa que
+ * a função chega numa próxima versão (plano, etapa 9). Sem login, guarda a ação
+ * e leva a Entrar; depois do login, a pessoa volta a este local e a esta ação.
+ */
+function contribuir(acao) {
+  if (logado()) {
+    anunciar(mensagemDeContribuicao(acao));
+    return;
+  }
+  pedirLogin({ local: localAberto, nome: nomeDoLocalAberto, acao, origem: origemDosDetalhes });
+}
+
+/**
+ * Login ou cadastro feito (sessao.js). Com uma ação pendente, os detalhes do
+ * local reabrem e o foco vai para o botão da ação, que segue. Sem ela, a pessoa
+ * volta à lista (especificação, 2.6).
+ */
+function voltarDoLogin(usuario, pendente, { novaConta, naTela }) {
+  const saudacao = novaConta
+    ? `Conta criada. Você entrou como ${usuario.username}.`
+    : `Você entrou como ${usuario.username}.`;
+  // A pessoa saiu de Entrar antes da resposta: a tela e o foco ficam onde ela está.
+  if (!naTela) {
+    anunciar(saudacao);
+    return;
+  }
+  if (!pendente) {
+    mostrarVisao("lista");
+    anunciar(saudacao);
+    return;
+  }
+  abrirDetalhes(pendente.local, {
+    origem: pendente.origem,
+    // Se o local não abrir, o anúncio do erro ainda diz que o login deu certo.
+    prefixo: saudacao,
+    depois: function () {
+      seguirNaContribuicao(pendente.acao);
+      anunciar(`${saudacao} ${mensagemDeContribuicao(pendente.acao)}`);
+    },
+  });
+}
+
+/** "Voltar…" ou Esc em Entrar e Criar conta: de volta ao local, no botão que pediu o login, ou à lista. */
+function cancelarLogin(pendente) {
+  if (!pendente) {
+    mostrarVisao("lista");
+    return;
+  }
+  abrirDetalhes(pendente.local, {
+    origem: pendente.origem,
+    depois: () => seguirNaContribuicao(pendente.acao),
+  });
+}
+
+/**
+ * Leva o foco ao botão da ação quando os detalhes chegam, só se ele ainda está
+ * nos detalhes: se a pessoa foi para outro lugar enquanto carregava, o foco fica lá.
+ */
+function seguirNaContribuicao(acao) {
+  if ($.contains($("#visao-detalhes")[0], document.activeElement)) {
+    focarContribuicao(acao);
+  }
 }
 
 /**
  * O local não abriu: a visão Detalhes diz o que aconteceu e o que fazer (bug 2
  * do HANDOFF), e o anúncio também, para quem já saiu do painel.
  */
-function exibirErroDeDetalhes(status) {
+function exibirErroDeDetalhes(status, prefixo = "") {
   const erro = erroDeDetalhes(status);
   mostrarErroDeDetalhes(erro);
-  anunciar(`${erro.titulo}. ${erro.mensagem}`);
+  anunciar(`${prefixo} ${erro.titulo}. ${erro.mensagem}`.trim());
 }
 
 /**

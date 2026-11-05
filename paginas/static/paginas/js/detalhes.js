@@ -138,12 +138,17 @@ let rotulos = null;
 
 /**
  * Liga os botões da visão Detalhes. `aoVoltar` roda em "Voltar à lista" e no
- * Esc com o foco no painel; `aoMostrarNoMapa`, em "Mostrar no mapa".
+ * Esc com o foco no painel; `aoMostrarNoMapa`, em "Mostrar no mapa";
+ * `aoContribuir(acao)`, nos botões de contribuição ("avaliar", "condicao",
+ * "denunciar").
  */
-export function iniciarDetalhes({ opcoes, aoVoltar, aoMostrarNoMapa }) {
+export function iniciarDetalhes({ opcoes, aoVoltar, aoMostrarNoMapa, aoContribuir }) {
   rotulos = opcoes;
   $("#voltar-dos-detalhes").on("click", aoVoltar);
   $("#mostrar-no-mapa").on("click", aoMostrarNoMapa);
+  $("#contribuir").on("click", "[data-acao]", function () {
+    aoContribuir($(this).attr("data-acao"));
+  });
   $("#visao-detalhes").on("keydown", function (evento) {
     if (evento.key === "Escape") {
       aoVoltar();
@@ -179,6 +184,13 @@ export function mostrarDetalhes(local, resultado) {
   $("<p>", { class: "autoria" })
     .text(textoAutoria(local.criado_por, local.criado_em))
     .appendTo(conteudo);
+  // A contribuição só aparece com um local carregado: num erro, não há onde contribuir.
+  $("#contribuir").prop("hidden", false);
+}
+
+/** Leva o foco ao botão de uma ação de contribuição, na volta do login. */
+export function focarContribuicao(acao) {
+  $(`#contribuir [data-acao="${acao}"]`).trigger("focus");
 }
 
 /**
@@ -189,6 +201,7 @@ export function mostrarDetalhes(local, resultado) {
 export function mostrarCarregando(nome) {
   $("#titulo-detalhes").text(nome ?? "Carregando o local");
   $("#endereco-detalhes").text("").prop("hidden", true);
+  $("#contribuir").prop("hidden", true);
   acompanharResultado(null);
   $("#conteudo-detalhes")
     .empty()
@@ -211,6 +224,7 @@ export function acompanharResultado(resultado) {
 export function mostrarErroDeDetalhes({ titulo, mensagem }) {
   $("#titulo-detalhes").text(titulo);
   $("#endereco-detalhes").text("").prop("hidden", true);
+  $("#contribuir").prop("hidden", true);
   acompanharResultado(null);
   $("#conteudo-detalhes")
     .empty()
