@@ -70,14 +70,20 @@ export function camposVazios({ username, password }) {
   return erros;
 }
 
-/** Contexto no topo de Entrar e Criar conta quando uma ação pediu o login. */
+/**
+ * Contexto no topo de Entrar e Criar conta quando uma ação pediu o login: uma
+ * contribuição num local ou, sem local, adicionar um (plano, etapa 12).
+ */
 export function textoContexto({ acao, nome }) {
+  if (acao === "adicionar") {
+    return "Entre ou crie uma conta para adicionar um local. Depois, você volta para escolher o ponto.";
+  }
   return `Entre ou crie uma conta para ${ACOES[acao].alvo} ${nome}. Depois, você volta para este local.`;
 }
 
 /** Botão do topo de Entrar e Criar conta: diz para onde volta. */
 export function rotuloVoltar(pendente) {
-  return pendente ? `Voltar a ${pendente.nome}` : "Voltar à lista";
+  return pendente?.nome ? `Voltar a ${pendente.nome}` : "Voltar à lista";
 }
 
 /** Anúncio de uma ação de contribuição, com login, até ela ser implementada. */
@@ -238,7 +244,7 @@ function sair() {
   enviar("POST", "/api/auth/logout/")
     .done(function () {
       definirUsuario(null);
-      tirarConfiguracoesDaTela();
+      tirarDaTelaOQueExigeLogin();
       anunciar("Você saiu da conta. O mapa continua aberto, e você pode entrar de novo pelo menu.");
     })
     .fail(function (resposta) {
@@ -254,7 +260,7 @@ function sair() {
           }
           // A sessão tinha caído (a senha foi trocada em outra janela, por
           // exemplo): a pessoa queria sair, e saiu.
-          tirarConfiguracoesDaTela();
+          tirarDaTelaOQueExigeLogin();
           anunciar("Sua sessão já tinha terminado. Você está como visitante.");
         })
         .fail(function (conferencia) {
@@ -264,11 +270,12 @@ function sair() {
 }
 
 /**
- * Depois de Sair, Configurações não fica na tela de um visitante: o painel
- * volta para a lista, sem tirar o foco do botão Menu (plano, etapa 11).
+ * Depois de Sair, o que exige login não fica na tela de um visitante:
+ * Configurações (plano, etapa 11) e o modo de adicionar local (etapa 12). O
+ * painel volta para a lista, sem tirar o foco do botão Menu.
  */
-function tirarConfiguracoesDaTela() {
-  if (!$("#visao-configuracoes").prop("hidden")) {
+function tirarDaTelaOQueExigeLogin() {
+  if ($("#visao-configuracoes, #visao-adicionar").filter(":not([hidden])").length) {
     mostrarVisao("lista", { focar: false, frente: false });
   }
 }

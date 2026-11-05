@@ -25,6 +25,13 @@ import {
   mostrarDetalhes,
   mostrarErroDeDetalhes,
 } from "./detalhes.js";
+import {
+  entrarNoModoCadastro,
+  iniciarCadastroLocal,
+  modoCadastroAtivo,
+  registrarMovimentoNoModo,
+  sairDoModoCadastro,
+} from "./cadastro_local.js";
 import { iniciarConta } from "./conta.js";
 import { esconderResultados as esconderEnderecos, iniciarBuscaEndereco } from "./endereco.js";
 import {
@@ -140,7 +147,11 @@ function iniciarPagina(centro, link) {
   iniciarBuscaNaArea({ aoBuscar: buscarNaArea });
   // A referência do Nominatim é sempre o centro padrão, nunca a posição nem o
   // local do link (decisão 28).
-  iniciarBuscaEndereco({ centroPadrao: opcoes.busca.centro_padrao, aoEscolher: escolherEndereco });
+  iniciarBuscaEndereco({
+    prefixo: "endereco",
+    centroPadrao: opcoes.busca.centro_padrao,
+    aoEscolher: escolherEndereco,
+  });
   iniciarLocalizacao({ aoPedir: () => pedirLocalizacao(), aoIrParaEndereco: irParaEndereco });
   iniciarDetalhes({
     opcoes,
@@ -150,9 +161,16 @@ function iniciarPagina(centro, link) {
   });
   iniciarSessao({ aoEntrar: voltarDoLogin, aoCancelar: cancelarLogin });
   iniciarConta();
+  iniciarCadastroLocal({ centroPadrao: opcoes.busca.centro_padrao });
   aoMoverPelaPessoa(function () {
     geracaoDaVista += 1;
-    oferecerBuscaNaArea();
+    // No modo de adicionar local, mover o mapa é mirar: "Buscar nesta área" só
+    // aparece quando o modo terminar.
+    if (modoCadastroAtivo()) {
+      registrarMovimentoNoModo();
+    } else {
+      oferecerBuscaNaArea();
+    }
   });
   // A localização automática vale a partir da abertura: se a pessoa mexer no
   // mapa durante a primeira busca, a vista dela também fica onde está.
@@ -340,7 +358,7 @@ function buscarAPartirDe({ latitude, longitude, origem, endereco }) {
 function escolherEndereco({ latitude, longitude, rotulo }) {
   geracaoDaVista += 1;
   buscarAPartirDe({ latitude, longitude, origem: "endereco", endereco: rotulo }).done(function () {
-    esconderEnderecos();
+    esconderEnderecos("endereco");
     marcarPontoDeReferencia(latitude, longitude, "Endereço buscado");
     mostrarVisao("lista");
   });
@@ -508,6 +526,12 @@ function voltarDoLogin(usuario, pendente, { novaConta, naTela }) {
     anunciar(saudacao);
     return;
   }
+  // Adicionar local pediu o login: a pessoa volta ao modo, para escolher o ponto.
+  if (pendente.acao === "adicionar") {
+    entrarNoModoCadastro();
+    anunciar(`${saudacao} Escolha o ponto do novo local.`);
+    return;
+  }
   abrirDetalhes(pendente.local, {
     origem: pendente.origem,
     // Se o local não abrir, o anúncio do erro ainda diz que o login deu certo.
@@ -521,7 +545,8 @@ function voltarDoLogin(usuario, pendente, { novaConta, naTela }) {
 
 /** "Voltar…" ou Esc em Entrar e Criar conta: de volta ao local, no botão que pediu o login, ou à lista. */
 function cancelarLogin(pendente) {
-  if (!pendente) {
+  // Sem local de origem (Entrar pelo menu, ou Adicionar local), a volta é à lista.
+  if (!pendente?.local) {
     mostrarVisao("lista");
     return;
   }
@@ -557,6 +582,10 @@ function exibirErroDeDetalhes(status, prefixo = "") {
  * uma resposta que ainda não chegou não reabre o painel.
  */
 function aoTrocarVisao(nome) {
+  // O modo de adicionar local vale só enquanto a visão dele está no painel.
+  if (nome !== "adicionar") {
+    sairDoModoCadastro();
+  }
   if (nome === "detalhes" || localAberto === null) {
     return;
   }

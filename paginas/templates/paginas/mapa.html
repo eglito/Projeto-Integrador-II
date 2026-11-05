@@ -63,7 +63,7 @@
           <button type="submit">Buscar endereço</button>
           <div id="resultados-endereco" class="resultados-endereco" hidden>
             <h4>Escolha o endereço</h4>
-            <ul id="lista-enderecos" class="lista-enderecos" role="list"></ul>
+            <ul id="lista-endereco" class="lista-enderecos" role="list"></ul>
           </div>
         </form>
 
@@ -164,6 +164,41 @@
         <p class="trocar-formulario">Já tem conta? <button type="button" id="ir-para-entrar">Entrar</button></p>
       </section>
 
+      {# Adicionar local, escolha do ponto (especificação, seção 3; plano, etapa 12). O formulário do local vem na etapa 13. #}
+      <section id="visao-adicionar" class="visao" aria-labelledby="titulo-adicionar" hidden>
+        <button type="button" id="cancelar-cadastro" class="voltar">Cancelar</button>
+        <h2 id="titulo-adicionar" tabindex="-1">Adicionar local</h2>
+        <section id="ponto-escolhido" class="ponto-escolhido" aria-labelledby="titulo-ponto-escolhido" hidden>
+          <h3 id="titulo-ponto-escolhido" tabindex="-1">Ponto escolhido</h3>
+          <p id="ponto-escolhido-texto"></p>
+          <p id="ponto-escolhido-coordenadas"></p>
+          <div class="acoes-ponto">
+            <button type="button" id="continuar-cadastro">Continuar</button>
+            <button type="button" id="outro-ponto">Escolher outro ponto</button>
+          </div>
+        </section>
+        <p>Escolha onde fica o local, de um destes jeitos:</p>
+        <ul class="jeitos-de-escolher">
+          <li>Mova o mapa até a mira, no centro dele, ficar sobre o lugar, e use "Usar o centro do mapa". Pelo teclado: Tab até o mapa, setas para mover e Shift+Tab até o botão. Em tela pequena, o mapa fica na aba Mapa.</li>
+          <li>Clique no lugar, no mapa.</li>
+          <li>Busque o endereço, aqui embaixo.</li>
+        </ul>
+        <form id="form-endereco-local" role="search" aria-labelledby="titulo-endereco-local" novalidate>
+          <h3 id="titulo-endereco-local">Endereço do novo local</h3>
+          <div class="campo">
+            <label for="campo-endereco-local">Endereço ou nome do lugar</label>
+            <input id="campo-endereco-local" name="endereco" type="text" autocomplete="off" aria-describedby="campo-endereco-local-ajuda">
+            <p id="campo-endereco-local-ajuda" class="ajuda">Exemplo: Praça da Matriz, Araraquara. O texto vai para o serviço de endereços do OpenStreetMap (Nominatim).</p>
+            <p id="campo-endereco-local-erro" class="erro" hidden></p>
+          </div>
+          <button type="submit">Buscar endereço</button>
+          <div id="resultados-endereco-local" class="resultados-endereco" hidden>
+            <h4>Escolha o endereço</h4>
+            <ul id="lista-endereco-local" class="lista-enderecos" role="list"></ul>
+          </div>
+        </form>
+      </section>
+
       {# Configurações (README, decisões 23 e 32): troca do nome e da senha, as duas confirmadas pela senha atual. #}
       <section id="visao-configuracoes" class="visao" aria-labelledby="titulo-configuracoes" hidden>
         <button type="button" id="voltar-das-configuracoes" class="voltar">Voltar à lista</button>
@@ -211,10 +246,15 @@
     <div class="area-mapa">
       {# Aparece depois de a pessoa mover o mapa. Fica antes do mapa no Tab: com o mapa em foco, Shift+Tab chega aqui. #}
       <button type="button" id="buscar-na-area" class="buscar-na-area" hidden>Buscar nesta área</button>
+      {# No modo de adicionar local, no lugar de "Buscar nesta área" e também antes do mapa no Tab. #}
+      <button type="button" id="usar-centro" class="buscar-na-area" hidden>Usar o centro do mapa</button>
       {# O Leaflet torna o mapa focável pelo Tab; a instrução é lida quando ele recebe o foco. #}
       <div id="mapa" role="region" aria-label="Mapa dos locais" aria-describedby="mapa-instrucoes"></div>
+      {# Mira do modo de adicionar local: só visual; as instruções do mapa a descrevem. #}
+      <div id="mira" class="mira" aria-hidden="true" hidden></div>
     </div>
     <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar. A tecla Tab passa pelos locais, na ordem da lista, e Enter abre os detalhes do local, no painel; depois deles vêm os botões de zoom e Minha localização. Esc esconde o nome que aparece sobre o local. Depois de mover o mapa, o botão Buscar nesta área fica logo antes do mapa.</p>
+    <p id="mapa-instrucoes-cadastro" class="visualmente-oculto">Modo de adicionar local: a mira marca o centro do mapa. Use as setas para mover o mapa até a mira ficar sobre o lugar; depois, Shift+Tab leva ao botão Usar o centro do mapa. Um clique no mapa também escolhe o ponto. Esc cancela.</p>
   </main>
 
   {# Tela estreita (decisão 29): alterna Mapa e Lista. Escondida em tela larga. #}
@@ -233,6 +273,8 @@
   <ul role="list">
     <li><button type="button" data-visao="buscar">Buscar</button></li>
     <li><button type="button" data-visao="lista">Lista de locais</button></li>
+    {# Para todos: sem sessão, leva a Entrar e depois volta ao modo (plano, etapa 12). #}
+    <li id="item-adicionar"><button type="button" id="menu-adicionar">Adicionar local</button></li>
     <li id="item-entrar"><button type="button" id="menu-entrar">Entrar</button></li>
     {# Só com sessão aberta (plano, etapa 11). #}
     <li id="item-configuracoes" hidden><button type="button" id="menu-configuracoes">Configurações</button></li>

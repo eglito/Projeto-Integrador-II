@@ -146,6 +146,8 @@ Sessão: no menu, "Entrar" abre o login no painel, e "Criar conta" fica logo aba
 docker compose exec web python manage.py shell -c "from usuarios.models import Usuario; print(Usuario.objects.filter(username__startswith='teste-etapa').delete())"
 ```
 
+Adicionar local: no menu, "Adicionar local" abre o modo de escolher o ponto (sem sessão, pede o login antes). Mova o mapa até a mira e use "Usar o centro do mapa", clique no mapa ou busque o endereço; o ponto ganha o marcador "Novo local". Pelo teclado: Tab até o mapa, setas e Shift+Tab até o botão. Esc cancela. O formulário do local chega na etapa 13: por enquanto, "Continuar" só avisa.
+
 Configurações: com sessão aberta, o menu mostra "Configurações", com a troca do nome de usuário e a da senha; as duas pedem a senha atual. Para ver as outras sessões caírem na troca de senha, entre na mesma conta em duas janelas (uma anônima), troque a senha numa e tente trocar o nome na outra: ela diz que a sessão terminou.
 
 Detalhes: escolha um local na lista ou dê Enter num marcador. O painel mostra endereço, equipamentos com a condição datada, comodidades, segurança por faixa de horário e autoria. Esc ou "Voltar à lista" devolvem o foco a quem abriu os detalhes, e o Voltar do navegador também fecha o painel. A URL ganha `?local=id`: com os dados de desenvolvimento, http://localhost:8000/?local=7 abre um local direto (os ids dependem do banco local; confira em http://localhost:8000/api/locais/), e um id que não existe mostra "Local não encontrado".
