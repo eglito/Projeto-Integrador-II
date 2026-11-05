@@ -6,6 +6,8 @@ import {
   textoAutoria,
   textoCondicao,
   textoDimensoes,
+  textoAvaliacoes,
+  textoDistanciaDetalhe,
   textoEndereco,
 } from "../js/detalhes.js";
 
@@ -82,6 +84,19 @@ QUnit.module("detalhes.js: local", function () {
     );
   });
 
+  QUnit.test("distância como na lista, com a origem", function (assert) {
+    assert.strictEqual(
+      textoDistanciaDetalhe(646, "centro"),
+      "Distância: 646 m do centro do mapa.",
+    );
+    assert.strictEqual(textoDistanciaDetalhe(1252, "voce"), "Distância: 1,3 km de você.");
+  });
+
+  QUnit.test("aberto pelo link, o local é o centro do mapa, e não '0 m'", function (assert) {
+    assert.strictEqual(textoDistanciaDetalhe(0, "centro"), "No centro do mapa.");
+    assert.strictEqual(textoDistanciaDetalhe(0.4, "centro"), "No centro do mapa.");
+  });
+
   QUnit.test("endereço, ou o aviso de que não foi informado", function (assert) {
     assert.strictEqual(textoEndereco("Rua 3", "Araraquara (SP)"), "Rua 3. Araraquara (SP).");
     assert.strictEqual(
@@ -107,12 +122,18 @@ QUnit.module("detalhes.js: segurança por faixa de horário", function () {
     );
   });
 
+  QUnit.test("quantas avaliações, no singular e no plural", function (assert) {
+    assert.strictEqual(textoAvaliacoes(0), "Nenhuma avaliação");
+    assert.strictEqual(textoAvaliacoes(1), "1 avaliação");
+    assert.strictEqual(textoAvaliacoes(3), "3 avaliações");
+  });
+
   QUnit.test("sem avaliações, diz isso em texto", function (assert) {
     const vazio = { avaliacoes: 0, movimento: {}, iluminacao: {} };
     const [manha] = linhasSeguranca({ manha: vazio, tarde: vazio, noite: vazio }, ROTULOS);
     assert.deepEqual(manha, {
       faixa: "Manhã",
-      avaliacoes: "0",
+      avaliacoes: "Nenhuma avaliação",
       movimento: "Sem avaliações",
       iluminacao: "Sem avaliações",
     });
@@ -128,7 +149,7 @@ QUnit.module("detalhes.js: segurança por faixa de horário", function () {
     const linhas = linhasSeguranca({ manha: vazio, tarde: vazio, noite }, ROTULOS);
     assert.deepEqual(linhas[2], {
       faixa: "Noite",
-      avaliacoes: "3",
+      avaliacoes: "3 avaliações",
       movimento: "Movimentado: 2; Vazio: 1",
       iluminacao: "Boa: 3",
     });

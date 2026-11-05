@@ -20,6 +20,26 @@ def test_raiz_entrega_a_pagina_do_mapa(pagina):
     assertTemplateUsed(pagina, "paginas/mapa.html")
 
 
+def test_link_direto_de_um_local_entrega_a_mesma_pagina(client):
+    # README, decisão 33: ?local=id é lido pelo JavaScript; o Django só entrega a
+    # página, também para um id que não existe ou que nem é número.
+    for query in ("?local=7", "?local=999999", "?local=abc"):
+        resposta = client.get(f"/{query}")
+
+        assert resposta.status_code == 200, query
+        assertTemplateUsed(resposta, "paginas/mapa.html")
+
+
+def test_visao_de_detalhes_comeca_escondida_e_com_titulo_focavel(pagina):
+    # O foco vai para o nome do local quando os detalhes abrem (especificação, 2.4).
+    html = pagina.content.decode()
+    visao = re.search(r'<section id="visao-detalhes"[^>]*>', html)
+
+    assert visao, "O painel deveria ter a visão Detalhes."
+    assert "hidden" in visao.group(0)
+    assert re.search(r'id="titulo-detalhes"[^>]*tabindex="-1"', html)
+
+
 def test_arquivos_estaticos_citados_na_pagina_existem(pagina):
     caminhos = re.findall(r'(?:src|href)="/static/([^"]+)"', pagina.content.decode())
 

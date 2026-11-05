@@ -225,6 +225,11 @@ export function destacarNoMapa(id, { centralizar = false, semAnimacao = false } 
   }
 }
 
+/** O local `id` tem marcador no mapa, isto é, está no resultado da busca atual. */
+export function temMarcador(id) {
+  return marcadores.has(id);
+}
+
 /** Leva o foco ao marcador do local `id`, por exemplo depois de escolhê-lo na lista. */
 export function focarMarcador(id) {
   marcadores.get(id)?.getElement()?.focus();

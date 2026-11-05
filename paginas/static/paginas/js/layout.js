@@ -8,6 +8,8 @@ const TELA_ESTREITA = "(max-width: 48em)";
 
 // Chamado quando o mapa volta para a frente: o Leaflet precisa medir de novo.
 let aoMostrarMapa = function () {};
+// Chamado a cada troca de visão do painel, com o nome da visão nova.
+let aoTrocarVisao = function () {};
 // Quem abriu a visão Buscar, para o foco voltar a ele (especificação, 2.4).
 let origemDaBusca = null;
 
@@ -36,18 +38,20 @@ export function listaVisivel() {
 }
 
 /**
- * Mostra uma visão do painel (lista, buscar) e esconde as outras. Em tela
- * estreita, traz o painel para a frente. Com `focar`, o foco vai para o título.
+ * Mostra uma visão do painel (lista, buscar, detalhes) e esconde as outras. Em
+ * tela estreita, traz o painel para a frente, a não ser com `frente` falso. Com
+ * `focar`, o foco vai para o título.
  */
-export function mostrarVisao(nome, { focar = true, origem = null } = {}) {
+export function mostrarVisao(nome, { focar = true, origem = null, frente = true } = {}) {
   $("#painel .visao").prop("hidden", true);
   $(`#visao-${nome}`).prop("hidden", false);
-  if (telaEstreita()) {
+  if (frente && telaEstreita()) {
     mostrarTela("lista");
   }
   if (nome === "buscar") {
     origemDaBusca = origem;
   }
+  aoTrocarVisao(nome);
   if (focar) {
     $(`#visao-${nome} h2`).trigger("focus");
   }
@@ -82,9 +86,13 @@ function fecharMenu({ devolverFoco = true } = {}) {
   }
 }
 
-/** Liga menu, visões e barra inferior. `aoMostrarMapa` roda quando o mapa volta à frente. */
+/**
+ * Liga menu, visões e barra inferior. `aoMostrarMapa` roda quando o mapa volta
+ * à frente; `aoTrocarVisao(nome)`, a cada troca de visão do painel.
+ */
 export function iniciarLayout(opcoes) {
   aoMostrarMapa = opcoes.aoMostrarMapa;
+  aoTrocarVisao = opcoes.aoTrocarVisao;
 
   $("#botao-menu").on("click", function () {
     if (menuAberto()) {

@@ -8,7 +8,7 @@
  * ao mapa, à lista e à URL.
  */
 
-import { COMODIDADES, formatarData, rotuloComodidade } from "./formatacao.js";
+import { COMODIDADES, formatarData, rotuloComodidade, textoDistancia } from "./formatacao.js";
 
 const SEM_AVALIACOES = "Sem avaliações";
 
@@ -46,6 +46,17 @@ export function textoAutoria(criadoPor, criadoEm) {
   return criadoPor ? `Cadastrado por ${criadoPor} em ${data}.` : `Cadastrado em ${data}.`;
 }
 
+/**
+ * "Distância: 646 m do centro do mapa.", como na lista. Aberto pelo link, o
+ * local é o próprio centro do mapa, e "0 m" não diria nada.
+ */
+export function textoDistanciaDetalhe(metros, origem) {
+  if (origem === "centro" && Math.round(metros) === 0) {
+    return "No centro do mapa.";
+  }
+  return `Distância: ${textoDistancia(metros, origem)}.`;
+}
+
 /** "Rua 3. Araraquara (SP)." O endereço é opcional no cadastro. */
 export function textoEndereco(endereco, municipio) {
   return endereco ? `${endereco}. ${municipio}.` : `Endereço não informado. ${municipio}.`;
@@ -65,26 +76,37 @@ function contagens(porValor, escolhas) {
     .join("; ");
 }
 
+/** "1 avaliação", "3 avaliações" ou "Nenhuma avaliação". */
+export function textoAvaliacoes(quantidade) {
+  if (quantidade === 0) {
+    return "Nenhuma avaliação";
+  }
+  return quantidade === 1 ? "1 avaliação" : `${quantidade} avaliações`;
+}
+
 /**
  * Linhas da tabela de segurança, uma por faixa de horário, com os rótulos de
- * /api/opcoes/: { faixa: "Noite", avaliacoes: "1", movimento: "Movimentado: 1",
- * iluminacao: "Boa: 1" }. Tudo em texto, nada só em cor (especificação, 2.4).
- * A iluminação só é obrigatória à noite; nas outras faixas pode faltar.
+ * /api/opcoes/: { faixa: "Noite", avaliacoes: "1 avaliação", movimento:
+ * "Movimentado: 1", iluminacao: "Boa: 1" }. Tudo em texto, nada só em cor
+ * (especificação, 2.4). A iluminação só é obrigatória à noite; nas outras
+ * faixas pode faltar. As avaliações vão junto da faixa, e não numa coluna
+ * própria: com três colunas, a tabela cabe em 320 px sem partir palavras.
  */
 export function linhasSeguranca(seguranca, { faixas_horario, movimento, iluminacao }) {
   return faixas_horario.map(function ({ valor, rotulo }) {
     const resumo = seguranca[valor];
-    if (!resumo || resumo.avaliacoes === 0) {
+    const quantidade = resumo ? resumo.avaliacoes : 0;
+    if (quantidade === 0) {
       return {
         faixa: rotulo,
-        avaliacoes: "0",
+        avaliacoes: textoAvaliacoes(0),
         movimento: SEM_AVALIACOES,
         iluminacao: SEM_AVALIACOES,
       };
     }
     return {
       faixa: rotulo,
-      avaliacoes: String(resumo.avaliacoes),
+      avaliacoes: textoAvaliacoes(quantidade),
       movimento: contagens(resumo.movimento, movimento),
       iluminacao: contagens(resumo.iluminacao, iluminacao) || "Não informada",
     };
@@ -130,17 +152,17 @@ export function iniciarDetalhes({ opcoes, aoVoltar, aoMostrarNoMapa }) {
 }
 
 /**
- * Preenche a visão com o LocalDetalhe. `distancia` é o texto da lista ("646 m
- * do centro do mapa"), ou null quando o local não está no resultado da busca;
- * aí também não há marcador para "Mostrar no mapa". Tudo com .text(): nomes,
- * endereço e textos alternativos vêm de quem cadastrou.
+ * Preenche a visão com o LocalDetalhe. `resultado` é o mesmo local no
+ * resultado da busca atual, { distancia_m, origem }, ou null quando ele não
+ * está nela. Tudo com .text(): nomes, endereço e textos alternativos vêm de
+ * quem cadastrou.
  */
-export function mostrarDetalhes(local, { distancia }) {
+export function mostrarDetalhes(local, resultado) {
   $("#titulo-detalhes").text(local.nome);
   $("#endereco-detalhes")
     .text(textoEndereco(local.endereco, local.municipio_nome))
     .prop("hidden", false);
-  atualizarDistancia(distancia);
+  acompanharResultado(resultado);
 
   const conteudo = $("#conteudo-detalhes").empty();
   if (local.foto) {
@@ -160,21 +182,36 @@ export function mostrarDetalhes(local, { distancia }) {
 }
 
 /**
- * Atualiza a distância depois de uma busca nova (por exemplo, pela posição da
- * pessoa) com o painel aberto. Sem distância, a linha e "Mostrar no mapa" somem.
+ * A visão abre na hora do clique, antes da resposta da API: o nome, quando a
+ * lista já o tem, e o aviso de que os detalhes estão chegando. Sem isso, numa
+ * rede lenta, a pessoa clicaria sem ver nada acontecer.
  */
-export function atualizarDistancia(distancia) {
+export function mostrarCarregando(nome) {
+  $("#titulo-detalhes").text(nome ?? "Carregando o local");
+  $("#endereco-detalhes").text("").prop("hidden", true);
+  acompanharResultado(null);
+  $("#conteudo-detalhes")
+    .empty()
+    .append($("<p>").text("Carregando os detalhes…"));
+}
+
+/**
+ * Distância e "Mostrar no mapa" seguem a busca atual, também depois de uma
+ * busca nova com o painel aberto (pela posição da pessoa, por exemplo). Fora do
+ * resultado, o local não tem distância nem marcador, e os dois somem.
+ */
+export function acompanharResultado(resultado) {
   $("#distancia-detalhes")
-    .text(distancia ? `Distância: ${distancia}.` : "")
-    .prop("hidden", !distancia);
-  $("#mostrar-no-mapa").prop("hidden", !distancia);
+    .text(resultado ? textoDistanciaDetalhe(resultado.distancia_m, resultado.origem) : "")
+    .prop("hidden", !resultado);
+  $("#mostrar-no-mapa").prop("hidden", !resultado);
 }
 
 /** O local não abriu: título e mensagem dizem o que aconteceu e o que fazer. */
 export function mostrarErroDeDetalhes({ titulo, mensagem }) {
   $("#titulo-detalhes").text(titulo);
   $("#endereco-detalhes").text("").prop("hidden", true);
-  atualizarDistancia(null);
+  acompanharResultado(null);
   $("#conteudo-detalhes")
     .empty()
     .append($("<p>").text(mensagem));
@@ -223,18 +260,18 @@ function secaoSeguranca(seguranca) {
   const tabela = $("<table>", { class: "seguranca" }).appendTo(secao);
   $("<caption>").text("Avaliações dos últimos 90 dias, por faixa de horário").appendTo(tabela);
   const cabecalho = $("<tr>").appendTo($("<thead>").appendTo(tabela));
-  for (const coluna of ["Faixa", "Avaliações", "Movimento", "Iluminação"]) {
+  for (const coluna of ["Faixa", "Movimento", "Iluminação"]) {
     $("<th>", { scope: "col" }).text(coluna).appendTo(cabecalho);
   }
   const corpo = $("<tbody>").appendTo(tabela);
   for (const linha of linhasSeguranca(seguranca, rotulos)) {
+    // O cabeçalho da linha leva a faixa e, abaixo, quantas avaliações a sustentam.
+    // O espaço separa os dois no nome lido pelo leitor de tela ("Manhã 2 avaliações").
+    const faixa = $("<th>", { scope: "row" })
+      .text(`${linha.faixa} `)
+      .append($("<span>", { class: "seguranca__avaliacoes" }).text(linha.avaliacoes));
     $("<tr>")
-      .append(
-        $("<th>", { scope: "row" }).text(linha.faixa),
-        $("<td>").text(linha.avaliacoes),
-        $("<td>").text(linha.movimento),
-        $("<td>").text(linha.iluminacao),
-      )
+      .append(faixa, $("<td>").text(linha.movimento), $("<td>").text(linha.iluminacao))
       .appendTo(corpo);
   }
   return secao;

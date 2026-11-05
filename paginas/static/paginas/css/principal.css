@@ -446,6 +446,124 @@ body {
   font-size: 0.9rem;
 }
 
+/* Visão Detalhes (especificação, 2.4). */
+.voltar,
+#mostrar-no-mapa {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem;
+  font: inherit;
+}
+
+.voltar {
+  margin-bottom: 0.75rem;
+}
+
+#visao-detalhes > p {
+  margin: 0 0 0.5rem;
+  color: var(--cor-texto-secundario);
+}
+
+.conteudo-detalhes h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.conteudo-detalhes p {
+  margin: 0.25rem 0;
+}
+
+/* Fotos na largura do painel, sem rolagem horizontal em 320 px (WCAG 1.4.10). */
+.foto-local {
+  margin: 0.75rem 0 0;
+}
+
+.foto-local img,
+.foto-condicao {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+.foto-condicao {
+  margin-top: 0.25rem;
+}
+
+.equipamentos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.equipamentos li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #d0d0d0;
+}
+
+.equipamento__nome {
+  font-weight: 700;
+}
+
+.comodidades {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+/* Cada par fica num div, e o grid enxerga direto o dt e o dd. */
+.comodidades div {
+  display: contents;
+}
+
+.comodidades dt {
+  font-weight: 600;
+}
+
+.comodidades dd {
+  margin: 0;
+}
+
+/*
+ * Tabela de segurança: tudo em texto. Com três colunas, a palavra mais longa de
+ * cada uma cabe em 320 px, e nenhuma palavra é partida no meio.
+ */
+.seguranca {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.seguranca caption {
+  margin-bottom: 0.25rem;
+  color: var(--cor-texto-secundario);
+  text-align: left;
+}
+
+.seguranca th,
+.seguranca td {
+  padding: 0.35rem 0.4rem;
+  border: 1px solid #d0d0d0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.seguranca thead th {
+  background: var(--cor-escolhido-fundo);
+}
+
+.seguranca__avaliacoes {
+  display: block;
+  color: var(--cor-texto-secundario);
+  font-weight: 400;
+}
+
+.autoria {
+  margin-top: 1.25rem;
+  color: var(--cor-texto-secundario);
+  font-size: 0.9rem;
+}
+
 /* Visão Buscar: endereço ou lugar. */
 #form-endereco {
   margin-bottom: 1.25rem;

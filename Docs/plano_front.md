@@ -18,7 +18,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 4 | Layout responsivo | `feat/layout-responsivo` | 3 (a 0 virou validação depois; decisão 39) | Concluída (PR #25) |
 | 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 3 (a 4 reposiciona a interface) | Concluída (PR #24) |
 | 6 | Busca por endereço | `feat/busca-endereco` | 5 | Concluída (PR #26) |
-| 7 | Geolocalização | `feat/geolocalizacao` | 6 | Pendente |
+| 7 | Geolocalização | `feat/geolocalizacao` | 6 | Concluída (PR #27) |
 | 8 | Painel de detalhes. **Marco:** fecha a entrega só de leitura | `feat/painel-detalhes` | 7 | Pendente |
 | 9 | Sessão no painel | `feat/sessao-front` | 8 | Pendente |
 | 10 | Configurações no back | `feat/api-conta` | — | Concluída (PR #23) |
@@ -238,7 +238,17 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - Esc ou "Voltar à lista" devolvem o foco ao item ou ao marcador de origem.
   - `?local=id` com `pushState` (decisão 33). O Voltar do navegador fecha o painel, e o link direto abre o local.
   - Um id inválido mostra mensagem própria em português, e não o 404 em inglês da API (bug 2 do HANDOFF).
-- **Arquivos:** `js/detalhes.js`, `js/navegacao.js`, `testes/detalhes.test.js` e o template.
+  - Na implementação:
+    - A visão Detalhes é a terceira do painel. Ela abre na hora do clique, com o nome que a lista já tem e "Carregando os detalhes…", e o foco vai para o nome; o mapa centraliza e destaca o marcador na mesma hora. O conteúdo entra quando a API responde, e o anúncio diz "Detalhes de {nome}.". Achado na verificação: no Docker com Colima, a resposta às vezes levava 750 ms, e o clique parecia não fazer nada.
+    - Pela lista, o mapa vai até o local; pelo marcador, fica onde está. Em qualquer largura, escolher na lista abre os detalhes, e "Mostrar no mapa" leva o foco ao marcador e, em tela estreita, traz o Mapa para a frente (decisão 41, que revê a parte da 40 sobre a lista em tela estreita). Em tela estreita, os detalhes abertos pelo marcador voltam ao Mapa, no marcador.
+    - A distância é o texto da lista, porque a rota de detalhe não a traz. Fora do resultado da busca, a linha e "Mostrar no mapa" somem; depois de uma busca nova com o painel aberto, distância e destaque acompanham o resultado. "Buscar nesta área" volta para a lista, onde está o resultado.
+    - Segurança numa tabela de três colunas (Faixa, Movimento e Iluminação), com as avaliações na célula da faixa: com quatro colunas, em 320 px, as palavras se partiam no meio. Comodidades numa lista de definição. Datas no fuso de São Paulo, o da API (`formatarData`).
+    - Histórico: abrir e fechar criam entradas (`pushState`), também quando o menu ou "Buscar nesta área" tiram os detalhes da tela. O Voltar fecha o painel e devolve o foco à origem; o Avançar o reabre. `registrarLocal` só cria entrada quando a URL ainda não diz o que a tela mostra, então o que o `popstate` abre ou fecha não entra de novo.
+    - Link direto: a página busca o detalhe antes de criar o mapa, que abre no local, e a busca parte dali (decisão 31); a distância vira "No centro do mapa". Com a permissão de localização já dada, a abertura pelo link conta como escolha da vista, e só aparece "Você está aqui"; o anúncio dessa situação, da etapa 7, ficou neutro.
+    - Um id que não é número (`abc`, `0`, `07`) não vai à API. Ele e o 404 mostram "Local não encontrado", com o que fazer.
+    - Uma resposta atrasada não cobre o local escolhido depois (`pedidoDeDetalhes`), e fechar o painel antes da resposta a descarta.
+    - Os botões de contribuição (especificação, 2.4) ficam para a etapa 9, como previsto.
+- **Arquivos:** `js/detalhes.js`, `js/navegacao.js`, `testes/detalhes.test.js`, `testes/navegacao.test.js` e o template.
 - **Conceitos novos:** `pushState` e `popstate`, `URLSearchParams` e gerenciamento de foco.
 - **Verificação:** itens 4 e 5.
 - **Marco:** aqui a entrega só de leitura do HANDOFF (seção 5) fica completa. Os 9 itens da seção 6 rodam inteiros.
