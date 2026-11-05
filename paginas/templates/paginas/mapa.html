@@ -96,6 +96,17 @@
           </div>
         </form>
       </section>
+
+      {# Detalhes do local (especificação, 2.4), preenchidos pelo detalhes.js. Abre pela lista, pelo marcador ou por ?local=id (README, decisão 33). #}
+      <section id="visao-detalhes" class="visao" aria-labelledby="titulo-detalhes" hidden>
+        <button type="button" id="voltar-dos-detalhes" class="voltar">Voltar à lista</button>
+        <h2 id="titulo-detalhes" tabindex="-1"></h2>
+        <p id="endereco-detalhes"></p>
+        <p id="distancia-detalhes" hidden></p>
+        {# Leva o foco ao marcador; em tela estreita, traz o Mapa para a frente (README, decisão 41). #}
+        <button type="button" id="mostrar-no-mapa" hidden>Mostrar no mapa</button>
+        <div id="conteudo-detalhes" class="conteudo-detalhes"></div>
+      </section>
     </div>
 
     <div class="area-mapa">

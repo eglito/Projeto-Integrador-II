@@ -1,5 +1,6 @@
 import {
   descricaoFiltros,
+  formatarData,
   formatarDistancia,
   resumoBusca,
   rotuloComodidade,
@@ -33,6 +34,19 @@ QUnit.module("formatacao.js: distância", function () {
     assert.strictEqual(textoDistancia(646, "centro"), "646 m do centro do mapa");
     assert.strictEqual(textoDistancia(1252, "voce"), "1,3 km de você");
     assert.strictEqual(textoDistancia(350, "endereco"), "350 m do endereço buscado");
+  });
+});
+
+QUnit.module("formatacao.js: data", function () {
+  QUnit.test("dia, mês e ano com dois dígitos", function (assert) {
+    assert.strictEqual(formatarData("2026-10-09T11:30:13.300309-03:00"), "09/10/2026");
+  });
+
+  QUnit.test("no fuso de São Paulo, qualquer que seja o do navegador", function (assert) {
+    // 01:30 de 12/10 em UTC ainda é 11/10 em São Paulo (22:30).
+    assert.strictEqual(formatarData("2026-10-12T01:30:00Z"), "11/10/2026");
+    // 23:59 de 11/10 em São Paulo é 12/10 em UTC, mas continua 11/10.
+    assert.strictEqual(formatarData("2026-10-11T23:59:00-03:00"), "11/10/2026");
   });
 });
 
