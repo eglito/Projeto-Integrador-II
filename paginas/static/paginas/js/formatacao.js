@@ -5,6 +5,15 @@
 
 const NUMERO = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
 
+// Datas no fuso da API (Docs/API.md, seção 1), e não no do navegador: um
+// registro das 23h em São Paulo continua no mesmo dia para quem está em outro fuso.
+const DATA = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
 // De onde a distância é medida (README, decisão 31).
 const ORIGENS = {
   centro: "do centro do mapa",
@@ -14,7 +23,7 @@ const ORIGENS = {
 
 // Campos de comodidade do Local (Docs/API.md, 5.7). São campos fixos do
 // contrato, e não uma lista de escolhas: por isso não vêm de /api/opcoes/.
-const COMODIDADES = [
+export const COMODIDADES = [
   ["tem_bebedouro", "Bebedouro"],
   ["tem_sanitario", "Sanitário"],
   ["tem_bancos", "Bancos"],
@@ -27,6 +36,11 @@ export function formatarDistancia(metros) {
     return `${arredondado} m`;
   }
   return `${NUMERO.format(arredondado / 1000)} km`;
+}
+
+/** "09/10/2026", a partir da data ISO 8601 da API ("2026-10-09T11:30:13-03:00"). */
+export function formatarData(iso) {
+  return DATA.format(new Date(iso));
 }
 
 /** "646 m do centro do mapa". */

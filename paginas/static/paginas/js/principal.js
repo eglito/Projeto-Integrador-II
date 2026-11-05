@@ -16,11 +16,18 @@ import {
   parametrosDaBusca,
   raioDaArea,
 } from "./busca.js";
+import {
+  acompanharResultado,
+  erroDeDetalhes,
+  iniciarDetalhes,
+  mostrarCarregando,
+  mostrarDetalhes,
+  mostrarErroDeDetalhes,
+} from "./detalhes.js";
 import { esconderResultados as esconderEnderecos, iniciarBuscaEndereco } from "./endereco.js";
 import {
   descricaoFiltros,
   resumoBusca,
-  textoDistancia,
   textoFiltrosAtivos,
 } from "./formatacao.js";
 import { iniciarLayout, listaVisivel, mostrarTela, mostrarVisao, telaEstreita } from "./layout.js";
@@ -40,7 +47,9 @@ import {
   marcarPontoDeReferencia,
   marcarPosicao,
   removerPontoDeReferencia,
+  temMarcador,
 } from "./mapa.js";
+import { iniciarNavegacao, registrarLocal } from "./navegacao.js";
 
 let opcoes = null;
 /**
@@ -54,11 +63,22 @@ let busca = null;
 let locaisAtuais = [];
 /**
  * Sobe a cada escolha da pessoa sobre o que o mapa mostra: mover o mapa,
- * escolher um endereço ou um local da lista. A posição que chega depois de uma
- * dessas escolhas não tira a vista do lugar (plano, etapa 7). É a ideia do
- * @Version do JPA: quem guardou um número antigo sabe que alguém mexeu depois.
+ * escolher um endereço ou um local (na lista, no histórico ou pelo link). A
+ * posição que chega depois de uma dessas escolhas não tira a vista do lugar
+ * (plano, etapa 7). É a ideia do @Version do JPA: quem guardou um número
+ * antigo sabe que alguém mexeu depois.
  */
 let geracaoDaVista = 0;
+/**
+ * Visão Detalhes (especificação, 2.4). `localAberto` é o id do local nela,
+ * "invalido" (link com um id que nem é número) ou null, com ela fechada.
+ * `origemDosDetalhes` diz quem a abriu, { tipo: "lista" | "marcador", id },
+ * para o foco voltar lá. `pedidoDeDetalhes` é o id do último pedido: a
+ * resposta atrasada de um local escolhido antes não cobre a do último.
+ */
+let localAberto = null;
+let origemDosDetalhes = null;
+let pedidoDeDetalhes = null;
 
 // Grava o cookie csrftoken. O estado da sessão ganha interface na etapa 9.
 obter("/api/auth/sessao/");
@@ -66,55 +86,94 @@ obter("/api/auth/sessao/");
 obter("/api/opcoes/")
   .done(function (resposta) {
     opcoes = resposta;
-    const centro = opcoes.busca.centro_padrao;
-    criarMapa("mapa", centro);
-    iniciarLayout({ aoMostrarMapa: ajustarTamanho });
-    iniciarLista({ aoEscolher: escolherNaLista, aoAmpliar: ampliarRaio });
-    iniciarFiltros({
-      tiposEquipamento: opcoes.tipos_equipamento,
-      raioPadrao: opcoes.busca.raio_padrao_m,
-      raioMaximo: opcoes.busca.raio_maximo_m,
-      aoAplicar: aplicarFiltros,
-    });
-    iniciarBuscaNaArea({ aoBuscar: buscarNaArea });
-    iniciarBuscaEndereco({ centroPadrao: centro, aoEscolher: escolherEndereco });
-    iniciarLocalizacao({ aoPedir: () => pedirLocalizacao(), aoIrParaEndereco: irParaEndereco });
-    aoMoverPelaPessoa(function () {
-      geracaoDaVista += 1;
-      oferecerBuscaNaArea();
-    });
-    // A localização automática vale a partir da abertura: se a pessoa mexer no
-    // mapa durante a primeira busca, a vista dela também fica onde está.
-    const geracaoNaAbertura = geracaoDaVista;
-    // Sem a posição da pessoa, a busca parte do centro do mapa (decisão 31).
-    buscar({
-      latitude: centro.latitude,
-      longitude: centro.longitude,
-      origem: "centro",
-      endereco: null,
-      raio: opcoes.busca.raio_padrao_m,
-      raioDaArea: false,
-      tipo: "",
-      alturaMaxima: null,
-      limitado: false,
-    }).done(function () {
-      // A localização só entra depois da primeira busca: as duas juntas poderiam
-      // terminar fora de ordem, e a do centro apagaria a de "você". Se a primeira
-      // busca falhar, a API está fora do ar, a posição não ajudaria, e o botão
-      // "Minha localização" nem aparece.
-      adicionarBotaoLocalizacao(() => pedirLocalizacao());
-      verificarPermissao().then(function (concedida) {
-        if (concedida) {
-          pedirLocalizacao({ automatico: true, geracao: geracaoNaAbertura });
-        }
+    const centroPadrao = opcoes.busca.centro_padrao;
+    const idDoLink = iniciarNavegacao({ aoNavegar: navegarPeloHistorico });
+    if (typeof idDoLink !== "number") {
+      // Sem link, ou com um id que nem é número: nada a buscar antes do mapa.
+      iniciarPagina(centroPadrao, idDoLink === null ? null : { id: idDoLink, status: idDoLink });
+      return;
+    }
+    // Link direto (?local=id): o mapa abre no local, e a busca parte dali, como
+    // toda busca sem a posição da pessoa parte do centro do mapa (decisão 31).
+    // Assim o local do link sempre tem marcador e item na lista.
+    obter(`/api/locais/${idDoLink}/`)
+      .done(function (local) {
+        const centro = { latitude: local.latitude, longitude: local.longitude, zoom: centroPadrao.zoom };
+        iniciarPagina(centro, { id: idDoLink, dados: local });
+      })
+      .fail(function (resposta) {
+        iniciarPagina(centroPadrao, { id: idDoLink, status: resposta.status });
       });
-    });
   })
   .fail(function () {
     anunciar(
       "Não foi possível carregar o mapa. Confira a conexão com a internet e recarregue a página.",
     );
   });
+
+/**
+ * Monta a página em volta de `centro` e faz a primeira busca. `link` é o local
+ * de ?local=id: { id, dados } com o LocalDetalhe, { id, status } quando ele não
+ * abriu, ou null sem link.
+ */
+function iniciarPagina(centro, link) {
+  criarMapa("mapa", centro);
+  iniciarLayout({ aoMostrarMapa: ajustarTamanho, aoTrocarVisao: aoTrocarVisao });
+  iniciarLista({ aoEscolher: escolherNaLista, aoAmpliar: ampliarRaio });
+  iniciarFiltros({
+    tiposEquipamento: opcoes.tipos_equipamento,
+    raioPadrao: opcoes.busca.raio_padrao_m,
+    raioMaximo: opcoes.busca.raio_maximo_m,
+    aoAplicar: aplicarFiltros,
+  });
+  iniciarBuscaNaArea({ aoBuscar: buscarNaArea });
+  // A referência do Nominatim é sempre o centro padrão, nunca a posição nem o
+  // local do link (decisão 28).
+  iniciarBuscaEndereco({ centroPadrao: opcoes.busca.centro_padrao, aoEscolher: escolherEndereco });
+  iniciarLocalizacao({ aoPedir: () => pedirLocalizacao(), aoIrParaEndereco: irParaEndereco });
+  iniciarDetalhes({ opcoes, aoVoltar: fecharDetalhes, aoMostrarNoMapa: mostrarNoMapa });
+  aoMoverPelaPessoa(function () {
+    geracaoDaVista += 1;
+    oferecerBuscaNaArea();
+  });
+  // A localização automática vale a partir da abertura: se a pessoa mexer no
+  // mapa durante a primeira busca, a vista dela também fica onde está.
+  const geracaoNaAbertura = geracaoDaVista;
+  if (link?.dados) {
+    // O link já escolheu a vista: a localização automática não a tira do local.
+    geracaoDaVista += 1;
+  }
+  // Sem a posição da pessoa, a busca parte do centro do mapa (decisão 31).
+  buscar({
+    latitude: centro.latitude,
+    longitude: centro.longitude,
+    origem: "centro",
+    endereco: null,
+    raio: opcoes.busca.raio_padrao_m,
+    raioDaArea: false,
+    tipo: "",
+    alturaMaxima: null,
+    limitado: false,
+  }).done(function () {
+    if (link) {
+      abrirDetalhes(link.id, {
+        origem: { tipo: "lista", id: link.id },
+        dados: link.dados,
+        status: link.status,
+      });
+    }
+    // A localização só entra depois da primeira busca: as duas juntas poderiam
+    // terminar fora de ordem, e a do centro apagaria a de "você". Se a primeira
+    // busca falhar, a API está fora do ar, a posição não ajudaria, e o botão
+    // "Minha localização" nem aparece.
+    adicionarBotaoLocalizacao(() => pedirLocalizacao());
+    verificarPermissao().then(function (concedida) {
+      if (concedida) {
+        pedirLocalizacao({ automatico: true, geracao: geracaoNaAbertura });
+      }
+    });
+  });
+}
 
 /**
  * Uma chamada alimenta o mapa e a lista (especificação, 2.3). Devolve o jqXHR.
@@ -153,6 +212,7 @@ function buscar(novaBusca) {
         limitado: busca.limitado,
       });
       anunciar(endereco ? `Endereço: ${endereco}. ${resumo}` : resumo);
+      acompanharDetalhes();
     })
     .fail(function (resposta) {
       if (resposta.status === 400) {
@@ -208,6 +268,11 @@ function buscarNaArea() {
     marcarRaio(raio, { daArea: true });
     // As distâncias voltam a sair do centro do mapa, e não do endereço buscado.
     removerPontoDeReferencia();
+    // Com os detalhes abertos, o painel volta para a lista, onde está o
+    // resultado; em tela estreita, sem tirar o Mapa da frente.
+    if (localAberto !== null) {
+      mostrarVisao("lista", { focar: false, frente: false });
+    }
     // O botão some, e o foco vai para o resultado, sem se perder. Se a busca
     // falhar, nada disso acontece: botão e foco ficam para nova tentativa.
     esconderBuscaNaArea();
@@ -279,8 +344,9 @@ function pedirLocalizacao({ automatico = false, geracao = geracaoDaVista } = {})
     }
     marcarPosicao(posicao.latitude, posicao.longitude);
     if (geracao !== geracaoDaVista) {
+      // Vale para quem mexeu no mapa e para quem abriu um local pelo link.
       anunciar(
-        "Sua localização está marcada no mapa como Você está aqui. Como você mudou o mapa enquanto ela chegava, mapa e lista ficaram onde estavam. Para buscar perto de você, use Minha localização.",
+        "Sua localização está marcada no mapa como Você está aqui. O mapa e a lista ficaram onde estavam, para não tirar você do que estava vendo. Para buscar perto de você, use Minha localização.",
       );
       return;
     }
@@ -312,28 +378,171 @@ function localPorId(id) {
 }
 
 /**
- * Escolha feita na lista: o mapa vai até o local. Em tela larga, o foco fica
- * na lista. Em tela estreita, o Mapa vem para a frente e o foco vai para o
- * marcador, porque centralizar um mapa escondido não teria efeito (decisão 40).
+ * Escolha feita na lista: o mapa vai até o local, que fica destacado, e o
+ * painel vira o de detalhes (especificação, 2.1). Em tela estreita, a Lista
+ * continua na frente; "Mostrar no mapa" leva ao marcador (README, decisão 41).
  */
 function escolherNaLista(id) {
   geracaoDaVista += 1;
-  marcarNaLista(id);
-  if (telaEstreita()) {
-    mostrarTela("mapa");
-    // O mapa acabou de aparecer: sem animação, e o foco já encontra o marcador no lugar.
-    destacarNoMapa(id, { centralizar: true, semAnimacao: true });
-    focarMarcador(id);
-  } else {
-    destacarNoMapa(id, { centralizar: true });
-  }
-  anunciar(`${localPorId(id).nome} destacado no mapa.`);
+  abrirDetalhes(id, { origem: { tipo: "lista", id }, centralizar: true });
 }
 
-/** Escolha feita no marcador: a lista mostra o item, e o foco fica no marcador. */
+/** Escolha feita no marcador (clique, Enter ou Espaço): o painel vira o de detalhes, e o mapa fica onde está. */
 function escolherNoMapa(id) {
-  const local = localPorId(id);
-  destacarNoMapa(id);
-  marcarNaLista(id, { rolar: true });
-  anunciar(`${local.nome}, ${textoDistancia(local.distancia_m, busca.origem)}. Destacado na lista.`);
+  abrirDetalhes(id, { origem: { tipo: "marcador", id } });
+}
+
+/**
+ * Abre a visão Detalhes do local `id` e cria a entrada ?local=id no histórico.
+ * `origem`: quem a abriu, para o foco voltar lá. `centralizar`: leva o mapa
+ * até o local. `dados` e `status`: a resposta já buscada na abertura por link,
+ * o LocalDetalhe ou o código do erro.
+ */
+function abrirDetalhes(id, { origem = null, centralizar = false, dados = null, status = null } = {}) {
+  localAberto = id;
+  origemDosDetalhes = origem;
+  pedidoDeDetalhes = id;
+  // A origem vai com a entrada do histórico: o Voltar e o Avançar a recuperam.
+  registrarLocal(id, { origem });
+  // Lista e mapa respondem na hora, com o que a busca já sabe do local. Fora
+  // do resultado, as duas chamadas só tiram o destaque do local anterior.
+  marcarNaLista(id);
+  // Em tela estreita, o mapa está atrás do painel: sem animação.
+  destacarNoMapa(id, { centralizar, semAnimacao: telaEstreita() });
+  if (status !== null) {
+    exibirErroDeDetalhes(status);
+    mostrarVisao("detalhes");
+    return;
+  }
+  if (dados) {
+    exibirDetalhes(dados);
+    mostrarVisao("detalhes");
+    return;
+  }
+  // O painel também: o foco vai para o nome, e o conteúdo chega depois, sem
+  // mexer no foco nem na tela, porque a pessoa pode ter ido para outro lugar.
+  mostrarCarregando(localPorId(id)?.nome ?? null);
+  mostrarVisao("detalhes");
+  obter(`/api/locais/${id}/`)
+    .done(function (local) {
+      if (pedidoDeDetalhes === id) {
+        exibirDetalhes(local);
+      }
+    })
+    .fail(function (resposta) {
+      if (pedidoDeDetalhes === id) {
+        exibirErroDeDetalhes(resposta.status);
+      }
+    });
+}
+
+/** Preenche a visão Detalhes; a distância vem da busca atual, quando o local está nela. */
+function exibirDetalhes(local) {
+  mostrarDetalhes(local, noResultado(localPorId(local.id)));
+  anunciar(`Detalhes de ${local.nome}.`);
+}
+
+/**
+ * O local não abriu: a visão Detalhes diz o que aconteceu e o que fazer (bug 2
+ * do HANDOFF), e o anúncio também, para quem já saiu do painel.
+ */
+function exibirErroDeDetalhes(status) {
+  const erro = erroDeDetalhes(status);
+  mostrarErroDeDetalhes(erro);
+  anunciar(`${erro.titulo}. ${erro.mensagem}`);
+}
+
+/**
+ * O painel trocou de visão (layout.js). Saindo dos detalhes, por "Voltar à
+ * lista", pelo Esc, pelo menu ou por uma busca, a URL deixa de citar o local, e
+ * uma resposta que ainda não chegou não reabre o painel.
+ */
+function aoTrocarVisao(nome) {
+  if (nome === "detalhes" || localAberto === null) {
+    return;
+  }
+  localAberto = null;
+  pedidoDeDetalhes = null;
+  registrarLocal(null);
+}
+
+/**
+ * "Voltar à lista", Esc com o foco no painel ou o Voltar do navegador: a lista
+ * volta, e o foco vai para quem abriu os detalhes (especificação, 2.4).
+ */
+function fecharDetalhes() {
+  const origem = origemDosDetalhes;
+  origemDosDetalhes = null;
+  mostrarVisao("lista", { focar: false });
+  devolverFoco(origem);
+}
+
+/**
+ * O foco volta ao marcador ou ao item da lista de origem. Se uma busca nova
+ * os tirou da tela, vai para o título da lista e não se perde.
+ */
+function devolverFoco(origem) {
+  if (origem?.tipo === "marcador" && temMarcador(origem.id)) {
+    if (telaEstreita()) {
+      mostrarTela("mapa");
+    }
+    focarMarcador(origem.id);
+    return;
+  }
+  const item = origem ? $(`#lista-locais [data-local="${origem.id}"]`) : $();
+  (item.length ? item : $("#titulo-lista")).trigger("focus");
+}
+
+/**
+ * "Mostrar no mapa": o mapa vai até o local, e o foco, para o marcador. Em
+ * tela estreita, o Mapa vem para a frente (README, decisão 41). Sem animação:
+ * o foco precisa encontrar o marcador no lugar.
+ */
+function mostrarNoMapa() {
+  geracaoDaVista += 1;
+  if (telaEstreita()) {
+    mostrarTela("mapa");
+  }
+  destacarNoMapa(localAberto, { centralizar: true, semAnimacao: true });
+  focarMarcador(localAberto);
+}
+
+/**
+ * Voltar ou Avançar do navegador (navegacao.js): a tela acompanha a URL, sem
+ * criar entrada nova. Sem local na URL, fecha os detalhes; com um local, abre
+ * como da primeira vez. Aberto pelo marcador, o mapa fica onde está e o Esc
+ * volta ao marcador; pela lista, ou pelo link (sem estado), o mapa vai até ele.
+ */
+function navegarPeloHistorico(id, estado) {
+  if (id === null) {
+    if (localAberto !== null) {
+      fecharDetalhes();
+    }
+    return;
+  }
+  const origem = estado?.origem ?? { tipo: "lista", id };
+  const centralizar = origem.tipo === "lista";
+  if (centralizar) {
+    geracaoDaVista += 1;
+  }
+  abrirDetalhes(id, { origem, centralizar, status: id === "invalido" ? "invalido" : null });
+}
+
+/**
+ * Depois de uma busca nova com os detalhes abertos (pela posição da pessoa,
+ * por exemplo), a distância e o destaque acompanham o resultado novo.
+ */
+function acompanharDetalhes() {
+  if (typeof localAberto !== "number") {
+    return;
+  }
+  acompanharResultado(noResultado(localPorId(localAberto)));
+  // Fora do resultado novo, as duas chamadas só limpam o destaque.
+  marcarNaLista(localAberto);
+  destacarNoMapa(localAberto);
+}
+
+/** O que o painel de detalhes precisa do local no resultado da busca: a distância e a origem dela. */
+function noResultado(resultado) {
+  return resultado ? { distancia_m: resultado.distancia_m, origem: busca.origem } : null;
 }

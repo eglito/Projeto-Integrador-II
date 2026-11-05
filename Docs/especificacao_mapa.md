@@ -101,7 +101,7 @@ Dados de `GET /api/locais/{id}/` (LocalDetalhe):
 
 ## 5. Decisões
 
-Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 40.
+Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 41.
 
 | # | Pergunta | Resposta | README |
 |---|---|---|---|
@@ -132,7 +132,7 @@ Decididas na entrevista de 04/11/2026, antes da etapa 4 (decisões de projeto do
 | Como se organizam mapa, menu e painel em tela larga? | Painel à esquerda, sempre visível; mapa ao lado; menu como gaveta por cima, fechada no início | 40 |
 | O menu é navegação ou tem conteúdo? | Navegação: cada item abre uma visão do painel (Buscar, Lista de locais). "Entrar" entra na etapa 9 | 40 |
 | Onde ficam título, menu e anúncios? | Barra superior com "☰ Menu" e o título; a região de anúncios numa faixa logo abaixo, visível em qualquer visão | 40 |
-| E em tela estreita? | Barra inferior com Mapa e Lista; o Mapa abre na frente. Escolher um local na lista leva ao Mapa, com o foco no marcador | 40 |
+| E em tela estreita? | Barra inferior com Mapa e Lista; o Mapa abre na frente. Escolher um local na lista leva ao Mapa, com o foco no marcador. Revista em 05/11/2026, na etapa 8: escolher na lista abre os detalhes, e "Mostrar no mapa" leva ao marcador | 40 e 41 |
 | Depois de aplicar os filtros? | O painel volta para a lista, com o foco no título e uma linha com os filtros ativos | 40 |
 
 ---
