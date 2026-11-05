@@ -44,11 +44,11 @@ export function mensagemDeFalha(acao, status) {
 }
 
 /**
- * Guarda o aria-describedby de cada campo sem erro, isto é, a ajuda, quando há:
+ * Guarda o aria-describedby de cada campo (input ou select) sem erro, isto é, a ajuda, quando há:
  * limparErros volta a ele, e mostrarErros soma o erro a ele.
  */
 export function prepararFormulario(nome) {
-  $(`#form-${nome} input`).each(function () {
+  $(`#form-${nome}`).find("input, select").each(function () {
     $(this).data("descricao", $(this).attr("aria-describedby") || "");
   });
 }
@@ -88,7 +88,7 @@ export function mostrarErros(nome, campos, { porCampo, geral }) {
 export function limparErros(nome) {
   $(`#${nome}-erro-geral`).text("").prop("hidden", true);
   $(`#form-${nome} .erro`).not(".erro-geral").text("").prop("hidden", true);
-  $(`#form-${nome} input`).each(function () {
+  $(`#form-${nome}`).find("input, select").each(function () {
     const entrada = $(this).removeAttr("aria-invalid");
     if (entrada.data("descricao")) {
       entrada.attr("aria-describedby", entrada.data("descricao"));
