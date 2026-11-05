@@ -110,16 +110,26 @@ export function logado() {
   return usuario !== null;
 }
 
-/** Menu e convite para contribuir acompanham a sessão. */
+/** Usuário da sessão, { id, username }, ou null para visitante. */
+export function usuarioAtual() {
+  return usuario;
+}
+
+/**
+ * Menu e convite para contribuir acompanham a sessão. Exportada como
+ * atualizarUsuario para a troca de nome (conta.js) mostrar o nome novo no menu.
+ */
 function definirUsuario(novo) {
   usuario = novo;
   $("#menu-usuario")
     .text(novo ? textoUsuario(novo.username) : "")
     .prop("hidden", !novo);
   $("#item-entrar").prop("hidden", Boolean(novo));
-  $("#item-sair").prop("hidden", !novo);
+  $("#item-configuracoes, #item-sair").prop("hidden", !novo);
   $("#contribuir-ajuda").prop("hidden", Boolean(novo));
 }
+
+export { definirUsuario as atualizarUsuario };
 
 /**
  * Liga menu e formulários. `aoEntrar(usuario, pendente, { novaConta, naTela })`
@@ -228,6 +238,10 @@ function sair() {
   enviar("POST", "/api/auth/logout/")
     .done(function () {
       definirUsuario(null);
+      // Configurações não fica na tela de um visitante. O foco continua no Menu.
+      if (!$("#visao-configuracoes").prop("hidden")) {
+        mostrarVisao("lista", { focar: false, frente: false });
+      }
       anunciar("Você saiu da conta. O mapa continua aberto, e você pode entrar de novo pelo menu.");
     })
     .fail(function (resposta) {
