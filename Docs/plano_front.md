@@ -248,6 +248,7 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
     - Um id que não é número (`abc`, `0`, `07`) não vai à API. Ele e o 404 mostram "Local não encontrado", com o que fazer.
     - Uma resposta atrasada não cobre o local escolhido depois (`pedidoDeDetalhes`), e fechar o painel antes da resposta a descarta.
     - Os botões de contribuição (especificação, 2.4) ficam para a etapa 9, como previsto.
+    - Achados na revisão: um erro que chega depois do clique só preenche o painel e é anunciado, sem trazer o painel para a frente nem mover o foco, porque a pessoa pode ter ido para o Mapa; a entrada do histórico guarda quem abriu os detalhes, e o Voltar e o Avançar reabrem como da primeira vez (pelo marcador, o mapa fica onde está e o Esc volta ao marcador); e abrir um local fora do resultado tira o destaque do anterior.
 - **Arquivos:** `js/detalhes.js`, `js/navegacao.js`, `testes/detalhes.test.js`, `testes/navegacao.test.js` e o template.
 - **Conceitos novos:** `pushState` e `popstate`, `URLSearchParams` e gerenciamento de foco.
 - **Verificação:** itens 4 e 5.

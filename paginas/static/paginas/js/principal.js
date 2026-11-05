@@ -402,25 +402,26 @@ function abrirDetalhes(id, { origem = null, centralizar = false, dados = null, s
   localAberto = id;
   origemDosDetalhes = origem;
   pedidoDeDetalhes = id;
-  registrarLocal(id);
+  // A origem vai com a entrada do histórico: o Voltar e o Avançar a recuperam.
+  registrarLocal(id, { origem });
+  // Lista e mapa respondem na hora, com o que a busca já sabe do local. Fora
+  // do resultado, as duas chamadas só tiram o destaque do local anterior.
+  marcarNaLista(id);
+  // Em tela estreita, o mapa está atrás do painel: sem animação.
+  destacarNoMapa(id, { centralizar, semAnimacao: telaEstreita() });
   if (status !== null) {
     exibirErroDeDetalhes(status);
+    mostrarVisao("detalhes");
     return;
-  }
-  // Lista e mapa respondem na hora, com o que a busca já sabe do local.
-  const resultado = localPorId(id);
-  if (resultado) {
-    marcarNaLista(id);
-    // Em tela estreita, o mapa está atrás do painel: sem animação.
-    destacarNoMapa(id, { centralizar, semAnimacao: telaEstreita() });
   }
   if (dados) {
     exibirDetalhes(dados);
     mostrarVisao("detalhes");
     return;
   }
-  // O painel também: o foco vai para o nome, e o conteúdo chega depois.
-  mostrarCarregando(resultado?.nome ?? null);
+  // O painel também: o foco vai para o nome, e o conteúdo chega depois, sem
+  // mexer no foco nem na tela, porque a pessoa pode ter ido para outro lugar.
+  mostrarCarregando(localPorId(id)?.nome ?? null);
   mostrarVisao("detalhes");
   obter(`/api/locais/${id}/`)
     .done(function (local) {
@@ -441,11 +442,13 @@ function exibirDetalhes(local) {
   anunciar(`Detalhes de ${local.nome}.`);
 }
 
-/** O local não abriu: a visão Detalhes diz o que aconteceu e o que fazer (bug 2 do HANDOFF). */
+/**
+ * O local não abriu: a visão Detalhes diz o que aconteceu e o que fazer (bug 2
+ * do HANDOFF), e o anúncio também, para quem já saiu do painel.
+ */
 function exibirErroDeDetalhes(status) {
   const erro = erroDeDetalhes(status);
   mostrarErroDeDetalhes(erro);
-  mostrarVisao("detalhes");
   anunciar(`${erro.titulo}. ${erro.mensagem}`);
 }
 
@@ -506,21 +509,23 @@ function mostrarNoMapa() {
 
 /**
  * Voltar ou Avançar do navegador (navegacao.js): a tela acompanha a URL, sem
- * criar entrada nova. Sem local na URL, fecha os detalhes; com um local, abre.
+ * criar entrada nova. Sem local na URL, fecha os detalhes; com um local, abre
+ * como da primeira vez. Aberto pelo marcador, o mapa fica onde está e o Esc
+ * volta ao marcador; pela lista, ou pelo link (sem estado), o mapa vai até ele.
  */
-function navegarPeloHistorico(id) {
+function navegarPeloHistorico(id, estado) {
   if (id === null) {
     if (localAberto !== null) {
       fecharDetalhes();
     }
     return;
   }
-  geracaoDaVista += 1;
-  abrirDetalhes(id, {
-    origem: { tipo: "lista", id },
-    centralizar: true,
-    status: id === "invalido" ? "invalido" : null,
-  });
+  const origem = estado?.origem ?? { tipo: "lista", id };
+  const centralizar = origem.tipo === "lista";
+  if (centralizar) {
+    geracaoDaVista += 1;
+  }
+  abrirDetalhes(id, { origem, centralizar, status: id === "invalido" ? "invalido" : null });
 }
 
 /**
@@ -531,12 +536,10 @@ function acompanharDetalhes() {
   if (typeof localAberto !== "number") {
     return;
   }
-  const resultado = localPorId(localAberto);
-  acompanharResultado(noResultado(resultado));
-  if (resultado) {
-    marcarNaLista(localAberto);
-    destacarNoMapa(localAberto);
-  }
+  acompanharResultado(noResultado(localPorId(localAberto)));
+  // Fora do resultado novo, as duas chamadas só limpam o destaque.
+  marcarNaLista(localAberto);
+  destacarNoMapa(localAberto);
 }
 
 /** O que o painel de detalhes precisa do local no resultado da busca: a distância e a origem dela. */

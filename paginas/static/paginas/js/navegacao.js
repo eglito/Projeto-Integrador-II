@@ -38,15 +38,17 @@ export function urlComLocal(href, id) {
 let localNaUrl = null;
 
 /**
- * Liga o Voltar e o Avançar do navegador: `aoNavegar(id)` recebe o local da URL
- * nova (id, "invalido" ou null). Devolve o local da URL de abertura.
+ * Liga o Voltar e o Avançar do navegador: `aoNavegar(id, estado)` recebe o
+ * local da URL nova (id, "invalido" ou null) e o estado guardado com ela por
+ * registrarLocal, ou null (a entrada da abertura da página). Devolve o local da
+ * URL de abertura.
  */
 export function iniciarNavegacao({ aoNavegar }) {
   localNaUrl = idDaUrl(window.location.search);
-  $(window).on("popstate", function () {
+  $(window).on("popstate", function (evento) {
     // O navegador já mudou a URL: só o estado acompanha, sem nova entrada.
     localNaUrl = idDaUrl(window.location.search);
-    aoNavegar(localNaUrl);
+    aoNavegar(localNaUrl, evento.originalEvent.state);
   });
   return localNaUrl;
 }
@@ -54,12 +56,17 @@ export function iniciarNavegacao({ aoNavegar }) {
 /**
  * A tela passou a mostrar o local `id` (ou nenhum, com null). Só cria uma
  * entrada no histórico quando a URL ainda não diz isso: assim, o que o popstate
- * abre ou fecha não entra no histórico de novo.
+ * abre ou fecha não entra no histórico de novo. `estado` vai junto da entrada
+ * (por exemplo, quem abriu os detalhes) e volta no popstate; com a URL igual,
+ * ele só atualiza a entrada atual.
  */
-export function registrarLocal(id) {
+export function registrarLocal(id, estado = null) {
   if (id === localNaUrl) {
+    if (id !== null) {
+      window.history.replaceState(estado, "");
+    }
     return;
   }
   localNaUrl = id;
-  window.history.pushState(null, "", urlComLocal(window.location.href, id));
+  window.history.pushState(estado, "", urlComLocal(window.location.href, id));
 }
