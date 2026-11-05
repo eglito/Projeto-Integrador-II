@@ -70,35 +70,54 @@ export function validarTextoEndereco(texto) {
   return texto.trim() === "" ? { erro: TEXTO_VAZIO } : { texto: texto.trim() };
 }
 
-// Estado da busca de endereços nesta página.
+// Estado da busca de endereços nesta página. A trava de 1 s e o cache valem
+// para todos os formulários: a política do Nominatim é por quem pede.
 let ultimaBuscaEm = null;
 let buscando = false;
-let resultadosAtuais = [];
 // Política de uso do Nominatim: guardar os resultados, em vez de repetir a busca.
 const cache = new Map();
+// Resultados mostrados agora em cada formulário, pelo prefixo dos ids.
+const resultadosAtuais = new Map();
 
 /**
- * Liga o formulário. `aoEscolher` recebe { latitude, longitude, rotulo } do
- * endereço escolhido, direto (um resultado) ou pela lista (de 2 a 5).
+ * Ids de um formulário de endereço com o prefixo `p` ("endereco" na visão
+ * Buscar): #form-p, o campo #campo-p, com a ajuda em #campo-p-ajuda e o erro
+ * em #campo-p-erro, e os resultados em #resultados-p, com a lista em #lista-p.
  */
-export function iniciarBuscaEndereco({ centroPadrao, aoEscolher }) {
+function ids(prefixo) {
+  return {
+    formulario: `#form-${prefixo}`,
+    campo: `#campo-${prefixo}`,
+    ajuda: `campo-${prefixo}-ajuda`,
+    erro: `campo-${prefixo}-erro`,
+    resultados: `#resultados-${prefixo}`,
+    lista: `#lista-${prefixo}`,
+  };
+}
+
+/**
+ * Liga um formulário de endereço. `aoEscolher` recebe { latitude, longitude,
+ * rotulo } do endereço escolhido, direto (um resultado) ou pela lista (de 2 a 5).
+ */
+export function iniciarBuscaEndereco({ prefixo, centroPadrao, aoEscolher }) {
+  const id = ids(prefixo);
   // Só no Enter ou no botão, sem autocompletar (especificação, 2.5).
-  $("#form-endereco").on("submit", function (evento) {
+  $(id.formulario).on("submit", function (evento) {
     evento.preventDefault();
-    const validacao = validarTextoEndereco($("#campo-endereco").val());
+    const validacao = validarTextoEndereco($(id.campo).val());
     if (validacao.erro) {
-      mostrarErro(validacao.erro);
+      mostrarErro(prefixo, validacao.erro);
       return;
     }
     if (buscando) {
       return; // o anúncio "Buscando o endereço…" já está no ar
     }
-    limparErro();
-    esconderResultados();
+    limparErro(prefixo);
+    esconderResultados(prefixo);
 
     const chave = chaveDeCache(validacao.texto);
     if (cache.has(chave)) {
-      tratarResultados(cache.get(chave), validacao.texto, aoEscolher);
+      tratarResultados(prefixo, cache.get(chave), validacao.texto, aoEscolher);
       return;
     }
 
@@ -110,7 +129,7 @@ export function iniciarBuscaEndereco({ centroPadrao, aoEscolher }) {
       obter(URL_NOMINATIM, parametrosNominatim(validacao.texto, centroPadrao))
         .done(function (resultados) {
           cache.set(chave, resultados);
-          tratarResultados(resultados, validacao.texto, aoEscolher);
+          tratarResultados(prefixo, resultados, validacao.texto, aoEscolher);
         })
         .fail(function () {
           anunciar(
@@ -123,8 +142,9 @@ export function iniciarBuscaEndereco({ centroPadrao, aoEscolher }) {
     }, esperaParaNovaBusca(ultimaBuscaEm, Date.now()));
   });
 
-  $("#lista-enderecos").on("click", "[data-indice]", function () {
-    aoEscolher(converter(resultadosAtuais[Number($(this).attr("data-indice"))]));
+  $(id.lista).on("click", "[data-indice]", function () {
+    const resultados = resultadosAtuais.get(prefixo);
+    aoEscolher(converter(resultados[Number($(this).attr("data-indice"))]));
   });
 }
 
@@ -136,9 +156,10 @@ function converter(resultado) {
   };
 }
 
-function tratarResultados(resultados, texto, aoEscolher) {
+function tratarResultados(prefixo, resultados, texto, aoEscolher) {
   if (resultados.length === 0) {
     mostrarErro(
+      prefixo,
       `Nenhum endereço encontrado para "${texto}". Confira a grafia ou inclua o bairro e a cidade.`,
     );
     return;
@@ -148,39 +169,40 @@ function tratarResultados(resultados, texto, aoEscolher) {
     return;
   }
   // Ambíguo: a pessoa escolhe. .text() escapa o nome, que vem de fora.
-  resultadosAtuais = resultados;
-  const lista = $("#lista-enderecos").empty();
+  const id = ids(prefixo);
+  resultadosAtuais.set(prefixo, resultados);
+  const lista = $(id.lista).empty();
   resultados.forEach(function (resultado, indice) {
     const botao = $("<button>", { type: "button", "data-indice": indice }).text(
       rotuloEndereco(resultado.display_name),
     );
     $("<li>").append(botao).appendTo(lista);
   });
-  $("#resultados-endereco").prop("hidden", false);
+  $(id.resultados).prop("hidden", false);
   anunciar(`${resultados.length} endereços encontrados. Escolha um.`);
   lista.find("button").first().trigger("focus");
 }
 
 /** Erro junto do campo, ligado a ele, anunciado e com o foco no campo (CLAUDE.md). */
-function mostrarErro(mensagem) {
-  $("#campo-endereco-erro").text(mensagem).prop("hidden", false);
-  $("#campo-endereco")
-    .attr({
-      "aria-invalid": "true",
-      "aria-describedby": "campo-endereco-ajuda campo-endereco-erro",
-    })
+function mostrarErro(prefixo, mensagem) {
+  const id = ids(prefixo);
+  $(`#${id.erro}`).text(mensagem).prop("hidden", false);
+  $(id.campo)
+    .attr({ "aria-invalid": "true", "aria-describedby": `${id.ajuda} ${id.erro}` })
     .trigger("focus");
   anunciar(mensagem);
 }
 
-function limparErro() {
-  $("#campo-endereco-erro").text("").prop("hidden", true);
-  $("#campo-endereco").removeAttr("aria-invalid").attr("aria-describedby", "campo-endereco-ajuda");
+function limparErro(prefixo) {
+  const id = ids(prefixo);
+  $(`#${id.erro}`).text("").prop("hidden", true);
+  $(id.campo).removeAttr("aria-invalid").attr("aria-describedby", id.ajuda);
 }
 
-/** Esconde os endereços oferecidos, por exemplo depois da escolha. */
-export function esconderResultados() {
-  $("#resultados-endereco").prop("hidden", true);
-  $("#lista-enderecos").empty();
-  resultadosAtuais = [];
+/** Esconde os endereços oferecidos no formulário `prefixo`, por exemplo depois da escolha. */
+export function esconderResultados(prefixo) {
+  const id = ids(prefixo);
+  $(id.resultados).prop("hidden", true);
+  $(id.lista).empty();
+  resultadosAtuais.delete(prefixo);
 }

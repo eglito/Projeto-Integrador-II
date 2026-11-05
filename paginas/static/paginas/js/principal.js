@@ -140,7 +140,11 @@ function iniciarPagina(centro, link) {
   iniciarBuscaNaArea({ aoBuscar: buscarNaArea });
   // A referência do Nominatim é sempre o centro padrão, nunca a posição nem o
   // local do link (decisão 28).
-  iniciarBuscaEndereco({ centroPadrao: opcoes.busca.centro_padrao, aoEscolher: escolherEndereco });
+  iniciarBuscaEndereco({
+    prefixo: "endereco",
+    centroPadrao: opcoes.busca.centro_padrao,
+    aoEscolher: escolherEndereco,
+  });
   iniciarLocalizacao({ aoPedir: () => pedirLocalizacao(), aoIrParaEndereco: irParaEndereco });
   iniciarDetalhes({
     opcoes,
@@ -340,7 +344,7 @@ function buscarAPartirDe({ latitude, longitude, origem, endereco }) {
 function escolherEndereco({ latitude, longitude, rotulo }) {
   geracaoDaVista += 1;
   buscarAPartirDe({ latitude, longitude, origem: "endereco", endereco: rotulo }).done(function () {
-    esconderEnderecos();
+    esconderEnderecos("endereco");
     marcarPontoDeReferencia(latitude, longitude, "Endereço buscado");
     mostrarVisao("lista");
   });
