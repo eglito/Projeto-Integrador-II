@@ -1,7 +1,7 @@
 # Plano: front-end do mapa (Fase 4)
 
 Etapas para entregar o que pede `Docs/especificacao_mapa.md`. Aprovado em 03/11/2026.
-As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 40).
+As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 41).
 
 > Regras de cada etapa: branch própria, commits por unidade lógica e PR aberta pelo autor (`CLAUDE.md`, Git). `pytest` e `ruff` rodam antes de cada commit, então o item 9 da verificação vale para todas as etapas e não é repetido. Cada etapa termina com evidência (screenshot, saída de comando), não com "pronto".
 
