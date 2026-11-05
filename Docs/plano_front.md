@@ -335,6 +335,10 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - O Esc cancela com o foco na visão, em "Usar o centro do mapa" ou no próprio mapa; num marcador, continua só escondendo o nome (WCAG 1.4.13). Sair da conta com o modo aberto volta à lista, como Configurações.
   - A mira tem linhas escuras com contorno branco, para o contraste de 3:1 sobre qualquer tile (WCAG 1.4.11).
   - Achado na verificação: a faixa de anúncios muda de altura e o mapa é medido de novo (etapa 7), o que o desloca alguns pixels; o marcador do ponto acompanha o lugar escolhido, e a mira continua no centro.
+  - Achados na revisão:
+    - Uma resposta do Nominatim que chega depois de a pessoa sair da visão do formulário é descartada (fica só no cache). Sem isso, ela reabria "Adicionar local" sem o modo, com o marcador "Novo local" no mapa. Vale também para a visão Buscar, onde a resposta atrasada fazia a busca e trocava a visão.
+    - Ao abrir o modo, o formulário de endereço volta limpo, sem o erro de uma vez anterior (`limparFormulario`).
+    - Se o mapa foi para outra área durante o modo (a pessoa o moveu, ou ele foi até um endereço), ou se "Buscar nesta área" estava na tela na entrada, o botão volta ao fim do modo. O movimento vem do mesmo aviso que o `mapa.js` já dá para "Buscar nesta área", e não da comparação do centro: o arredondamento da nova medida do mapa, a cada mudança de altura da faixa, já mudava o centro.
 - **Arquivos:** `js/cadastro_local.js`, `js/endereco.js`, `js/mapa.js`, `js/sessao.js`, `testes/cadastro_local.test.js`, o CSS da mira e o template.
 - **Verificação:** itens 4 e 5.
 

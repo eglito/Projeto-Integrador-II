@@ -129,12 +129,18 @@ export function iniciarBuscaEndereco({ prefixo, centroPadrao, aoEscolher }) {
       obter(URL_NOMINATIM, parametrosNominatim(validacao.texto, centroPadrao))
         .done(function (resultados) {
           cache.set(chave, resultados);
-          tratarResultados(prefixo, resultados, validacao.texto, aoEscolher);
+          // Quem saiu da visão do formulário antes da resposta não é levado de
+          // volta a ela: o resultado fica só no cache, para a próxima busca.
+          if (formularioNaTela(prefixo)) {
+            tratarResultados(prefixo, resultados, validacao.texto, aoEscolher);
+          }
         })
         .fail(function () {
-          anunciar(
-            "Não foi possível buscar o endereço. Confira a conexão com a internet e tente de novo.",
-          );
+          if (formularioNaTela(prefixo)) {
+            anunciar(
+              "Não foi possível buscar o endereço. Confira a conexão com a internet e tente de novo.",
+            );
+          }
         })
         .always(function () {
           buscando = false;
@@ -146,6 +152,11 @@ export function iniciarBuscaEndereco({ prefixo, centroPadrao, aoEscolher }) {
     const resultados = resultadosAtuais.get(prefixo);
     aoEscolher(converter(resultados[Number($(this).attr("data-indice"))]));
   });
+}
+
+/** A visão do painel que contém o formulário ainda está na tela. */
+function formularioNaTela(prefixo) {
+  return $(ids(prefixo).formulario).closest(".visao").is(":not([hidden])");
 }
 
 function converter(resultado) {
@@ -197,6 +208,13 @@ function limparErro(prefixo) {
   const id = ids(prefixo);
   $(`#${id.erro}`).text("").prop("hidden", true);
   $(id.campo).removeAttr("aria-invalid").attr("aria-describedby", id.ajuda);
+}
+
+/** Deixa o formulário `prefixo` como novo: campo vazio, sem erro e sem endereços oferecidos. */
+export function limparFormulario(prefixo) {
+  $(ids(prefixo).campo).val("");
+  limparErro(prefixo);
+  esconderResultados(prefixo);
 }
 
 /** Esconde os endereços oferecidos no formulário `prefixo`, por exemplo depois da escolha. */

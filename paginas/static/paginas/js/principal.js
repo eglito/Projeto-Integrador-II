@@ -29,6 +29,7 @@ import {
   entrarNoModoCadastro,
   iniciarCadastroLocal,
   modoCadastroAtivo,
+  registrarMovimentoNoModo,
   sairDoModoCadastro,
 } from "./cadastro_local.js";
 import { iniciarConta } from "./conta.js";
@@ -163,8 +164,11 @@ function iniciarPagina(centro, link) {
   iniciarCadastroLocal({ centroPadrao: opcoes.busca.centro_padrao });
   aoMoverPelaPessoa(function () {
     geracaoDaVista += 1;
-    // No modo de adicionar local, mover o mapa é mirar: "Buscar nesta área" não aparece.
-    if (!modoCadastroAtivo()) {
+    // No modo de adicionar local, mover o mapa é mirar: "Buscar nesta área" só
+    // aparece quando o modo terminar.
+    if (modoCadastroAtivo()) {
+      registrarMovimentoNoModo();
+    } else {
       oferecerBuscaNaArea();
     }
   });

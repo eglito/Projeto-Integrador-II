@@ -11,8 +11,8 @@
  */
 
 import { anunciar } from "./anuncio.js";
-import { esconderBuscaNaArea } from "./busca.js";
-import { esconderResultados, iniciarBuscaEndereco } from "./endereco.js";
+import { esconderBuscaNaArea, oferecerBuscaNaArea } from "./busca.js";
+import { esconderResultados, iniciarBuscaEndereco, limparFormulario } from "./endereco.js";
 import { fecharMenu, mostrarVisao } from "./layout.js";
 import {
   aoClicarNoMapa,
@@ -54,6 +54,11 @@ export function textoCoordenadas(latitude, longitude) {
 // O modo está aberto, e o ponto escolhido nele: { latitude, longitude, origem, endereco }.
 let ativo = false;
 let ponto = null;
+// Para "Buscar nesta área" voltar ao fim do modo: se o mapa foi para outra área
+// durante ele (a pessoa o moveu, ou ele foi até um endereço) e se o botão
+// estava na tela na entrada (o modo o esconde).
+let mapaMudouNoModo = false;
+let buscarNaAreaNaEntrada = false;
 
 export function modoCadastroAtivo() {
   return ativo;
@@ -113,9 +118,11 @@ export function entrarNoModoCadastro() {
   ponto = null;
   removerNovoLocal();
   $("#ponto-escolhido").prop("hidden", true);
-  $("#campo-endereco-local").val("");
-  esconderResultados("endereco-local");
+  // Sem o erro ou os endereços de uma vez anterior.
+  limparFormulario("endereco-local");
   // O lugar de "Buscar nesta área" é de "Usar o centro do mapa" enquanto o modo durar.
+  mapaMudouNoModo = false;
+  buscarNaAreaNaEntrada = !$("#buscar-na-area").prop("hidden");
   esconderBuscaNaArea();
   $("#mira, #usar-centro").prop("hidden", false);
   $("#mapa").attr("aria-describedby", "mapa-instrucoes-cadastro");
@@ -136,6 +143,20 @@ export function sairDoModoCadastro() {
   esconderResultados("endereco-local");
   $("#ponto-escolhido, #mira, #usar-centro").prop("hidden", true);
   $("#mapa").attr("aria-describedby", "mapa-instrucoes");
+  // O mapa foi para outra área (ou o botão já estava na tela): a lista mostra
+  // a busca anterior, e "Buscar nesta área" volta a ser oferecido (especificação, 2.3).
+  if (mapaMudouNoModo || buscarNaAreaNaEntrada) {
+    oferecerBuscaNaArea();
+  }
+}
+
+/**
+ * A pessoa moveu o mapa durante o modo (principal.js, aoMoverPelaPessoa, que
+ * ignora os movimentos do código e as mudanças de tamanho): no modo, mover o
+ * mapa é mirar, e "Buscar nesta área" só volta quando o modo terminar.
+ */
+export function registrarMovimentoNoModo() {
+  mapaMudouNoModo = true;
 }
 
 /** Cancelar ou Esc: a lista volta, com o foco no título, e o modo termina. */
@@ -150,11 +171,16 @@ function cancelar() {
  * tela estreita, o painel vem para a frente. Pelo endereço, o mapa vai até ele.
  */
 function escolherPonto(novo) {
+  // Uma resposta que chega com o modo já encerrado não reabre nada.
+  if (!ativo) {
+    return;
+  }
   ponto = novo;
   marcarNovoLocal(ponto.latitude, ponto.longitude);
   if (ponto.origem === "endereco") {
     esconderResultados("endereco-local");
     centralizarEm(ponto.latitude, ponto.longitude);
+    mapaMudouNoModo = true;
   }
   const texto = textoPontoEscolhido(ponto);
   $("#ponto-escolhido-texto").text(texto);
