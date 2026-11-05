@@ -20,7 +20,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 6 | Busca por endereço | `feat/busca-endereco` | 5 | Concluída (PR #26) |
 | 7 | Geolocalização | `feat/geolocalizacao` | 6 | Concluída (PR #27) |
 | 8 | Painel de detalhes. **Marco:** fecha a entrega só de leitura | `feat/painel-detalhes` | 7 | Concluída (PR #29) |
-| 9 | Sessão no painel | `feat/sessao-front` | 8 | Pendente |
+| 9 | Sessão no painel | `feat/sessao-front` | 8 | Concluída (PR #30) |
 | 10 | Configurações no back | `feat/api-conta` | — | Concluída (PR #23) |
 | 11 | Configurações no front | `feat/configuracoes-front` | 9 e 10 | Pendente |
 | 12 | Adicionar local: escolha do ponto | `feat/cadastro-local-ponto` | 9 | Pendente |
@@ -305,7 +305,16 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
 ### Etapa 11: Configurações no front
 
 - **Entrega:** o item Configurações aparece no menu só com sessão aberta. São dois formulários no painel, nome e senha, e cada um pede a senha atual. Depois da troca, o nome novo aparece no menu, e o resultado é anunciado.
-- **Arquivos:** `js/conta.js` e o template.
+- Na implementação:
+  - O item fica entre "Lista de locais" e "Sair", e o `definirUsuario` do `sessao.js` o mostra e esconde junto com Entrar e Sair. A visão Configurações tem "Voltar à lista" e Esc, como Buscar.
+  - Formulário do nome: "Nome atual: {nome}.", o novo nome e a senha atual. Formulário da senha: a senha atual e a nova. Os campos têm `autocomplete` `username`, `current-password` e `new-password` (WCAG 1.3.5), e a ajuda da senha atual diz por que ela é pedida.
+  - Conferidos antes de ir à API: campo vazio e o nome que já é o seu, também na forma de largura total (`normalize("NFKC")`, como a API). Sem isso, a API aceitaria o mesmo nome e a página diria que trocou.
+  - Depois da troca, os campos são esvaziados e o foco fica no botão. O nome novo vai para o menu e para "Nome atual", e o anúncio diz onde ele aparece (menu e autoria, RN-08). A troca de senha anuncia que esta sessão continua e as outras foram encerradas (decisão 23).
+  - Um 403 confere a sessão com a API: se ela caiu (a senha foi trocada em outro lugar, por exemplo), o menu volta a mostrar Entrar e a mensagem diz para entrar de novo; senão, pede para recarregar a página.
+  - Sair com Configurações aberta leva o painel para a lista, sem tirar o foco do Menu.
+  - Os quatro formulários do painel mostram os erros do mesmo jeito: a lógica saiu do `sessao.js` para `formularios.js`, sem mudar o comportamento da etapa 9 (a verificação dela no Chrome deu os mesmos resultados).
+  - Achado na verificação: com duas janelas na mesma conta, a troca de senha numa derruba a sessão da outra, e a outra só descobre no próximo pedido; é esse 403 que mostra "Sua sessão terminou".
+- **Arquivos:** `js/conta.js`, `js/formularios.js`, `js/sessao.js`, `testes/conta.test.js`, `testes/formularios.test.js` e o template.
 - **Verificação:** itens 4 e 5.
 
 ### Etapa 12: adicionar local, escolha do ponto

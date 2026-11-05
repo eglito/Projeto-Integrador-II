@@ -25,6 +25,7 @@ import {
   mostrarDetalhes,
   mostrarErroDeDetalhes,
 } from "./detalhes.js";
+import { iniciarConta } from "./conta.js";
 import { esconderResultados as esconderEnderecos, iniciarBuscaEndereco } from "./endereco.js";
 import {
   descricaoFiltros,
@@ -148,6 +149,7 @@ function iniciarPagina(centro, link) {
     aoContribuir: contribuir,
   });
   iniciarSessao({ aoEntrar: voltarDoLogin, aoCancelar: cancelarLogin });
+  iniciarConta();
   aoMoverPelaPessoa(function () {
     geracaoDaVista += 1;
     oferecerBuscaNaArea();

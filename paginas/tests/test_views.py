@@ -67,6 +67,32 @@ def test_campos_de_conta_dizem_o_proposito_ao_navegador(pagina):
         assert f'autocomplete="{proposito}"' in campo.group(0), id_
 
 
+def test_configuracoes_so_aparecem_com_sessao(pagina):
+    # Plano, etapa 11: o item do menu e a visão começam escondidos.
+    html = pagina.content.decode()
+    item = re.search(r'<li id="item-configuracoes"[^>]*>', html)
+    visao = re.search(r'<section id="visao-configuracoes"[^>]*>', html)
+
+    assert item and "hidden" in item.group(0)
+    assert visao and "hidden" in visao.group(0)
+
+
+def test_campos_de_configuracoes_dizem_o_proposito_ao_navegador(pagina):
+    # WCAG 1.3.5: senha atual e senha nova não se confundem, e o gerenciador de
+    # senhas sabe qual atualizar.
+    html = pagina.content.decode()
+    esperados = {
+        "conta-nome-usuario": "username",
+        "conta-nome-senha": "current-password",
+        "conta-senha-atual": "current-password",
+        "conta-senha-nova": "new-password",
+    }
+    for id_, proposito in esperados.items():
+        campo = re.search(rf'<input id="{id_}"[^>]*>', html)
+        assert campo, f"Falta o campo {id_}."
+        assert f'autocomplete="{proposito}"' in campo.group(0), id_
+
+
 def test_detalhes_tem_as_tres_acoes_de_contribuicao(pagina):
     # Especificação, 2.4: avaliar, registrar condição e denunciar, como botões.
     acoes = re.findall(
