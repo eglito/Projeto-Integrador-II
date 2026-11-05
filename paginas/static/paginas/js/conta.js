@@ -144,8 +144,14 @@ function enviarFormulario(formulario) {
     : enviar("POST", "/api/auth/conta/senha/", dados);
   pedido
     .done(function (resposta) {
-      // Senhas e nome saem dos campos; o foco fica no botão, e o resultado é anunciado.
-      $(`#form-${formulario} input`).val("");
+      // Senhas e nome saem dos campos, e o resultado é anunciado. Quem enviou
+      // com Enter num campo ficaria num campo vazio: o foco vai para o botão,
+      // se ainda está neste formulário (a pessoa pode ter ido para outro lugar).
+      const form = $(`#form-${formulario}`);
+      form.find("input").val("");
+      if ($.contains(form[0], document.activeElement)) {
+        form.find("button[type=submit]").trigger("focus");
+      }
       if (trocaDeNome) {
         // A resposta traz o nome como a API o gravou, já normalizado.
         atualizarUsuario(resposta);

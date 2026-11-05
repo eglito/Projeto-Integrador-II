@@ -314,6 +314,7 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - Sair com Configurações aberta leva o painel para a lista, sem tirar o foco do Menu.
   - Os quatro formulários do painel mostram os erros do mesmo jeito: a lógica saiu do `sessao.js` para `formularios.js`, sem mudar o comportamento da etapa 9 (a verificação dela no Chrome deu os mesmos resultados).
   - Achado na verificação: com duas janelas na mesma conta, a troca de senha numa derruba a sessão da outra, e a outra só descobre no próximo pedido; é esse 403 que mostra "Sua sessão terminou".
+  - Achados na revisão: Sair com a sessão já caída (logout com 403) também tira Configurações da tela; e quem envia com Enter num campo tem o foco levado ao botão depois da troca, porque o campo fica vazio.
 - **Arquivos:** `js/conta.js`, `js/formularios.js`, `js/sessao.js`, `testes/conta.test.js`, `testes/formularios.test.js` e o template.
 - **Verificação:** itens 4 e 5.
 

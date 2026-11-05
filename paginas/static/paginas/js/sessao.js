@@ -238,10 +238,7 @@ function sair() {
   enviar("POST", "/api/auth/logout/")
     .done(function () {
       definirUsuario(null);
-      // Configurações não fica na tela de um visitante. O foco continua no Menu.
-      if (!$("#visao-configuracoes").prop("hidden")) {
-        mostrarVisao("lista", { focar: false, frente: false });
-      }
+      tirarConfiguracoesDaTela();
       anunciar("Você saiu da conta. O mapa continua aberto, e você pode entrar de novo pelo menu.");
     })
     .fail(function (resposta) {
@@ -251,14 +248,27 @@ function sair() {
       }
       carregarSessao()
         .done(function () {
-          anunciar(
-            logado()
-              ? mensagemDeFalha(ACOES_DA_SESSAO.sair, resposta.status)
-              : "Sua sessão já tinha terminado. Você está como visitante.",
-          );
+          if (logado()) {
+            anunciar(mensagemDeFalha(ACOES_DA_SESSAO.sair, resposta.status));
+            return;
+          }
+          // A sessão tinha caído (a senha foi trocada em outra janela, por
+          // exemplo): a pessoa queria sair, e saiu.
+          tirarConfiguracoesDaTela();
+          anunciar("Sua sessão já tinha terminado. Você está como visitante.");
         })
         .fail(function (conferencia) {
           anunciar(mensagemDeFalha(ACOES_DA_SESSAO.sair, conferencia.status));
         });
     });
+}
+
+/**
+ * Depois de Sair, Configurações não fica na tela de um visitante: o painel
+ * volta para a lista, sem tirar o foco do botão Menu (plano, etapa 11).
+ */
+function tirarConfiguracoesDaTela() {
+  if (!$("#visao-configuracoes").prop("hidden")) {
+    mostrarVisao("lista", { focar: false, frente: false });
+  }
 }
