@@ -272,6 +272,7 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
     - Sair leva o foco ao botão Menu e mantém a pessoa no mapa (decisão 22). Um 403 no logout (sessão que já tinha caído) confere a sessão de novo e diz isso.
     - Depois do login, os campos são esvaziados. O logout seguinte, já com o token CSRF trocado pelo login, confirmou que o `api.js` lê o cookie a cada requisição.
     - A seção Contribuir fica no fim dos detalhes e só aparece com o local carregado. O visitante lê "Para contribuir, entre na sua conta. Depois, você volta para este local."
+    - Achados na revisão: se a pessoa sai de Entrar (Esc, menu ou Voltar do navegador) antes da resposta do login, a resposta só atualiza o menu e anuncia "Você entrou como…", sem mudar a tela nem o foco; se o local pendente não abre depois do login, o anúncio do erro começa por "Você entrou como…"; e as falhas do logout dizem o que fazer conforme a causa (sem conexão, ou "recarregue a página"), também quando a conferência da sessão falha.
 - **Arquivos:** `js/sessao.js`, `js/detalhes.js`, `testes/sessao.test.js` e o template.
 - **Conceitos novos:**
   - A ação pendente equivale ao `SavedRequest` do Spring Security.

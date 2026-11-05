@@ -60,6 +60,17 @@ QUnit.module("sessao.js: erros da API", function () {
     );
     assert.false(mensagemDeFalha("entrar", 403).includes("CSRF"));
   });
+
+  QUnit.test("sair: a rede manda conferir a conexão; o servidor, recarregar", function (assert) {
+    assert.strictEqual(
+      mensagemDeFalha("sair", 0),
+      "Não foi possível sair. Confira a conexão com a internet e tente de novo.",
+    );
+    assert.strictEqual(
+      mensagemDeFalha("sair", 500),
+      "Não foi possível sair agora. Recarregue a página e tente de novo.",
+    );
+  });
 });
 
 QUnit.module("sessao.js: ação pendente", function () {

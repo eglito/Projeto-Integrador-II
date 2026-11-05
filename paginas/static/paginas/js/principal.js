@@ -413,11 +413,20 @@ function escolherNoMapa(id) {
  * `origem`: quem a abriu, para o foco voltar lá. `centralizar`: leva o mapa
  * até o local. `dados` e `status`: a resposta já buscada na abertura por link,
  * o LocalDetalhe ou o código do erro. `depois`: roda quando os detalhes chegam,
- * por exemplo para a volta do login seguir com a ação pendente.
+ * por exemplo para a volta do login seguir com a ação pendente. `prefixo`: vai
+ * antes do anúncio de erro, para ele não apagar o que a pessoa precisava ouvir
+ * (como "Você entrou como…").
  */
 function abrirDetalhes(
   id,
-  { origem = null, centralizar = false, dados = null, status = null, depois = null } = {},
+  {
+    origem = null,
+    centralizar = false,
+    dados = null,
+    status = null,
+    depois = null,
+    prefixo = "",
+  } = {},
 ) {
   localAberto = id;
   origemDosDetalhes = origem;
@@ -430,7 +439,7 @@ function abrirDetalhes(
   // Em tela estreita, o mapa está atrás do painel: sem animação.
   destacarNoMapa(id, { centralizar, semAnimacao: telaEstreita() });
   if (status !== null) {
-    exibirErroDeDetalhes(status);
+    exibirErroDeDetalhes(status, prefixo);
     mostrarVisao("detalhes");
     return;
   }
@@ -453,7 +462,7 @@ function abrirDetalhes(
     })
     .fail(function (resposta) {
       if (pedidoDeDetalhes === id) {
-        exibirErroDeDetalhes(resposta.status);
+        exibirErroDeDetalhes(resposta.status, prefixo);
       }
     });
 }
@@ -483,10 +492,15 @@ function contribuir(acao) {
  * local reabrem e o foco vai para o botão da ação, que segue. Sem ela, a pessoa
  * volta à lista (especificação, 2.6).
  */
-function voltarDoLogin(usuario, pendente, { novaConta }) {
+function voltarDoLogin(usuario, pendente, { novaConta, naTela }) {
   const saudacao = novaConta
     ? `Conta criada. Você entrou como ${usuario.username}.`
     : `Você entrou como ${usuario.username}.`;
+  // A pessoa saiu de Entrar antes da resposta: a tela e o foco ficam onde ela está.
+  if (!naTela) {
+    anunciar(saudacao);
+    return;
+  }
   if (!pendente) {
     mostrarVisao("lista");
     anunciar(saudacao);
@@ -494,6 +508,8 @@ function voltarDoLogin(usuario, pendente, { novaConta }) {
   }
   abrirDetalhes(pendente.local, {
     origem: pendente.origem,
+    // Se o local não abrir, o anúncio do erro ainda diz que o login deu certo.
+    prefixo: saudacao,
     depois: function () {
       seguirNaContribuicao(pendente.acao);
       anunciar(`${saudacao} ${mensagemDeContribuicao(pendente.acao)}`);
@@ -527,10 +543,10 @@ function seguirNaContribuicao(acao) {
  * O local não abriu: a visão Detalhes diz o que aconteceu e o que fazer (bug 2
  * do HANDOFF), e o anúncio também, para quem já saiu do painel.
  */
-function exibirErroDeDetalhes(status) {
+function exibirErroDeDetalhes(status, prefixo = "") {
   const erro = erroDeDetalhes(status);
   mostrarErroDeDetalhes(erro);
-  anunciar(`${erro.titulo}. ${erro.mensagem}`);
+  anunciar(`${prefixo} ${erro.titulo}. ${erro.mensagem}`.trim());
 }
 
 /**

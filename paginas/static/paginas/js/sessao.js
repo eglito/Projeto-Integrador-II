@@ -76,12 +76,16 @@ export function separarErros(corpo) {
   return { porCampo, geral: gerais.length ? gerais.join(" ") : null };
 }
 
+// O que a pessoa tentava fazer, para a mensagem de falha.
+const ACOES_DA_SESSAO = { entrar: "entrar", cadastro: "criar a conta", sair: "sair" };
+
 /**
- * Falha que não é erro de campo: sem conexão (status 0), 403 com o token CSRF
- * antigo ou 500. O texto da API, em inglês no caso do CSRF, não chega à tela.
+ * Falha que não é erro de campo, ao entrar, criar a conta ou sair: sem conexão
+ * (status 0), 403 com o token CSRF antigo ou 500. O texto da API, em inglês no
+ * caso do CSRF, não chega à tela.
  */
-export function mensagemDeFalha(formulario, status) {
-  const acao = formulario === "cadastro" ? "criar a conta" : "entrar";
+export function mensagemDeFalha(operacao, status) {
+  const acao = ACOES_DA_SESSAO[operacao];
   if (status === 0) {
     return `Não foi possível ${acao}. Confira a conexão com a internet e tente de novo.`;
   }
@@ -140,8 +144,10 @@ function definirUsuario(novo) {
 }
 
 /**
- * Liga menu e formulários. `aoEntrar(usuario, pendente, { novaConta })` roda
- * depois do login ou do cadastro; `aoCancelar(pendente)`, no "Voltar…" e no Esc.
+ * Liga menu e formulários. `aoEntrar(usuario, pendente, { novaConta, naTela })`
+ * roda depois do login ou do cadastro; `naTela` diz se a pessoa ainda estava em
+ * Entrar ou Criar conta quando a resposta chegou. `aoCancelar(pendente)` roda
+ * no "Voltar…" e no Esc.
  */
 export function iniciarSessao({ aoEntrar, aoCancelar }) {
   // O aria-describedby de cada campo, sem erro: a ajuda, quando há.
@@ -215,9 +221,12 @@ function enviarFormulario(formulario, aoEntrar) {
       definirUsuario(novoUsuario);
       // Num aparelho compartilhado, nada do que foi digitado fica nos campos.
       $("#form-entrar, #form-cadastro").find("input").val("");
-      const acao = pendente;
+      // Com a rede lenta, a pessoa pode ter saído de Entrar antes da resposta
+      // (Esc, menu ou Voltar do navegador): aí a tela fica onde ela está.
+      const naTela = $("#visao-entrar, #visao-cadastro").filter(":not([hidden])").length > 0;
+      const acao = naTela ? pendente : null;
       pendente = null;
-      aoEntrar(novoUsuario, acao, { novaConta: formulario === "cadastro" });
+      aoEntrar(novoUsuario, acao, { novaConta: formulario === "cadastro", naTela });
     })
     .fail(function (resposta) {
       if (resposta.status === 400) {
@@ -277,7 +286,7 @@ function limparErros(formulario) {
 /**
  * Sair: a pessoa continua no mapa, como visitante (decisão 22), e o foco volta
  * ao botão Menu. Se a sessão já tinha terminado (403), a página confere com a
- * API e diz isso.
+ * API e diz isso. Toda falha é anunciada, com o que fazer.
  */
 function sair() {
   fecharMenu();
@@ -288,15 +297,19 @@ function sair() {
     })
     .fail(function (resposta) {
       if (resposta.status !== 403) {
-        anunciar("Não foi possível sair. Confira a conexão com a internet e tente de novo.");
+        anunciar(mensagemDeFalha("sair", resposta.status));
         return;
       }
-      carregarSessao().done(function () {
-        anunciar(
-          logado()
-            ? "Não foi possível sair agora. Recarregue a página e tente de novo."
-            : "Sua sessão já tinha terminado. Você está como visitante.",
-        );
-      });
+      carregarSessao()
+        .done(function () {
+          anunciar(
+            logado()
+              ? mensagemDeFalha("sair", resposta.status)
+              : "Sua sessão já tinha terminado. Você está como visitante.",
+          );
+        })
+        .fail(function (conferencia) {
+          anunciar(mensagemDeFalha("sair", conferencia.status));
+        });
     });
 }
