@@ -79,11 +79,13 @@ obter("/api/opcoes/")
     iniciarBuscaNaArea({ aoBuscar: buscarNaArea });
     iniciarBuscaEndereco({ centroPadrao: centro, aoEscolher: escolherEndereco });
     iniciarLocalizacao({ aoPedir: () => pedirLocalizacao(), aoIrParaEndereco: irParaEndereco });
-    adicionarBotaoLocalizacao(() => pedirLocalizacao());
     aoMoverPelaPessoa(function () {
       geracaoDaVista += 1;
       oferecerBuscaNaArea();
     });
+    // A localização automática vale a partir da abertura: se a pessoa mexer no
+    // mapa durante a primeira busca, a vista dela também fica onde está.
+    const geracaoNaAbertura = geracaoDaVista;
     // Sem a posição da pessoa, a busca parte do centro do mapa (decisão 31).
     buscar({
       latitude: centro.latitude,
@@ -96,12 +98,14 @@ obter("/api/opcoes/")
       alturaMaxima: null,
       limitado: false,
     }).done(function () {
-      // A permissão só é consultada depois da primeira busca: as duas juntas
-      // poderiam terminar fora de ordem, e a do centro apagaria a de "você".
-      // Se a primeira busca falhar, a API está fora do ar, e a posição não ajudaria.
+      // A localização só entra depois da primeira busca: as duas juntas poderiam
+      // terminar fora de ordem, e a do centro apagaria a de "você". Se a primeira
+      // busca falhar, a API está fora do ar, a posição não ajudaria, e o botão
+      // "Minha localização" nem aparece.
+      adicionarBotaoLocalizacao(() => pedirLocalizacao());
       verificarPermissao().then(function (concedida) {
         if (concedida) {
-          pedirLocalizacao({ automatico: true });
+          pedirLocalizacao({ automatico: true, geracao: geracaoNaAbertura });
         }
       });
     });
@@ -215,9 +219,11 @@ function buscarNaArea() {
  * Novo ponto de partida, o endereço escolhido ou a posição da pessoa: as
  * distâncias passam a sair dele (decisão 31). Raio e filtros continuam; o raio
  * da área visível, que valia para outra área, volta ao padrão. Com a busca
- * feita, o mapa vai até o ponto. Devolve o jqXHR, para quem chama completar.
+ * feita, o mapa vai até o ponto, a não ser que a pessoa o tenha movido durante
+ * a busca. Devolve o jqXHR, para quem chama completar.
  */
 function buscarAPartirDe({ latitude, longitude, origem, endereco }) {
+  const geracao = geracaoDaVista;
   const raio = busca.raioDaArea ? opcoes.busca.raio_padrao_m : busca.raio;
   const novaBusca = {
     ...busca,
@@ -231,6 +237,11 @@ function buscarAPartirDe({ latitude, longitude, origem, endereco }) {
   };
   return buscar(novaBusca).done(function () {
     marcarRaio(raio);
+    // A pessoa moveu o mapa enquanto a busca não voltava: a vista fica onde ela
+    // deixou, com o "Buscar nesta área" que o movimento ofereceu (plano, etapa 7).
+    if (geracao !== geracaoDaVista) {
+      return;
+    }
     // O mapa sai de onde a pessoa o deixou: "Buscar nesta área" ofereceria a área
     // antiga e trocaria o ponto pelo centro do mapa sem ela ter mexido nele.
     esconderBuscaNaArea();
@@ -257,9 +268,10 @@ function escolherEndereco({ latitude, longitude, rotulo }) {
  * abertura (`automatico`). Com ela, o mapa vai até a pessoa e a busca mede
  * "de você". Se a pessoa mudou o mapa enquanto a posição não chegava, a vista
  * dela fica onde está: só o marcador "Você está aqui" aparece (plano, etapa 7).
+ * `geracao` é o contador de quando o pedido começou: no clique, agora; na
+ * abertura, antes da primeira busca.
  */
-function pedirLocalizacao({ automatico = false } = {}) {
-  const geracao = geracaoDaVista;
+function pedirLocalizacao({ automatico = false, geracao = geracaoDaVista } = {}) {
   localizar({ automatico }).then(function (posicao) {
     // null: a falha já foi explicada, ou já havia um pedido em curso.
     if (!posicao) {

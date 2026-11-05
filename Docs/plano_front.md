@@ -219,6 +219,7 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
     - Um contador (`geracaoDaVista`) sobe quando a pessoa move o mapa, escolhe um endereço ou um local da lista. A resposta que encontra o contador mudado só marca a posição, e o anúncio explica por que o mapa ficou onde estava.
     - "Você está aqui" é um alvo, com o rótulo sempre visível acima. Tem camada própria, e não a do endereço, como previa a etapa 6: com a resposta atrasada, os dois aparecem juntos. Continua no mapa depois de "Buscar nesta área", porque marca onde a pessoa está.
     - "◎ Minha localização" fica abaixo do zoom. No Tab, vem depois dos marcadores, como o zoom (o Leaflet põe os controles depois das camadas); o convite do painel vem antes deles, e as instruções do mapa dizem a ordem.
+    - Achados na revisão: na abertura, o contador vale desde antes da primeira busca, e não desde o pedido da posição, porque a pessoa pode mexer no mapa enquanto a busca ou a consulta da permissão não terminam; se ela move o mapa durante a busca "de você" (ou a do endereço), a lista muda, mas o mapa fica onde ela deixou, com "Buscar nesta área"; e o botão "Minha localização" só aparece depois de a primeira busca dar certo, porque sem ela o clique deixava a faixa parada em "Buscando sua localização…".
 - **Arquivos:** `js/localizacao.js`, `js/mapa.js` e o teste das mensagens por código de erro.
 - **Conceitos novos:**
   - Geolocation API com callbacks, e Permissions API com Promise.
