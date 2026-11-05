@@ -564,6 +564,67 @@ body {
   font-size: 0.9rem;
 }
 
+/* Contribuir, no fim dos detalhes (especificação, 2.4). */
+.contribuir {
+  margin-top: 1.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #d0d0d0;
+}
+
+.contribuir h3 {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.contribuir p {
+  margin: 0 0 0.5rem;
+  color: var(--cor-texto-secundario);
+  font-size: 0.95rem;
+}
+
+.acoes-contribuir {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Entrar e Criar conta (README, decisão 32). */
+.contexto-login {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--cor-topo);
+  background: var(--cor-escolhido-fundo);
+}
+
+.erro-geral {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--cor-erro);
+  border-radius: 0.25rem;
+}
+
+.trocar-formulario {
+  margin: 1rem 0 0;
+}
+
+/* Botões do painel: alvo de pelo menos 24 × 24 px (WCAG 2.5.8). */
+.acoes-contribuir button,
+.formulario-conta button,
+.trocar-formulario button {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem;
+  font: inherit;
+}
+
+/* Nome de quem está conectado, no topo do menu. */
+.menu-usuario {
+  margin: 1rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--cor-escolhido-fundo);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 /* Visão Buscar: endereço ou lugar. */
 #form-endereco {
   margin-bottom: 1.25rem;

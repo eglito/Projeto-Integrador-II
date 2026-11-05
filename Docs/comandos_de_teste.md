@@ -140,6 +140,12 @@ Pelo teclado: os primeiros Tabs mostram "Pular para a lista" e "Pular para o map
 
 > **JavaScript em cache.** O `runserver` não manda cabeçalho de cache, e o navegador pode continuar usando um módulo JavaScript antigo depois de uma mudança. Se a página se comportar como antes da mudança, recarregue ignorando o cache (Cmd+Shift+R no macOS, Ctrl+Shift+R no Windows) ou marque "Disable cache" na aba Network do DevTools.
 
+Sessão: no menu, "Entrar" abre o login no painel, e "Criar conta" fica logo abaixo do formulário. Num local, os botões de Contribuir pedem o login a quem não entrou e, depois dele, voltam ao local e ao botão. Com sessão, o menu mostra o nome e "Sair". Para apagar as contas que os roteiros de verificação criam, com nome começado por `teste-etapa` (os locais delas continuam, sem autor):
+
+```bash
+docker compose exec web python manage.py shell -c "from usuarios.models import Usuario; print(Usuario.objects.filter(username__startswith='teste-etapa').delete())"
+```
+
 Detalhes: escolha um local na lista ou dê Enter num marcador. O painel mostra endereço, equipamentos com a condição datada, comodidades, segurança por faixa de horário e autoria. Esc ou "Voltar à lista" devolvem o foco a quem abriu os detalhes, e o Voltar do navegador também fecha o painel. A URL ganha `?local=id`: com os dados de desenvolvimento, http://localhost:8000/?local=7 abre um local direto (os ids dependem do banco local; confira em http://localhost:8000/api/locais/), e um id que não existe mostra "Local não encontrado".
 
 Localização: só funciona em `localhost` ou em https, não pelo IP da rede local. Sem a permissão dada, o painel convida a usar a localização, e o navegador só pergunta no clique em "Usar minha localização" ou em "Minha localização", abaixo do zoom. Com a permissão já dada, a página vai sozinha até a pessoa ao abrir. Para simular a posição no Chrome: DevTools (F12), menu ⋮, More tools, Sensors, e em Location escolha Other com latitude -21.77 e longitude -48.176, a 452 m da Praça dos Advogados; "Location unavailable" simula a falha. Para voltar ao convite ou para bloquear, use o ícone à esquerda do endereço da página, em Localização, e recarregue.

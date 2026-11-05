@@ -40,6 +40,42 @@ def test_visao_de_detalhes_comeca_escondida_e_com_titulo_focavel(pagina):
     assert re.search(r'id="titulo-detalhes"[^>]*tabindex="-1"', html)
 
 
+def test_menu_comeca_como_visitante_com_entrar_e_sair_escondido(pagina):
+    # Especificação, 2.5: Entrar para visitantes; com sessão, o nome e Sair.
+    html = pagina.content.decode()
+    entrar = re.search(r'<li id="item-entrar"[^>]*>', html)
+    sair = re.search(r'<li id="item-sair"[^>]*>', html)
+
+    assert entrar and "hidden" not in entrar.group(0)
+    assert sair and "hidden" in sair.group(0)
+    assert re.search(r'<p id="menu-usuario"[^>]*hidden', html)
+
+
+def test_campos_de_conta_dizem_o_proposito_ao_navegador(pagina):
+    # WCAG 1.3.5: autocomplete identifica o campo, e o gerenciador de senhas
+    # preenche (WCAG 3.3.8). Senha nova e senha atual não se confundem.
+    html = pagina.content.decode()
+    esperados = {
+        "entrar-usuario": "username",
+        "entrar-senha": "current-password",
+        "cadastro-usuario": "username",
+        "cadastro-senha": "new-password",
+    }
+    for id_, proposito in esperados.items():
+        campo = re.search(rf'<input id="{id_}"[^>]*>', html)
+        assert campo, f"Falta o campo {id_}."
+        assert f'autocomplete="{proposito}"' in campo.group(0), id_
+
+
+def test_detalhes_tem_as_tres_acoes_de_contribuicao(pagina):
+    # Especificação, 2.4: avaliar, registrar condição e denunciar, como botões.
+    acoes = re.findall(
+        r'<button type="button" data-acao="(\w+)"', pagina.content.decode()
+    )
+
+    assert acoes == ["avaliar", "condicao", "denunciar"]
+
+
 def test_arquivos_estaticos_citados_na_pagina_existem(pagina):
     caminhos = re.findall(r'(?:src|href)="/static/([^"]+)"', pagina.content.decode())
 

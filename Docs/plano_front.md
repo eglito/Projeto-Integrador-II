@@ -19,7 +19,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 5 | Filtros e "Buscar nesta área" | `feat/filtros-busca-area` | 3 (a 4 reposiciona a interface) | Concluída (PR #24) |
 | 6 | Busca por endereço | `feat/busca-endereco` | 5 | Concluída (PR #26) |
 | 7 | Geolocalização | `feat/geolocalizacao` | 6 | Concluída (PR #27) |
-| 8 | Painel de detalhes. **Marco:** fecha a entrega só de leitura | `feat/painel-detalhes` | 7 | Pendente |
+| 8 | Painel de detalhes. **Marco:** fecha a entrega só de leitura | `feat/painel-detalhes` | 7 | Concluída (PR #29) |
 | 9 | Sessão no painel | `feat/sessao-front` | 8 | Pendente |
 | 10 | Configurações no back | `feat/api-conta` | — | Concluída (PR #23) |
 | 11 | Configurações no front | `feat/configuracoes-front` | 9 e 10 | Pendente |
@@ -262,7 +262,17 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - Os erros 400 aparecem junto do campo, com `aria-describedby`, e `non_field_errors` no topo do formulário.
   - Depois do login, a pessoa volta ao local e à ação pendente. O logout a mantém no mapa como visitante (decisão 22).
   - Os botões de contribuição (avaliar, registrar condição, denunciar) aparecem no painel de detalhes. Sem login, levam ao login e voltam ao local. Com login, anunciam que a função chega numa etapa seguinte, até ser implementada.
-- **Arquivos:** `js/sessao.js`, `js/detalhes.js` e o template.
+  - Na implementação:
+    - `sessao.js` lê o `GET /api/auth/sessao/` da abertura, que também grava o cookie `csrftoken`. Visitante vê "Entrar" no menu; com sessão, "Conectado como {nome}" e "Sair".
+    - Entrar e Criar conta são duas visões do painel, com um botão para trocar de uma para a outra. O "Voltar…" do topo diz para onde volta ("Voltar a Parque Infantil" ou "Voltar à lista"), e o Esc faz o mesmo. Os campos têm `autocomplete` `username`, `current-password` e `new-password` (WCAG 1.3.5), e o gerenciador de senhas preenche (WCAG 3.3.8).
+    - Erros: campo vazio é conferido antes de ir à API, com mensagem nossa ("Informe o nome de usuário."), porque o "Este campo é obrigatório." da API não diz qual. O 400 de um campo fica junto dele, com `aria-invalid` e `aria-describedby`, e a ajuda continua na descrição; o `non_field_errors` fica no topo, com o foco nele. O 403 de CSRF e a falha de rede têm mensagem própria, sem o texto em inglês. Todo erro também é anunciado.
+    - Achado na verificação: com nome em uso e senha fraca, a API só devolve o erro do nome, porque o `validate()` do DRF não roda com um campo inválido; o da senha aparece no envio seguinte.
+    - A ação pendente guarda local, nome, ação e origem. Depois do login ou do cadastro, os detalhes reabrem, o foco vai para o botão da ação (só se a pessoa continua nos detalhes) e o anúncio diz "Você entrou como {nome}." e que a ação chega numa próxima versão. Sem ação pendente, a pessoa volta à lista. Cancelar reabre o local, no botão que pediu o login, e a origem dos detalhes continua: o Esc depois volta ao marcador ou ao item.
+    - Ir para Entrar fecha os detalhes na URL, como o menu; o Voltar do navegador na tela de login reabre o local.
+    - Sair leva o foco ao botão Menu e mantém a pessoa no mapa (decisão 22). Um 403 no logout (sessão que já tinha caído) confere a sessão de novo e diz isso.
+    - Depois do login, os campos são esvaziados. O logout seguinte, já com o token CSRF trocado pelo login, confirmou que o `api.js` lê o cookie a cada requisição.
+    - A seção Contribuir fica no fim dos detalhes e só aparece com o local carregado. O visitante lê "Para contribuir, entre na sua conta. Depois, você volta para este local."
+- **Arquivos:** `js/sessao.js`, `js/detalhes.js`, `testes/sessao.test.js` e o template.
 - **Conceitos novos:**
   - A ação pendente equivale ao `SavedRequest` do Spring Security.
   - O token CSRF muda no login, por isso `api.js` lê o cookie a cada requisição.
