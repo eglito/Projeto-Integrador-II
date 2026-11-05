@@ -30,6 +30,14 @@
       {# Lista textual equivalente ao mapa (RN-10). #}
       <section id="visao-lista" class="visao" aria-labelledby="titulo-lista">
         <h2 id="titulo-lista" tabindex="-1">Locais</h2>
+        {# Geolocalização (especificação, 2.2): convite antes do primeiro pedido, ou o que deu errado e como mudar. Escondido até a página saber o estado da permissão. #}
+        <div id="convite-localizacao" class="convite-localizacao" hidden>
+          <p id="convite-localizacao-texto"></p>
+          <div class="acoes-convite">
+            <button type="button" id="usar-localizacao">Usar minha localização</button>
+            <button type="button" id="ir-para-endereco" hidden>Buscar por endereço</button>
+          </div>
+        </div>
         <div class="filtros-ativos">
           <p id="resumo-filtros"></p>
           <button type="button" id="alterar-filtros">Alterar filtros</button>
@@ -96,7 +104,7 @@
       {# O Leaflet torna o mapa focável pelo Tab; a instrução é lida quando ele recebe o foco. #}
       <div id="mapa" role="region" aria-label="Mapa dos locais" aria-describedby="mapa-instrucoes"></div>
     </div>
-    <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar. A tecla Tab passa pelos locais, na ordem da lista, e Enter escolhe o local. Esc esconde o nome que aparece sobre o local. Depois de mover o mapa, o botão Buscar nesta área fica logo antes do mapa.</p>
+    <p id="mapa-instrucoes" class="visualmente-oculto">Com o mapa em foco, use as setas para mover o mapa e as teclas mais e menos para aproximar e afastar. A tecla Tab passa pelos locais, na ordem da lista, e Enter escolhe o local; depois deles vêm os botões de zoom e Minha localização. Esc esconde o nome que aparece sobre o local. Depois de mover o mapa, o botão Buscar nesta área fica logo antes do mapa.</p>
   </main>
 
   {# Tela estreita (decisão 29): alterna Mapa e Lista. Escondida em tela larga. #}
