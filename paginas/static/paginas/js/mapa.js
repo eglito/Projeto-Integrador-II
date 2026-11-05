@@ -18,6 +18,8 @@ let camadaReferencia = null;
 // quando a posição chega depois de a pessoa escolher um endereço, os dois
 // aparecem juntos (plano, etapa 7).
 let camadaPosicao = null;
+// O ponto escolhido para um local novo (plano, etapa 12), "Novo local".
+let camadaNovoLocal = null;
 // Zoom mínimo ao ir para um endereço ou para a pessoa: o de um bairro, como o do centro padrão.
 const ZOOM_MINIMO_PONTO = 14;
 // id do local -> marcador, para destacar o escolhido.
@@ -97,6 +99,7 @@ export function criarMapa(idElemento, centro) {
   camadaLocais = L.layerGroup().addTo(mapa);
   camadaReferencia = L.layerGroup().addTo(mapa);
   camadaPosicao = L.layerGroup().addTo(mapa);
+  camadaNovoLocal = L.layerGroup().addTo(mapa);
   permitirDispensarNomes($(mapa.getContainer()));
 
   // O tamanho do mapa muda sem ser movimento da pessoa: girar o celular, cruzar
@@ -289,6 +292,33 @@ export function removerPontoDeReferencia() {
 export function marcarPosicao(latitude, longitude) {
   camadaPosicao.clearLayers();
   pontoFixo(latitude, longitude, "posicao", "Você está aqui").addTo(camadaPosicao);
+}
+
+/**
+ * Marca o ponto escolhido para um local novo, "Novo local": um quadrado,
+ * diferente do círculo e do pino dos locais, do losango do endereço e do alvo
+ * de "Você está aqui" (plano, etapa 12).
+ */
+export function marcarNovoLocal(latitude, longitude) {
+  camadaNovoLocal.clearLayers();
+  pontoFixo(latitude, longitude, "novo-local", "Novo local").addTo(camadaNovoLocal);
+}
+
+export function removerNovoLocal() {
+  camadaNovoLocal.clearLayers();
+}
+
+/**
+ * `callback({ latitude, longitude })` roda num clique no mapa, fora dos
+ * marcadores (o clique num marcador fica com ele) e dos controles (zoom e
+ * Minha localização param o clique). A longitude passa por wrap(), como em
+ * centroDoMapa.
+ */
+export function aoClicarNoMapa(callback) {
+  mapa.on("click", function (evento) {
+    const ponto = evento.latlng.wrap();
+    callback({ latitude: ponto.lat, longitude: ponto.lng });
+  });
 }
 
 /**

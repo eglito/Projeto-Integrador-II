@@ -42,6 +42,15 @@ QUnit.module("sessao.js: ação pendente", function () {
     assert.strictEqual(rotuloVoltar(null), "Voltar à lista");
   });
 
+  QUnit.test("adicionar um local também pede o login, e a volta é ao modo", function (assert) {
+    assert.strictEqual(
+      textoContexto({ acao: "adicionar" }),
+      "Entre ou crie uma conta para adicionar um local. Depois, você volta para escolher o ponto.",
+    );
+    // Sem local de origem, o botão do topo volta à lista.
+    assert.strictEqual(rotuloVoltar({ acao: "adicionar" }), "Voltar à lista");
+  });
+
   QUnit.test("com login, cada ação avisa que chega numa próxima versão", function (assert) {
     for (const acao of ["avaliar", "condicao", "denunciar"]) {
       const mensagem = mensagemDeContribuicao(acao);

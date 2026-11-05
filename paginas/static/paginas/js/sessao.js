@@ -70,14 +70,20 @@ export function camposVazios({ username, password }) {
   return erros;
 }
 
-/** Contexto no topo de Entrar e Criar conta quando uma ação pediu o login. */
+/**
+ * Contexto no topo de Entrar e Criar conta quando uma ação pediu o login: uma
+ * contribuição num local ou, sem local, adicionar um (plano, etapa 12).
+ */
 export function textoContexto({ acao, nome }) {
+  if (acao === "adicionar") {
+    return "Entre ou crie uma conta para adicionar um local. Depois, você volta para escolher o ponto.";
+  }
   return `Entre ou crie uma conta para ${ACOES[acao].alvo} ${nome}. Depois, você volta para este local.`;
 }
 
 /** Botão do topo de Entrar e Criar conta: diz para onde volta. */
 export function rotuloVoltar(pendente) {
-  return pendente ? `Voltar a ${pendente.nome}` : "Voltar à lista";
+  return pendente?.nome ? `Voltar a ${pendente.nome}` : "Voltar à lista";
 }
 
 /** Anúncio de uma ação de contribuição, com login, até ela ser implementada. */
