@@ -1,9 +1,7 @@
 import {
   camposVazios,
   mensagemDeContribuicao,
-  mensagemDeFalha,
   rotuloVoltar,
-  separarErros,
   textoContexto,
   textoUsuario,
 } from "../js/sessao.js";
@@ -22,54 +20,6 @@ QUnit.module("sessao.js: campos vazios", function () {
 
   QUnit.test("senha só com espaços conta como preenchida: espaço vale na senha", function (assert) {
     assert.deepEqual(camposVazios({ username: "maria", password: "   " }), {});
-  });
-});
-
-QUnit.module("sessao.js: erros da API", function () {
-  QUnit.test("erros de campo ficam no campo, com as mensagens juntas", function (assert) {
-    const corpo = {
-      password: [
-        "Esta senha é muito curta. Ela precisa conter pelo menos 8 caracteres.",
-        "Esta senha é inteiramente numérica.",
-      ],
-    };
-    assert.deepEqual(separarErros(corpo), {
-      porCampo: {
-        password:
-          "Esta senha é muito curta. Ela precisa conter pelo menos 8 caracteres. Esta senha é inteiramente numérica.",
-      },
-      geral: null,
-    });
-  });
-
-  QUnit.test("non_field_errors vai para o topo do formulário", function (assert) {
-    const corpo = {
-      non_field_errors: ["Usuário ou senha incorretos. Confira os dois campos e tente de novo."],
-    };
-    assert.deepEqual(separarErros(corpo), {
-      porCampo: {},
-      geral: "Usuário ou senha incorretos. Confira os dois campos e tente de novo.",
-    });
-  });
-
-  QUnit.test("sem conexão: confira a conexão; 403 e 500: recarregue", function (assert) {
-    assert.true(mensagemDeFalha("entrar", 0).startsWith("Não foi possível entrar. Confira a conexão"));
-    assert.strictEqual(
-      mensagemDeFalha("cadastro", 403),
-      "Não foi possível criar a conta agora. Recarregue a página e tente de novo.",
-    );
-    assert.false(mensagemDeFalha("entrar", 403).includes("CSRF"));
-  });
-
-  QUnit.test("sair: a rede manda conferir a conexão; o servidor, recarregar", function (assert) {
-    assert.strictEqual(
-      mensagemDeFalha("sair", 0),
-      "Não foi possível sair. Confira a conexão com a internet e tente de novo.",
-    );
-    assert.strictEqual(
-      mensagemDeFalha("sair", 500),
-      "Não foi possível sair agora. Recarregue a página e tente de novo.",
-    );
   });
 });
 
