@@ -29,9 +29,18 @@ let idDestacado = null;
 // a animação do anterior; duas escolhas rápidas geram dois.
 let movimentosDoCodigo = 0;
 let ajustandoTamanho = false;
+// O mapa está entre o movestart e o moveend (animação, arrasto, inércia). Medir
+// nesse meio-tempo não adianta: a animação do Leaflet reposiciona o mapa a cada
+// quadro a partir da posição que calculou no início e desfaz a correção. A
+// medida fica para o moveend.
+let emMovimento = false;
+let medirAoParar = false;
 
-// Espera depois do último resize da janela antes de medir o mapa de novo:
+// Espera depois da última mudança de tamanho do mapa antes de medi-lo de novo:
 // girar o celular ou arrastar a borda da janela dispara dezenas de eventos.
+// Precisa ser maior que a pausa do anuncio.js (PAUSA_MS, 100 ms): cada anúncio
+// esvazia a faixa, o que estica o mapa, e a preenche de novo. Dentro da espera
+// as duas mudanças se anulam, e a medida encontra o tamanho de antes.
 const ESPERA_RESIZE_MS = 150;
 
 /** Lido na criação do mapa: com movimento reduzido, nada de animação (CLAUDE.md). */
@@ -90,12 +99,25 @@ export function criarMapa(idElemento, centro) {
   camadaPosicao = L.layerGroup().addTo(mapa);
   permitirDispensarNomes($(mapa.getContainer()));
 
-  // Girar o celular, cruzar 48em ou mudar o zoom do navegador muda o tamanho do
-  // mapa, mas não é movimento da pessoa.
+  // O tamanho do mapa muda sem ser movimento da pessoa: girar o celular, cruzar
+  // 48em, mudar o zoom do navegador e a faixa de anúncios, que aparece, some e
+  // muda de altura com o texto (em 320 px, de uma a quatro linhas). O resize da
+  // janela só avisaria dos três primeiros; o ResizeObserver avisa qualquer
+  // mudança no próprio contêiner, como um ComponentListener do AWT em Java.
   let esperaDoResize = null;
-  $(window).on("resize", function () {
+  new ResizeObserver(function () {
     clearTimeout(esperaDoResize);
     esperaDoResize = setTimeout(ajustarTamanho, ESPERA_RESIZE_MS);
+  }).observe(mapa.getContainer());
+  mapa.on("movestart", function () {
+    emMovimento = true;
+  });
+  mapa.on("moveend", function () {
+    emMovimento = false;
+    if (medirAoParar) {
+      medirAoParar = false;
+      ajustarTamanho();
+    }
   });
   return mapa;
 }
@@ -289,13 +311,21 @@ export function adicionarBotaoLocalizacao(aoClicar) {
 }
 
 /**
- * Faz o Leaflet medir de novo o mapa, que esteve escondido (tela estreita,
- * Lista na frente). O moveend que isso dispara não é movimento da pessoa.
+ * Faz o Leaflet medir de novo o mapa, que mudou de tamanho (criarMapa) ou
+ * esteve escondido (tela estreita, Lista na frente; layout.js, mostrarTela).
+ * O moveend que isso dispara não é movimento da pessoa.
  */
 export function ajustarTamanho() {
   // Escondido (tela estreita, Lista na frente), o mapa mediria zero e perderia o
   // centro. Ele é medido quando volta para a frente (layout.js, mostrarTela).
   if (!mapa.getContainer().offsetWidth) {
+    return;
+  }
+  // Em movimento, a medida fica para o moveend (criarMapa). O invalidateSize
+  // põe no centro do mapa medido o ponto que o Leaflet tinha como centro, então
+  // o destino do movimento termina no centro do que se vê.
+  if (emMovimento) {
+    medirAoParar = true;
     return;
   }
   ajustandoTamanho = true;
