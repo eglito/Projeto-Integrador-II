@@ -93,6 +93,30 @@ def test_campos_de_configuracoes_dizem_o_proposito_ao_navegador(pagina):
         assert f'autocomplete="{proposito}"' in campo.group(0), id_
 
 
+def test_adicionar_local_aparece_para_todos_e_o_modo_comeca_fechado(pagina):
+    # Plano, etapa 12: o item leva visitantes a Entrar; o modo só abre pelo item.
+    html = pagina.content.decode()
+    item = re.search(r'<li id="item-adicionar"[^>]*>', html)
+    visao = re.search(r'<section id="visao-adicionar"[^>]*>', html)
+
+    assert item and "hidden" not in item.group(0)
+    assert visao and "hidden" in visao.group(0)
+
+
+def test_mira_e_so_visual_e_o_botao_do_centro_vem_antes_do_mapa(pagina):
+    # A mira é decorativa (as instruções do mapa a descrevem), e "Usar o centro
+    # do mapa" fica antes do mapa no Tab, como "Buscar nesta área": com o mapa em
+    # foco, Shift+Tab chega nele.
+    html = pagina.content.decode()
+    mira = re.search(r'<div id="mira"[^>]*>', html)
+    botao = re.search(r'<button[^>]*id="usar-centro"[^>]*>', html)
+
+    assert mira and 'aria-hidden="true"' in mira.group(0) and "hidden" in mira.group(0)
+    assert botao and "hidden" in botao.group(0)
+    assert html.index('id="usar-centro"') < html.index('id="mapa"')
+    assert 'id="mapa-instrucoes-cadastro"' in html
+
+
 def test_detalhes_tem_as_tres_acoes_de_contribuicao(pagina):
     # Especificação, 2.4: avaliar, registrar condição e denunciar, como botões.
     acoes = re.findall(

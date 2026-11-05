@@ -366,6 +366,78 @@ body {
   transform: translateX(-50%);
 }
 
+/*
+ * Ponto escolhido para um local novo ("Novo local", plano, etapa 12): um
+ * quadrado, forma diferente do círculo e do pino dos locais, do losango do
+ * endereço e do alvo de "Você está aqui". Rótulo sempre visível, abaixo.
+ */
+.novo-local {
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+}
+
+.novo-local__forma {
+  position: absolute;
+  inset: 2px;
+  border: 3px solid var(--cor-fundo);
+  background: var(--cor-foco);
+  box-shadow: 0 0 0 1px var(--cor-texto), 0 1px 4px rgb(0 0 0 / 0.4);
+}
+
+.novo-local__nome {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  padding: 2px 6px;
+  border: 1px solid var(--cor-texto);
+  border-radius: 4px;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+/*
+ * Mira do modo de adicionar local, no centro do mapa. Só visual e sem receber
+ * clique (o clique vai ao mapa). Linhas escuras com contorno branco: contraste
+ * de pelo menos 3:1 sobre qualquer tile (WCAG 1.4.11).
+ */
+.mira {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  pointer-events: none;
+}
+
+.mira::before,
+.mira::after {
+  content: "";
+  position: absolute;
+  background: var(--cor-texto);
+  box-shadow: 0 0 0 2px var(--cor-fundo);
+}
+
+.mira::before {
+  top: 0;
+  left: 21px;
+  width: 2px;
+  height: 44px;
+}
+
+.mira::after {
+  top: 21px;
+  left: 0;
+  width: 44px;
+  height: 2px;
+}
+
 /* Depois do Esc, somem os nomes de hover e foco; o do escolhido fica (WCAG 1.4.13). */
 .mapa--nomes-dispensados .marcador:not(.marcador--escolhido) .marcador__nome {
   display: none;
@@ -634,6 +706,44 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* Adicionar local: o ponto escolhido e os jeitos de escolher (plano, etapa 12). */
+.ponto-escolhido {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem 0.75rem;
+  border-left: 4px solid var(--cor-foco);
+  background: var(--cor-escolhido-fundo);
+}
+
+.ponto-escolhido h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.ponto-escolhido p {
+  margin: 0 0 0.5rem;
+}
+
+.acoes-ponto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.acoes-ponto button {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem;
+  font: inherit;
+}
+
+.jeitos-de-escolher {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.jeitos-de-escolher li {
+  margin-bottom: 0.35rem;
+}
+
 /* Nome de quem está conectado, no topo do menu. */
 .menu-usuario {
   margin: 1rem 0 0;
@@ -644,16 +754,19 @@ body {
 }
 
 /* Visão Buscar: endereço ou lugar. */
-#form-endereco {
+#form-endereco,
+#form-endereco-local {
   margin-bottom: 1.25rem;
 }
 
-#form-endereco h3 {
+#form-endereco h3,
+#form-endereco-local h3 {
   margin: 0 0 0.5rem;
   font-size: 1.05rem;
 }
 
-#form-endereco > button {
+#form-endereco > button,
+#form-endereco-local > button {
   min-height: 2.25rem;
   padding: 0.25rem 0.75rem;
   font: inherit;

@@ -244,7 +244,7 @@ function sair() {
   enviar("POST", "/api/auth/logout/")
     .done(function () {
       definirUsuario(null);
-      tirarConfiguracoesDaTela();
+      tirarDaTelaOQueExigeLogin();
       anunciar("Você saiu da conta. O mapa continua aberto, e você pode entrar de novo pelo menu.");
     })
     .fail(function (resposta) {
@@ -260,7 +260,7 @@ function sair() {
           }
           // A sessão tinha caído (a senha foi trocada em outra janela, por
           // exemplo): a pessoa queria sair, e saiu.
-          tirarConfiguracoesDaTela();
+          tirarDaTelaOQueExigeLogin();
           anunciar("Sua sessão já tinha terminado. Você está como visitante.");
         })
         .fail(function (conferencia) {
@@ -270,11 +270,12 @@ function sair() {
 }
 
 /**
- * Depois de Sair, Configurações não fica na tela de um visitante: o painel
- * volta para a lista, sem tirar o foco do botão Menu (plano, etapa 11).
+ * Depois de Sair, o que exige login não fica na tela de um visitante:
+ * Configurações (plano, etapa 11) e o modo de adicionar local (etapa 12). O
+ * painel volta para a lista, sem tirar o foco do botão Menu.
  */
-function tirarConfiguracoesDaTela() {
-  if (!$("#visao-configuracoes").prop("hidden")) {
+function tirarDaTelaOQueExigeLogin() {
+  if ($("#visao-configuracoes, #visao-adicionar").filter(":not([hidden])").length) {
     mostrarVisao("lista", { focar: false, frente: false });
   }
 }

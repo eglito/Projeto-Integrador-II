@@ -22,7 +22,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 8 | Painel de detalhes. **Marco:** fecha a entrega só de leitura | `feat/painel-detalhes` | 7 | Concluída (PR #29) |
 | 9 | Sessão no painel | `feat/sessao-front` | 8 | Concluída (PR #30) |
 | 10 | Configurações no back | `feat/api-conta` | — | Concluída (PR #23) |
-| 11 | Configurações no front | `feat/configuracoes-front` | 9 e 10 | Pendente |
+| 11 | Configurações no front | `feat/configuracoes-front` | 9 e 10 | Concluída (PR #31) |
 | 12 | Adicionar local: escolha do ponto | `feat/cadastro-local-ponto` | 9 | Pendente |
 | 13 | Adicionar local: formulário em etapas | `feat/cadastro-local-formulario` | 12 | Pendente |
 
@@ -325,7 +325,17 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - Clique no mapa.
   - Endereço, reaproveitando a etapa 6.
   - Esc cancela o modo de cadastro.
-- **Arquivos:** `js/cadastro_local.js`, o CSS da mira e o template.
+- Na implementação:
+  - O item "Adicionar local" aparece para todos, na ordem da especificação (2.5). Sem sessão, leva a Entrar com o contexto "Entre ou crie uma conta para adicionar um local", pela mesma ação pendente da etapa 9, e depois do login a pessoa entra direto no modo.
+  - O modo é a visão "Adicionar local" do painel e vale só enquanto ela está na tela: Cancelar, Esc, o menu, um marcador, o Voltar do navegador e Sair o encerram (`aoTrocarVisao`). Enquanto dura, aparecem a mira (só visual, `aria-hidden`) e "Usar o centro do mapa", no lugar de "Buscar nesta área", que não aparece no modo; o `aria-describedby` do mapa passa a apontar instruções próprias.
+  - "Usar o centro do mapa" fica antes do mapa no HTML, como "Buscar nesta área": com o mapa em foco, Shift+Tab chega nele depois das setas.
+  - O clique no mapa escolhe o ponto; o clique num marcador continua abrindo os detalhes daquele local, e isso encerra o modo.
+  - O endereço usa o `endereco.js`, adaptado num commit próprio para servir mais de um formulário (ids por prefixo, a mesma trava de 1 s e o mesmo cache), sem mudar a visão Buscar: a mesma verificação, com o Nominatim simulado, deu o mesmo resultado antes e depois.
+  - O ponto escolhido ganha o marcador "Novo local", um quadrado. O painel diz como ele foi escolhido ("pelo centro do mapa", "por um clique no mapa" ou "pelo endereço …") e mostra as coordenadas em pt-BR, com o foco no título "Ponto escolhido"; em tela estreita, o painel vem para a frente. "Escolher outro ponto" recomeça, e "Continuar" anuncia que nome e comodidades chegam numa próxima versão (etapa 13).
+  - O Esc cancela com o foco na visão, em "Usar o centro do mapa" ou no próprio mapa; num marcador, continua só escondendo o nome (WCAG 1.4.13). Sair da conta com o modo aberto volta à lista, como Configurações.
+  - A mira tem linhas escuras com contorno branco, para o contraste de 3:1 sobre qualquer tile (WCAG 1.4.11).
+  - Achado na verificação: a faixa de anúncios muda de altura e o mapa é medido de novo (etapa 7), o que o desloca alguns pixels; o marcador do ponto acompanha o lugar escolhido, e a mira continua no centro.
+- **Arquivos:** `js/cadastro_local.js`, `js/endereco.js`, `js/mapa.js`, `js/sessao.js`, `testes/cadastro_local.test.js`, o CSS da mira e o template.
 - **Verificação:** itens 4 e 5.
 
 ### Etapa 13: adicionar local, formulário em etapas

@@ -134,7 +134,7 @@ export function sairDoModoCadastro() {
   ponto = null;
   removerNovoLocal();
   esconderResultados("endereco-local");
-  $("#mira, #usar-centro").prop("hidden", true);
+  $("#ponto-escolhido, #mira, #usar-centro").prop("hidden", true);
   $("#mapa").attr("aria-describedby", "mapa-instrucoes");
 }
 
