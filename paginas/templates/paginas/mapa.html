@@ -163,6 +163,49 @@
         </form>
         <p class="trocar-formulario">Já tem conta? <button type="button" id="ir-para-entrar">Entrar</button></p>
       </section>
+
+      {# Configurações (README, decisões 23 e 32): troca do nome e da senha, as duas confirmadas pela senha atual. #}
+      <section id="visao-configuracoes" class="visao" aria-labelledby="titulo-configuracoes" hidden>
+        <button type="button" id="voltar-das-configuracoes" class="voltar">Voltar à lista</button>
+        <h2 id="titulo-configuracoes" tabindex="-1">Configurações</h2>
+
+        <form id="form-conta-nome" class="formulario-conta" aria-labelledby="titulo-conta-nome" novalidate>
+          <h3 id="titulo-conta-nome">Nome de usuário</h3>
+          <p id="conta-nome-atual"></p>
+          <p id="conta-nome-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+          <div class="campo">
+            <label for="conta-nome-usuario">Novo nome de usuário</label>
+            <input id="conta-nome-usuario" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" aria-describedby="conta-nome-usuario-ajuda">
+            <p id="conta-nome-usuario-ajuda" class="ajuda">Letras, números e os sinais @ . + - _, sem espaços. Ele aparece no menu e nos locais que você cadastrou.</p>
+            <p id="conta-nome-usuario-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="conta-nome-senha">Senha atual</label>
+            <input id="conta-nome-senha" name="senha_atual" type="password" autocomplete="current-password" aria-describedby="conta-nome-senha-ajuda">
+            <p id="conta-nome-senha-ajuda" class="ajuda">Ela confirma que é você quem está trocando.</p>
+            <p id="conta-nome-senha-erro" class="erro" hidden></p>
+          </div>
+          <button type="submit">Trocar nome</button>
+        </form>
+
+        <form id="form-conta-senha" class="formulario-conta" aria-labelledby="titulo-conta-senha" novalidate>
+          <h3 id="titulo-conta-senha">Senha</h3>
+          <p id="conta-senha-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+          <div class="campo">
+            <label for="conta-senha-atual">Senha atual</label>
+            <input id="conta-senha-atual" name="senha_atual" type="password" autocomplete="current-password" aria-describedby="conta-senha-atual-ajuda">
+            <p id="conta-senha-atual-ajuda" class="ajuda">Ela confirma que é você quem está trocando.</p>
+            <p id="conta-senha-atual-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="conta-senha-nova">Senha nova</label>
+            <input id="conta-senha-nova" name="nova_senha" type="password" autocomplete="new-password" aria-describedby="conta-senha-nova-ajuda">
+            <p id="conta-senha-nova-ajuda" class="ajuda">Pelo menos 8 caracteres, diferente da atual. Não use só números, uma senha comum ou uma parecida com o nome de usuário. As outras sessões da sua conta serão encerradas; esta continua.</p>
+            <p id="conta-senha-nova-erro" class="erro" hidden></p>
+          </div>
+          <button type="submit">Trocar senha</button>
+        </form>
+      </section>
     </div>
 
     <div class="area-mapa">
@@ -191,6 +234,8 @@
     <li><button type="button" data-visao="buscar">Buscar</button></li>
     <li><button type="button" data-visao="lista">Lista de locais</button></li>
     <li id="item-entrar"><button type="button" id="menu-entrar">Entrar</button></li>
+    {# Só com sessão aberta (plano, etapa 11). #}
+    <li id="item-configuracoes" hidden><button type="button" id="menu-configuracoes">Configurações</button></li>
     <li id="item-sair" hidden><button type="button" id="menu-sair">Sair</button></li>
   </ul>
 </nav>

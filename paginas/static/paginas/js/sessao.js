@@ -12,12 +12,25 @@
 
 import { enviar, obter } from "./api.js";
 import { anunciar } from "./anuncio.js";
+import {
+  limparErros,
+  mensagemDeFalha,
+  mostrarErros,
+  prepararFormulario,
+  separarErros,
+} from "./formularios.js";
 import { fecharMenu, mostrarVisao } from "./layout.js";
 
-// Campos da API e o fim do id do campo na página ("entrar-usuario", "cadastro-senha").
-const CAMPOS = { username: "usuario", password: "senha" };
+/** Campos da API em Entrar e Criar conta, com o id e o rótulo na tela. */
+function camposDe(formulario) {
+  return {
+    username: { id: `${formulario}-usuario`, rotulo: "Nome de usuário" },
+    password: { id: `${formulario}-senha`, rotulo: "Senha" },
+  };
+}
 
-const ROTULOS = { username: "Nome de usuário", password: "Senha" };
+// O que cada operação tenta fazer, para a mensagem de falha (formularios.js).
+const ACOES_DA_SESSAO = { entrar: "entrar", cadastro: "criar a conta", sair: "sair" };
 
 // A API responde "Este campo é obrigatório.", sem dizer qual: a conferência
 // do campo vazio fica no front, com mensagem que diz o que fazer.
@@ -55,41 +68,6 @@ export function camposVazios({ username, password }) {
     erros.password = VAZIOS.password;
   }
   return erros;
-}
-
-/**
- * Separa o corpo de um 400 (Docs/API.md, seção 3) em erros por campo, com as
- * mensagens de cada um juntas, e o erro geral: non_field_errors, ou o de um
- * campo que o formulário não tem.
- */
-export function separarErros(corpo) {
-  const porCampo = {};
-  const gerais = [];
-  for (const [campo, mensagens] of Object.entries(corpo ?? {})) {
-    const lista = [].concat(mensagens);
-    if (campo in CAMPOS) {
-      porCampo[campo] = lista.join(" ");
-    } else {
-      gerais.push(...lista);
-    }
-  }
-  return { porCampo, geral: gerais.length ? gerais.join(" ") : null };
-}
-
-// O que a pessoa tentava fazer, para a mensagem de falha.
-const ACOES_DA_SESSAO = { entrar: "entrar", cadastro: "criar a conta", sair: "sair" };
-
-/**
- * Falha que não é erro de campo, ao entrar, criar a conta ou sair: sem conexão
- * (status 0), 403 com o token CSRF antigo ou 500. O texto da API, em inglês no
- * caso do CSRF, não chega à tela.
- */
-export function mensagemDeFalha(operacao, status) {
-  const acao = ACOES_DA_SESSAO[operacao];
-  if (status === 0) {
-    return `Não foi possível ${acao}. Confira a conexão com a internet e tente de novo.`;
-  }
-  return `Não foi possível ${acao} agora. Recarregue a página e tente de novo.`;
 }
 
 /** Contexto no topo de Entrar e Criar conta quando uma ação pediu o login. */
@@ -132,16 +110,26 @@ export function logado() {
   return usuario !== null;
 }
 
-/** Menu e convite para contribuir acompanham a sessão. */
+/** Usuário da sessão, { id, username }, ou null para visitante. */
+export function usuarioAtual() {
+  return usuario;
+}
+
+/**
+ * Menu e convite para contribuir acompanham a sessão. Exportada como
+ * atualizarUsuario para a troca de nome (conta.js) mostrar o nome novo no menu.
+ */
 function definirUsuario(novo) {
   usuario = novo;
   $("#menu-usuario")
     .text(novo ? textoUsuario(novo.username) : "")
     .prop("hidden", !novo);
   $("#item-entrar").prop("hidden", Boolean(novo));
-  $("#item-sair").prop("hidden", !novo);
+  $("#item-configuracoes, #item-sair").prop("hidden", !novo);
   $("#contribuir-ajuda").prop("hidden", Boolean(novo));
 }
+
+export { definirUsuario as atualizarUsuario };
 
 /**
  * Liga menu e formulários. `aoEntrar(usuario, pendente, { novaConta, naTela })`
@@ -150,10 +138,8 @@ function definirUsuario(novo) {
  * no "Voltar…" e no Esc.
  */
 export function iniciarSessao({ aoEntrar, aoCancelar }) {
-  // O aria-describedby de cada campo, sem erro: a ajuda, quando há.
-  $("#form-entrar input, #form-cadastro input").each(function () {
-    $(this).data("descricao", $(this).attr("aria-describedby") || "");
-  });
+  prepararFormulario("entrar");
+  prepararFormulario("cadastro");
 
   $("#menu-entrar").on("click", function () {
     fecharMenu({ devolverFoco: false });
@@ -209,7 +195,7 @@ function enviarFormulario(formulario, aoEntrar) {
   limparErros(formulario);
   const vazios = camposVazios(dados);
   if (Object.keys(vazios).length) {
-    mostrarErros(formulario, { porCampo: vazios, geral: null });
+    mostrarErros(formulario, camposDe(formulario), { porCampo: vazios, geral: null });
     return;
   }
 
@@ -229,58 +215,17 @@ function enviarFormulario(formulario, aoEntrar) {
       aoEntrar(novoUsuario, acao, { novaConta: formulario === "cadastro", naTela });
     })
     .fail(function (resposta) {
+      const campos = camposDe(formulario);
       if (resposta.status === 400) {
-        mostrarErros(formulario, separarErros(resposta.responseJSON));
+        mostrarErros(formulario, campos, separarErros(resposta.responseJSON, campos));
       } else {
-        mostrarErros(formulario, { porCampo: {}, geral: mensagemDeFalha(formulario, resposta.status) });
+        const geral = mensagemDeFalha(ACOES_DA_SESSAO[formulario], resposta.status);
+        mostrarErros(formulario, campos, { porCampo: {}, geral });
       }
     })
     .always(function () {
       enviando = false;
     });
-}
-
-/**
- * Erros junto dos campos, ligados a eles por aria-describedby, e o geral no
- * topo do formulário (Docs/API.md, seção 3). O foco vai para o erro geral ou
- * para o primeiro campo com erro, e o anúncio repete tudo.
- */
-function mostrarErros(formulario, { porCampo, geral }) {
-  const mensagens = [];
-  if (geral) {
-    $(`#${formulario}-erro-geral`).text(geral).prop("hidden", false);
-    mensagens.push(geral);
-  }
-  let primeiroCampo = null;
-  for (const [campo, sufixo] of Object.entries(CAMPOS)) {
-    if (!porCampo[campo]) {
-      continue;
-    }
-    const id = `${formulario}-${sufixo}`;
-    $(`#${id}-erro`).text(porCampo[campo]).prop("hidden", false);
-    const entrada = $(`#${id}`);
-    entrada.attr({
-      "aria-invalid": "true",
-      "aria-describedby": `${entrada.data("descricao")} ${id}-erro`.trim(),
-    });
-    mensagens.push(`${ROTULOS[campo]}: ${porCampo[campo]}`);
-    primeiroCampo ??= entrada;
-  }
-  (geral ? $(`#${formulario}-erro-geral`) : primeiroCampo).trigger("focus");
-  anunciar(mensagens.join(" "));
-}
-
-function limparErros(formulario) {
-  $(`#${formulario}-erro-geral`).text("").prop("hidden", true);
-  $(`#form-${formulario} .erro`).not(".erro-geral").text("").prop("hidden", true);
-  $(`#form-${formulario} input`).each(function () {
-    const entrada = $(this).removeAttr("aria-invalid");
-    if (entrada.data("descricao")) {
-      entrada.attr("aria-describedby", entrada.data("descricao"));
-    } else {
-      entrada.removeAttr("aria-describedby");
-    }
-  });
 }
 
 /**
@@ -293,23 +238,37 @@ function sair() {
   enviar("POST", "/api/auth/logout/")
     .done(function () {
       definirUsuario(null);
+      tirarConfiguracoesDaTela();
       anunciar("Você saiu da conta. O mapa continua aberto, e você pode entrar de novo pelo menu.");
     })
     .fail(function (resposta) {
       if (resposta.status !== 403) {
-        anunciar(mensagemDeFalha("sair", resposta.status));
+        anunciar(mensagemDeFalha(ACOES_DA_SESSAO.sair, resposta.status));
         return;
       }
       carregarSessao()
         .done(function () {
-          anunciar(
-            logado()
-              ? mensagemDeFalha("sair", resposta.status)
-              : "Sua sessão já tinha terminado. Você está como visitante.",
-          );
+          if (logado()) {
+            anunciar(mensagemDeFalha(ACOES_DA_SESSAO.sair, resposta.status));
+            return;
+          }
+          // A sessão tinha caído (a senha foi trocada em outra janela, por
+          // exemplo): a pessoa queria sair, e saiu.
+          tirarConfiguracoesDaTela();
+          anunciar("Sua sessão já tinha terminado. Você está como visitante.");
         })
         .fail(function (conferencia) {
-          anunciar(mensagemDeFalha("sair", conferencia.status));
+          anunciar(mensagemDeFalha(ACOES_DA_SESSAO.sair, conferencia.status));
         });
     });
+}
+
+/**
+ * Depois de Sair, Configurações não fica na tela de um visitante: o painel
+ * volta para a lista, sem tirar o foco do botão Menu (plano, etapa 11).
+ */
+function tirarConfiguracoesDaTela() {
+  if (!$("#visao-configuracoes").prop("hidden")) {
+    mostrarVisao("lista", { focar: false, frente: false });
+  }
 }

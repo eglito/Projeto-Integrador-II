@@ -616,6 +616,24 @@ body {
   font: inherit;
 }
 
+/* Configurações: os dois formulários, um abaixo do outro (decisão 23). */
+#visao-configuracoes h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+#visao-configuracoes .formulario-conta + .formulario-conta {
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #d0d0d0;
+}
+
+#conta-nome-atual {
+  margin: 0 0 0.75rem;
+  color: var(--cor-texto-secundario);
+  overflow-wrap: anywhere;
+}
+
 /* Nome de quem está conectado, no topo do menu. */
 .menu-usuario {
   margin: 1rem 0 0;
