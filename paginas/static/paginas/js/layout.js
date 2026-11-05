@@ -77,7 +77,11 @@ function abrirMenu() {
   $("#menu [data-visao]").first().trigger("focus");
 }
 
-function fecharMenu({ devolverFoco = true } = {}) {
+/**
+ * Fecha a gaveta e tira o inert do resto da página. Sem `devolverFoco`, quem
+ * chama leva o foco para onde a escolha do menu leva (sessao.js, Entrar).
+ */
+export function fecharMenu({ devolverFoco = true } = {}) {
   $("#menu, #fundo-menu").prop("hidden", true);
   $("#botao-menu").attr("aria-expanded", "false");
   $(".pagina > [inert]").removeAttr("inert");

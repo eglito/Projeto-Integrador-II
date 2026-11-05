@@ -106,6 +106,62 @@
         {# Leva o foco ao marcador; em tela estreita, traz o Mapa para a frente (README, decisão 41). #}
         <button type="button" id="mostrar-no-mapa" hidden>Mostrar no mapa</button>
         <div id="conteudo-detalhes" class="conteudo-detalhes"></div>
+        {# Contribuição (especificação, 2.4). Sem login, o botão leva a Entrar e, depois, de volta a este local (plano, etapa 9). #}
+        <section id="contribuir" class="contribuir" aria-labelledby="titulo-contribuir" hidden>
+          <h3 id="titulo-contribuir">Contribuir</h3>
+          <p id="contribuir-ajuda">Para contribuir, entre na sua conta. Depois, você volta para este local.</p>
+          <div class="acoes-contribuir">
+            <button type="button" data-acao="avaliar">Avaliar o local</button>
+            <button type="button" data-acao="condicao">Registrar condição</button>
+            <button type="button" data-acao="denunciar">Denunciar</button>
+          </div>
+        </section>
+      </section>
+
+      {# Entrar e Criar conta no painel (README, decisão 32). Os autocomplete identificam os campos (WCAG 1.3.5) e deixam o gerenciador de senhas preencher (WCAG 3.3.8). #}
+      <section id="visao-entrar" class="visao" aria-labelledby="titulo-entrar" hidden>
+        <button type="button" class="voltar" data-cancelar-login>Voltar à lista</button>
+        <h2 id="titulo-entrar" tabindex="-1">Entrar</h2>
+        <p class="contexto-login" hidden></p>
+        {# novalidate: as mensagens de erro são as nossas e as da API, em português e dizendo como corrigir. #}
+        <form id="form-entrar" class="formulario-conta" novalidate>
+          <p id="entrar-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+          <div class="campo">
+            <label for="entrar-usuario">Nome de usuário</label>
+            <input id="entrar-usuario" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false">
+            <p id="entrar-usuario-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="entrar-senha">Senha</label>
+            <input id="entrar-senha" name="password" type="password" autocomplete="current-password">
+            <p id="entrar-senha-erro" class="erro" hidden></p>
+          </div>
+          <button type="submit">Entrar</button>
+        </form>
+        <p class="trocar-formulario">Ainda não tem conta? <button type="button" id="ir-para-cadastro">Criar conta</button></p>
+      </section>
+
+      <section id="visao-cadastro" class="visao" aria-labelledby="titulo-cadastro" hidden>
+        <button type="button" class="voltar" data-cancelar-login>Voltar à lista</button>
+        <h2 id="titulo-cadastro" tabindex="-1">Criar conta</h2>
+        <p class="contexto-login" hidden></p>
+        <form id="form-cadastro" class="formulario-conta" novalidate>
+          <p id="cadastro-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+          <div class="campo">
+            <label for="cadastro-usuario">Nome de usuário</label>
+            <input id="cadastro-usuario" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" aria-describedby="cadastro-usuario-ajuda">
+            <p id="cadastro-usuario-ajuda" class="ajuda">Letras, números e os sinais @ . + - _, sem espaços. Ele aparece nos locais que você cadastrar.</p>
+            <p id="cadastro-usuario-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="cadastro-senha">Senha</label>
+            <input id="cadastro-senha" name="password" type="password" autocomplete="new-password" aria-describedby="cadastro-senha-ajuda">
+            <p id="cadastro-senha-ajuda" class="ajuda">Pelo menos 8 caracteres. Não use só números, uma senha comum ou uma parecida com o nome de usuário.</p>
+            <p id="cadastro-senha-erro" class="erro" hidden></p>
+          </div>
+          <button type="submit">Criar conta</button>
+        </form>
+        <p class="trocar-formulario">Já tem conta? <button type="button" id="ir-para-entrar">Entrar</button></p>
       </section>
     </div>
 
@@ -129,9 +185,13 @@
 <div id="fundo-menu" class="fundo-menu" hidden></div>
 <nav id="menu" class="menu" aria-label="Menu" hidden>
   <button type="button" id="fechar-menu" class="fechar-menu">Fechar menu</button>
+  {# Com sessão aberta, o nome de quem está conectado (especificação, 2.5). #}
+  <p id="menu-usuario" class="menu-usuario" hidden></p>
   <ul role="list">
     <li><button type="button" data-visao="buscar">Buscar</button></li>
     <li><button type="button" data-visao="lista">Lista de locais</button></li>
+    <li id="item-entrar"><button type="button" id="menu-entrar">Entrar</button></li>
+    <li id="item-sair" hidden><button type="button" id="menu-sair">Sair</button></li>
   </ul>
 </nav>
 {% endblock %}
