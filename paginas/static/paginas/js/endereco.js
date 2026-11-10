@@ -154,9 +154,12 @@ export function iniciarBuscaEndereco({ prefixo, centroPadrao, aoEscolher }) {
   });
 }
 
-/** A visão do painel que contém o formulário ainda está na tela. */
+/**
+ * O formulário ainda está na tela: nem a visão do painel nem o passo que o
+ * contém foram escondidos (no cadastro, Continuar esconde o passo do ponto).
+ */
 function formularioNaTela(prefixo) {
-  return $(ids(prefixo).formulario).closest(".visao").is(":not([hidden])");
+  return $(ids(prefixo).formulario).parentsUntil("body").filter("[hidden]").length === 0;
 }
 
 function converter(resultado) {
