@@ -276,13 +276,13 @@ export function iniciarCadastroLocal({ centroPadrao, opcoes, aoConcluir, aoAbrir
   $("#continuar-cadastro").on("click", irParaDados);
 
   // Passo 2: nome e comodidades, e a possível duplicata.
-  $("#voltar-ao-ponto").on("click", () => mostrarEtapa("ponto"));
+  $("#voltar-ao-ponto").on("click", () => seguirParaEtapa("ponto"));
   $("#form-local").on("submit", function (evento) {
     evento.preventDefault();
     enviarLocal({ confirmarNovo: false });
   });
   $("#cadastrar-mesmo-assim").on("click", () => enviarLocal({ confirmarNovo: true }));
-  $("#voltar-aos-dados").on("click", () => mostrarEtapa("dados"));
+  $("#voltar-aos-dados").on("click", () => seguirParaEtapa("dados"));
   $("#candidatos").on("click", "[data-candidato]", function () {
     abrirExistente(Number($(this).attr("data-candidato")));
   });
@@ -405,6 +405,16 @@ function mostrarEtapa(nova, { focar = true } = {}) {
   }
 }
 
+/**
+ * Passo trocado pela pessoa (Continuar, Voltar…): o foco vai ao título, e o
+ * anúncio diz em que passo ela está, no lugar do aviso do passo anterior, que
+ * ainda estaria na faixa ("Use Continuar para seguir…").
+ */
+function seguirParaEtapa(nova) {
+  mostrarEtapa(nova);
+  anunciar(textoPasso(nova));
+}
+
 /** Cancelar ou Esc antes do local existir: a lista volta, com o foco no título, e o modo termina. */
 function cancelar() {
   mostrarVisao("lista");
@@ -468,7 +478,7 @@ function irParaDados() {
     enderecoSugerido = ponto.origem === "endereco" ? ponto.endereco : "";
     campo.val(enderecoSugerido);
   }
-  mostrarEtapa("dados");
+  seguirParaEtapa("dados");
 }
 
 function lerDadosDoLocal() {
