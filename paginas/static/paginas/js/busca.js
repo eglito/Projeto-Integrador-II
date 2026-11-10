@@ -96,13 +96,21 @@ export function iniciarFiltros({ tiposEquipamento, raioPadrao, raioMaximo, aoApl
   });
 
   $("#limpar-filtros").on("click", function () {
-    tipo.val("");
-    $("#filtro-altura").val("");
+    limparFiltrosDoEquipamento();
     raio.find("[data-area]").remove();
     raio.val(String(raioPadrao));
-    limparErroDaAltura();
     aoAplicar({ tipo: "", alturaMaxima: null, raio: raioPadrao });
   });
+}
+
+/**
+ * Tira do formulário os filtros de tipo e de altura, sem buscar: quem chama
+ * já fez a busca sem eles (principal.js, irAoLocal).
+ */
+export function limparFiltrosDoEquipamento() {
+  $("#filtro-tipo").val("");
+  $("#filtro-altura").val("");
+  limparErroDaAltura();
 }
 
 /** Erro junto do campo, ligado a ele, anunciado e com o foco no campo (CLAUDE.md). */

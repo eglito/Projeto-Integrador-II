@@ -164,39 +164,148 @@
         <p class="trocar-formulario">Já tem conta? <button type="button" id="ir-para-entrar">Entrar</button></p>
       </section>
 
-      {# Adicionar local, escolha do ponto (especificação, seção 3; plano, etapa 12). O formulário do local vem na etapa 13. #}
+      {# Adicionar local (especificação, seção 3; plano, etapas 12 e 13): um passo de cada vez, como prevê o formulário em etapas (README, seção 6). #}
       <section id="visao-adicionar" class="visao" aria-labelledby="titulo-adicionar" hidden>
         <button type="button" id="cancelar-cadastro" class="voltar">Cancelar</button>
         <h2 id="titulo-adicionar" tabindex="-1">Adicionar local</h2>
-        <section id="ponto-escolhido" class="ponto-escolhido" aria-labelledby="titulo-ponto-escolhido" hidden>
-          <h3 id="titulo-ponto-escolhido" tabindex="-1">Ponto escolhido</h3>
-          <p id="ponto-escolhido-texto"></p>
-          <p id="ponto-escolhido-coordenadas"></p>
+        <p id="passo-cadastro" class="passo-cadastro">Passo 1 de 3: o ponto</p>
+
+        {# Passo 1: o ponto, por três entradas equivalentes (etapa 12). #}
+        <div id="etapa-ponto" class="etapa-cadastro">
+          <section id="ponto-escolhido" class="ponto-escolhido" aria-labelledby="titulo-ponto-escolhido" hidden>
+            <h3 id="titulo-ponto-escolhido" tabindex="-1">Ponto escolhido</h3>
+            <p id="ponto-escolhido-texto"></p>
+            <p id="ponto-escolhido-coordenadas"></p>
+            <div class="acoes-ponto">
+              <button type="button" id="continuar-cadastro">Continuar</button>
+              <button type="button" id="outro-ponto">Escolher outro ponto</button>
+            </div>
+          </section>
+          <p>Escolha onde fica o local, de um destes jeitos:</p>
+          <ul class="jeitos-de-escolher">
+            <li>Mova o mapa até a mira, no centro dele, ficar sobre o lugar, e use "Usar o centro do mapa". Pelo teclado: Tab até o mapa, setas para mover e Shift+Tab até o botão. Em tela pequena, o mapa fica na aba Mapa.</li>
+            <li>Clique no lugar, no mapa.</li>
+            <li>Busque o endereço, aqui embaixo.</li>
+          </ul>
+          <form id="form-endereco-local" role="search" aria-labelledby="titulo-endereco-local" novalidate>
+            <h3 id="titulo-endereco-local">Endereço do novo local</h3>
+            <div class="campo">
+              <label for="campo-endereco-local">Endereço ou nome do lugar</label>
+              <input id="campo-endereco-local" name="endereco" type="text" autocomplete="off" aria-describedby="campo-endereco-local-ajuda">
+              <p id="campo-endereco-local-ajuda" class="ajuda">Exemplo: Praça da Matriz, Araraquara. O texto vai para o serviço de endereços do OpenStreetMap (Nominatim).</p>
+              <p id="campo-endereco-local-erro" class="erro" hidden></p>
+            </div>
+            <button type="submit">Buscar endereço</button>
+            <div id="resultados-endereco-local" class="resultados-endereco" hidden>
+              <h4>Escolha o endereço</h4>
+              <ul id="lista-endereco-local" class="lista-enderecos" role="list"></ul>
+            </div>
+          </form>
+        </div>
+
+        {# Passo 2: nome e comodidades. Comodidade sem resposta vai como null, "não informado" (Docs/API.md, seção 1). #}
+        <section id="etapa-dados" class="etapa-cadastro" aria-labelledby="titulo-etapa-dados" hidden>
+          <h3 id="titulo-etapa-dados" tabindex="-1">Nome e comodidades</h3>
+          <form id="form-local" class="formulario-conta" novalidate>
+            <p id="local-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+            <div class="campo">
+              <label for="local-nome">Nome do local</label>
+              <input id="local-nome" name="nome" type="text" maxlength="120" autocomplete="off" aria-describedby="local-nome-ajuda">
+              <p id="local-nome-ajuda" class="ajuda">O nome oficial da praça ou do parque, se houver. Exemplo: Praça Pedro de Toledo.</p>
+              <p id="local-nome-erro" class="erro" hidden></p>
+            </div>
+            <div class="campo">
+              <label for="local-municipio">Município</label>
+              <select id="local-municipio" name="municipio_ibge"></select>
+              <p id="local-municipio-erro" class="erro" hidden></p>
+            </div>
+            <div class="campo">
+              <label for="local-endereco">Endereço</label>
+              <input id="local-endereco" name="endereco" type="text" maxlength="255" autocomplete="off" aria-describedby="local-endereco-ajuda">
+              <p id="local-endereco-ajuda" class="ajuda">Opcional. Rua e número, ou um ponto de referência.</p>
+              <p id="local-endereco-erro" class="erro" hidden></p>
+            </div>
+            <fieldset class="comodidade">
+              <legend>Tem bebedouro?</legend>
+              <span class="opcao"><input type="radio" id="tem-bebedouro-sim" name="tem_bebedouro" value="sim"><label for="tem-bebedouro-sim">Sim</label></span>
+              <span class="opcao"><input type="radio" id="tem-bebedouro-nao" name="tem_bebedouro" value="nao"><label for="tem-bebedouro-nao">Não</label></span>
+              <span class="opcao"><input type="radio" id="tem-bebedouro-nao-sei" name="tem_bebedouro" value="" checked><label for="tem-bebedouro-nao-sei">Não sei</label></span>
+            </fieldset>
+            <fieldset class="comodidade">
+              <legend>Tem sanitário?</legend>
+              <span class="opcao"><input type="radio" id="tem-sanitario-sim" name="tem_sanitario" value="sim"><label for="tem-sanitario-sim">Sim</label></span>
+              <span class="opcao"><input type="radio" id="tem-sanitario-nao" name="tem_sanitario" value="nao"><label for="tem-sanitario-nao">Não</label></span>
+              <span class="opcao"><input type="radio" id="tem-sanitario-nao-sei" name="tem_sanitario" value="" checked><label for="tem-sanitario-nao-sei">Não sei</label></span>
+            </fieldset>
+            <fieldset class="comodidade">
+              <legend>Tem bancos?</legend>
+              <span class="opcao"><input type="radio" id="tem-bancos-sim" name="tem_bancos" value="sim"><label for="tem-bancos-sim">Sim</label></span>
+              <span class="opcao"><input type="radio" id="tem-bancos-nao" name="tem_bancos" value="nao"><label for="tem-bancos-nao">Não</label></span>
+              <span class="opcao"><input type="radio" id="tem-bancos-nao-sei" name="tem_bancos" value="" checked><label for="tem-bancos-nao-sei">Não sei</label></span>
+            </fieldset>
+            <div class="acoes-ponto">
+              <button type="submit">Cadastrar local</button>
+              <button type="button" id="voltar-ao-ponto">Voltar ao ponto</button>
+            </div>
+          </form>
+        </section>
+
+        {# Ainda o passo 2: o POST respondeu 409, e o lugar pode já existir (Docs/API.md, 6.2). #}
+        <section id="etapa-duplicata" class="etapa-cadastro" aria-labelledby="titulo-etapa-duplicata" hidden>
+          <h3 id="titulo-etapa-duplicata" tabindex="-1">Este lugar pode já estar cadastrado</h3>
+          <p>Confira os locais perto do ponto escolhido. Se for um deles, abra-o para contribuir com ele. Se for outro lugar, cadastre mesmo assim.</p>
+          <p id="duplicata-erro" class="erro erro-geral" tabindex="-1" hidden></p>
+          <ul id="candidatos" class="candidatos" role="list"></ul>
           <div class="acoes-ponto">
-            <button type="button" id="continuar-cadastro">Continuar</button>
-            <button type="button" id="outro-ponto">Escolher outro ponto</button>
+            <button type="button" id="cadastrar-mesmo-assim">É outro lugar: cadastrar mesmo assim</button>
+            <button type="button" id="voltar-aos-dados">Voltar ao nome</button>
           </div>
         </section>
-        <p>Escolha onde fica o local, de um destes jeitos:</p>
-        <ul class="jeitos-de-escolher">
-          <li>Mova o mapa até a mira, no centro dele, ficar sobre o lugar, e use "Usar o centro do mapa". Pelo teclado: Tab até o mapa, setas para mover e Shift+Tab até o botão. Em tela pequena, o mapa fica na aba Mapa.</li>
-          <li>Clique no lugar, no mapa.</li>
-          <li>Busque o endereço, aqui embaixo.</li>
-        </ul>
-        <form id="form-endereco-local" role="search" aria-labelledby="titulo-endereco-local" novalidate>
-          <h3 id="titulo-endereco-local">Endereço do novo local</h3>
-          <div class="campo">
-            <label for="campo-endereco-local">Endereço ou nome do lugar</label>
-            <input id="campo-endereco-local" name="endereco" type="text" autocomplete="off" aria-describedby="campo-endereco-local-ajuda">
-            <p id="campo-endereco-local-ajuda" class="ajuda">Exemplo: Praça da Matriz, Araraquara. O texto vai para o serviço de endereços do OpenStreetMap (Nominatim).</p>
-            <p id="campo-endereco-local-erro" class="erro" hidden></p>
-          </div>
-          <button type="submit">Buscar endereço</button>
-          <div id="resultados-endereco-local" class="resultados-endereco" hidden>
-            <h4>Escolha o endereço</h4>
-            <ul id="lista-endereco-local" class="lista-enderecos" role="list"></ul>
-          </div>
-        </form>
+
+        {# Passo 3: com o local criado (201), os equipamentos, um de cada vez. #}
+        <section id="etapa-equipamentos" class="etapa-cadastro" aria-labelledby="titulo-etapa-equipamentos" hidden>
+          <h3 id="titulo-etapa-equipamentos" tabindex="-1">Equipamentos</h3>
+          <p>Acrescente cada equipamento do local, um de cada vez. Quando terminar, use Concluir.</p>
+          <h4>Já adicionados</h4>
+          <p id="nenhum-equipamento">Nenhum ainda.</p>
+          <ul id="equipamentos-adicionados" class="equipamentos-adicionados" role="list"></ul>
+          <form id="form-equipamento" class="formulario-conta" aria-labelledby="titulo-novo-equipamento" novalidate>
+            <h4 id="titulo-novo-equipamento">Novo equipamento</h4>
+            <p id="equipamento-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+            <div class="campo">
+              <label for="equipamento-tipo">Tipo</label>
+              <select id="equipamento-tipo" name="tipo">
+                <option value="">Escolha o tipo</option>
+              </select>
+              <p id="equipamento-tipo-erro" class="erro" hidden></p>
+            </div>
+            {# Só no tipo "Outro" (restrição do banco). #}
+            <div id="campo-equipamento-nome-outro" class="campo" hidden>
+              <label for="equipamento-nome-outro">Nome do equipamento</label>
+              <input id="equipamento-nome-outro" name="nome_outro" type="text" maxlength="60" autocomplete="off" aria-describedby="equipamento-nome-outro-ajuda">
+              <p id="equipamento-nome-outro-ajuda" class="ajuda">Exemplo: argolas.</p>
+              <p id="equipamento-nome-outro-erro" class="erro" hidden></p>
+            </div>
+            <div class="campo">
+              <label for="equipamento-altura">Altura, em centímetros</label>
+              {# Texto com teclado numérico, como a altura dos filtros: um campo number esconderia o texto inválido. #}
+              <input id="equipamento-altura" name="altura_cm" type="text" inputmode="numeric" autocomplete="off" aria-describedby="equipamento-altura-ajuda">
+              <p id="equipamento-altura-ajuda" class="ajuda">Opcional. Do chão até a barra.</p>
+              <p id="equipamento-altura-erro" class="erro" hidden></p>
+            </div>
+            {# Só em barras paralelas (restrição do banco). #}
+            <div id="campo-equipamento-largura" class="campo" hidden>
+              <label for="equipamento-largura">Largura, em centímetros</label>
+              <input id="equipamento-largura" name="largura_cm" type="text" inputmode="numeric" autocomplete="off" aria-describedby="equipamento-largura-ajuda">
+              <p id="equipamento-largura-ajuda" class="ajuda">Opcional. A distância entre as duas barras.</p>
+              <p id="equipamento-largura-erro" class="erro" hidden></p>
+            </div>
+            <div class="acoes-ponto">
+              <button type="submit">Adicionar equipamento</button>
+              <button type="button" id="concluir-cadastro">Concluir</button>
+            </div>
+          </form>
+        </section>
       </section>
 
       {# Configurações (README, decisões 23 e 32): troca do nome e da senha, as duas confirmadas pela senha atual. #}

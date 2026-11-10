@@ -11,6 +11,7 @@ import {
   esconderBuscaNaArea,
   iniciarBuscaNaArea,
   iniciarFiltros,
+  limparFiltrosDoEquipamento,
   marcarRaio,
   oferecerBuscaNaArea,
   parametrosDaBusca,
@@ -27,7 +28,10 @@ import {
 } from "./detalhes.js";
 import {
   entrarNoModoCadastro,
+  iniciarAdicao,
   iniciarCadastroLocal,
+  mensagemConclusao,
+  mensagemLocalExistente,
   modoCadastroAtivo,
   registrarMovimentoNoModo,
   sairDoModoCadastro,
@@ -137,7 +141,7 @@ obter("/api/opcoes/")
 function iniciarPagina(centro, link) {
   criarMapa("mapa", centro);
   iniciarLayout({ aoMostrarMapa: ajustarTamanho, aoTrocarVisao: aoTrocarVisao });
-  iniciarLista({ aoEscolher: escolherNaLista, aoAmpliar: ampliarRaio });
+  iniciarLista({ aoEscolher: escolherNaLista, aoAmpliar: ampliarRaio, aoCadastrar: iniciarAdicao });
   iniciarFiltros({
     tiposEquipamento: opcoes.tipos_equipamento,
     raioPadrao: opcoes.busca.raio_padrao_m,
@@ -161,7 +165,12 @@ function iniciarPagina(centro, link) {
   });
   iniciarSessao({ aoEntrar: voltarDoLogin, aoCancelar: cancelarLogin });
   iniciarConta();
-  iniciarCadastroLocal({ centroPadrao: opcoes.busca.centro_padrao });
+  iniciarCadastroLocal({
+    centroPadrao: opcoes.busca.centro_padrao,
+    opcoes,
+    aoConcluir: concluirCadastro,
+    aoAbrirExistente: abrirLocalExistente,
+  });
   aoMoverPelaPessoa(function () {
     geracaoDaVista += 1;
     // No modo de adicionar local, mover o mapa é mirar: "Buscar nesta área" só
@@ -406,6 +415,65 @@ function ampliarRaio() {
   buscar({ ...busca, raio: raioMaximo, raioDaArea: false, limitado: false }).done(function () {
     marcarRaio(raioMaximo);
     focarResultado();
+  });
+}
+
+/**
+ * Fim do cadastro (especificação, seção 3): o local novo aparece no mapa, na
+ * lista e nos detalhes, com o anúncio de quantos equipamentos ele ganhou.
+ */
+function concluirCadastro(local, quantidade) {
+  return irAoLocal(local, (filtros) => mensagemConclusao(local.nome, quantidade, filtros));
+}
+
+/** "É este lugar", depois do 409: o local que já existia abre, e nada novo é cadastrado. */
+function abrirLocalExistente(local) {
+  return irAoLocal(local, (filtros) => mensagemLocalExistente(local.nome, filtros));
+}
+
+/**
+ * Leva a pessoa a `local`, { id, nome, latitude, longitude }: a busca parte
+ * dele, sem os filtros de tipo e de altura, que poderiam escondê-lo, e os
+ * detalhes abrem, com o local destacado no mapa e na lista. O raio fica, como
+ * em buscarAPartirDe. `mensagem({ filtrosLimpos })` monta o anúncio do fim.
+ * Devolve o jqXHR da busca: se ela falhar, o cadastro mostra o erro e a pessoa
+ * continua onde estava.
+ */
+function irAoLocal(local, mensagem) {
+  geracaoDaVista += 1;
+  const filtrosLimpos = Boolean(busca.tipo) || busca.alturaMaxima !== null;
+  const raio = busca.raioDaArea ? opcoes.busca.raio_padrao_m : busca.raio;
+  return buscar({
+    latitude: local.latitude,
+    longitude: local.longitude,
+    origem: "centro",
+    endereco: null,
+    raio,
+    raioDaArea: false,
+    tipo: "",
+    alturaMaxima: null,
+    limitado: false,
+  }).done(function () {
+    limparFiltrosDoEquipamento();
+    marcarRaio(raio);
+    // As distâncias saem do local, no centro do mapa, e não de um endereço buscado antes.
+    removerPontoDeReferencia();
+    esconderBuscaNaArea();
+    const anuncio = mensagem({ filtrosLimpos });
+    // A pessoa saiu do cadastro enquanto a busca não voltava: o mapa vai até o
+    // local, de onde a busca partiu, mas o painel e o foco ficam onde ela está.
+    if (!modoCadastroAtivo()) {
+      centralizarEm(local.latitude, local.longitude);
+      anunciar(anuncio);
+      return;
+    }
+    abrirDetalhes(local.id, {
+      origem: { tipo: "lista", id: local.id },
+      centralizar: true,
+      // Se os detalhes não abrirem, o anúncio do erro ainda diz como o cadastro terminou.
+      prefixo: anuncio,
+      depois: () => anunciar(anuncio),
+    });
   });
 }
 

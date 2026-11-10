@@ -117,6 +117,39 @@ def test_mira_e_so_visual_e_o_botao_do_centro_vem_antes_do_mapa(pagina):
     assert 'id="mapa-instrucoes-cadastro"' in html
 
 
+def test_formulario_em_etapas_comeca_no_passo_do_ponto(pagina):
+    # Plano, etapa 13: um passo de cada vez. O JavaScript monta o id do título de
+    # cada passo (`#titulo-etapa-${etapa}`), que o teste dos seletores não vê.
+    html = pagina.content.decode()
+    ponto = re.search(r'<div id="etapa-ponto"[^>]*>', html)
+
+    assert ponto and "hidden" not in ponto.group(0)
+    for etapa in ["dados", "duplicata", "equipamentos"]:
+        secao = re.search(rf'<section id="etapa-{etapa}"[^>]*>', html)
+        titulo = re.search(rf'<h3 id="titulo-etapa-{etapa}"[^>]*>', html)
+        assert secao and "hidden" in secao.group(0), etapa
+        assert titulo and 'tabindex="-1"' in titulo.group(0), etapa
+
+
+def test_comodidades_comecam_em_nao_sei(pagina):
+    # Sem resposta, a comodidade vai como null, "não informado" (Docs/API.md,
+    # seção 1): a opção marcada de início é "Não sei", e não "Não".
+    html = pagina.content.decode()
+    for comodidade in ["tem_bebedouro", "tem_sanitario", "tem_bancos"]:
+        opcoes = re.findall(rf'<input type="radio"[^>]*name="{comodidade}"[^>]*>', html)
+        marcadas = [opcao for opcao in opcoes if "checked" in opcao]
+        assert len(opcoes) == 3, comodidade
+        assert len(marcadas) == 1 and 'value=""' in marcadas[0], comodidade
+
+
+def test_campos_do_equipamento_que_dependem_do_tipo_comecam_escondidos(pagina):
+    # O nome só vale no tipo "Outro", e a largura só em barras paralelas (restrições do banco).
+    html = pagina.content.decode()
+    for campo in ["campo-equipamento-nome-outro", "campo-equipamento-largura"]:
+        bloco = re.search(rf'<div id="{campo}"[^>]*>', html)
+        assert bloco and "hidden" in bloco.group(0), campo
+
+
 def test_detalhes_tem_as_tres_acoes_de_contribuicao(pagina):
     # Especificação, 2.4: avaliar, registrar condição e denunciar, como botões.
     acoes = re.findall(
