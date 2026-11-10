@@ -177,14 +177,14 @@ QUnit.module("formatacao.js: resumo da busca", function () {
   QUnit.test("área cortada sem resultados sugere aproximar o mapa", function (assert) {
     assert.strictEqual(
       resumoBusca(0, { ...BUSCA, raio: 10000, limitado: true }),
-      "Nenhum local a até 10 km do centro do mapa. A área visível passa desse raio, o maior da busca: aproxime o mapa da região que quer ver e use Buscar nesta área.",
+      "Nenhum local a até 10 km do centro do mapa. A área visível passa desse raio, o maior da busca: aproxime o mapa da região que quer ver e use Buscar nesta área. Ou cadastre um local.",
     );
   });
 
   QUnit.test("no raio máximo, sugere mudar de área, e não aumentar o raio", function (assert) {
     assert.strictEqual(
       resumoBusca(0, { ...BUSCA, raio: 10000 }),
-      "Nenhum local a até 10 km do centro do mapa. Esse é o maior raio da busca: mova o mapa para outra região e use Buscar nesta área.",
+      "Nenhum local a até 10 km do centro do mapa. Esse é o maior raio da busca: mova o mapa para outra região e use Buscar nesta área. Ou cadastre um local.",
     );
   });
 });

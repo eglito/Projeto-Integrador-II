@@ -122,7 +122,8 @@ export function descricaoFiltros(rotuloTipo, alturaMaxima) {
 /**
  * Resultado da busca, para a região aria-live (especificação, 2.1 e 2.3).
  * Cita os filtros ativos. Sem resultados, só sugere o que dá para fazer: mudar
- * os filtros, aumentar o raio se ele ainda puder aumentar, ou mudar de área.
+ * os filtros, aumentar o raio se ele ainda puder aumentar, ou mudar de área; e,
+ * sempre, cadastrar um local, como o botão da lista oferece (lista.js).
  * `limitado` diz que a área visível passava do raio máximo.
  */
 export function resumoBusca(quantidade, { raio, raioMaximo, origem, filtros = "", limitado = false }) {
@@ -138,13 +139,13 @@ export function resumoBusca(quantidade, { raio, raioMaximo, origem, filtros = ""
     const sugestao = filtros
       ? "mude os filtros ou aproxime o mapa da região que quer ver e use Buscar nesta área."
       : "aproxime o mapa da região que quer ver e use Buscar nesta área.";
-    return `Nenhum local${filtros} ${area}. A área visível passa desse raio, o maior da busca: ${sugestao}`;
+    return `Nenhum local${filtros} ${area}. A área visível passa desse raio, o maior da busca: ${sugestao} Ou cadastre um local.`;
   }
   if (quantidade === 0) {
     const sugestao = filtros
       ? "mude os filtros ou mova o mapa para outra região e use Buscar nesta área."
       : "mova o mapa para outra região e use Buscar nesta área.";
-    return `Nenhum local${filtros} ${area}. Esse é o maior raio da busca: ${sugestao}`;
+    return `Nenhum local${filtros} ${area}. Esse é o maior raio da busca: ${sugestao} Ou cadastre um local.`;
   }
   const locais = quantidade === 1 ? "1 local" : `${quantidade} locais`;
   const corte = limitado

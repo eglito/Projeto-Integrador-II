@@ -23,7 +23,7 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 9 | Sessão no painel | `feat/sessao-front` | 8 | Concluída (PR #30) |
 | 10 | Configurações no back | `feat/api-conta` | — | Concluída (PR #23) |
 | 11 | Configurações no front | `feat/configuracoes-front` | 9 e 10 | Concluída (PR #31) |
-| 12 | Adicionar local: escolha do ponto | `feat/cadastro-local-ponto` | 9 | Pendente |
+| 12 | Adicionar local: escolha do ponto | `feat/cadastro-local-ponto` | 9 | Concluída (PR #32) |
 | 13 | Adicionar local: formulário em etapas | `feat/cadastro-local-formulario` | 12 | Pendente |
 
 As etapas 1 a 3 não dependem do layout e andam em paralelo com a etapa 0. A etapa 10 é só back-end e pode ser adiantada, por exemplo enquanto a etapa 0 não termina.
@@ -331,7 +331,7 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - "Usar o centro do mapa" fica antes do mapa no HTML, como "Buscar nesta área": com o mapa em foco, Shift+Tab chega nele depois das setas.
   - O clique no mapa escolhe o ponto; o clique num marcador continua abrindo os detalhes daquele local, e isso encerra o modo.
   - O endereço usa o `endereco.js`, adaptado num commit próprio para servir mais de um formulário (ids por prefixo, a mesma trava de 1 s e o mesmo cache), sem mudar a visão Buscar: a mesma verificação, com o Nominatim simulado, deu o mesmo resultado antes e depois.
-  - O ponto escolhido ganha o marcador "Novo local", um quadrado. O painel diz como ele foi escolhido ("pelo centro do mapa", "por um clique no mapa" ou "pelo endereço …") e mostra as coordenadas em pt-BR, com o foco no título "Ponto escolhido"; em tela estreita, o painel vem para a frente. "Escolher outro ponto" recomeça, e "Continuar" anuncia que nome e comodidades chegam numa próxima versão (etapa 13).
+  - O ponto escolhido ganha o marcador "Novo local", um quadrado. O painel diz como ele foi escolhido ("pelo centro do mapa", "por um clique no mapa" ou "pelo endereço …") e mostra as coordenadas em pt-BR, com o foco no título "Ponto escolhido"; em tela estreita, o painel vem para a frente. "Escolher outro ponto" recomeça, e "Continuar" segue para o passo 2 (etapa 13).
   - O Esc cancela com o foco na visão, em "Usar o centro do mapa" ou no próprio mapa; num marcador, continua só escondendo o nome (WCAG 1.4.13). Sair da conta com o modo aberto volta à lista, como Configurações.
   - A mira tem linhas escuras com contorno branco, para o contraste de 3:1 sobre qualquer tile (WCAG 1.4.11).
   - Achado na verificação: a faixa de anúncios muda de altura e o mapa é medido de novo (etapa 7), o que o desloca alguns pixels; o marcador do ponto acompanha o lugar escolhido, e a mira continua no centro.
@@ -350,7 +350,16 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - Com 201, a pessoa acrescenta os equipamentos. `nome_outro` só aparece com o tipo "outro", e largura só com barras paralelas.
   - Ao concluir, o local novo aparece no mapa e na lista, e o resultado é anunciado.
   - Na lista vazia, o botão "Cadastrar um local", a segunda ação da especificação (2.3), ao lado de "Buscar até 10 km" (etapa 3).
-- **Arquivos:** `js/cadastro_local.js`, `testes/cadastro_local.test.js` (montagem do corpo) e o template.
+- Na implementação:
+  - O modo ganha três passos na mesma visão "Adicionar local", um de cada vez, com "Passo N de 3" no topo: o ponto, nome e comodidades (com a possível duplicata ainda como passo 2) e os equipamentos. A mira e "Usar o centro do mapa" só valem no passo 1, e o clique no mapa também.
+  - Comodidade é um grupo de três opções (Sim, Não, Não sei), com "Não sei" marcada de início: sem resposta, o corpo leva `null`, "não informado", e não `false`.
+  - O 409 mostra os locais perto do ponto, cada um com a distância e o botão "É este lugar" (o nome do local completa o nome acessível, para os botões não ficarem iguais). "É outro lugar: cadastrar mesmo assim" reenvia com `confirmar_novo`. O texto da tela é do front: o `detail` da API fala de `confirmar_novo`, que é coisa de API. Se o nome já existe no município, o reenvio volta como 400 (`non_field_errors`), e a orientação aparece no erro geral do formulário, no passo 2.
+  - Com o 201, o local já existe: o topo deixa de oferecer "Cancelar", o Esc conclui, e "Concluir" avisa se há um equipamento escolhido e não adicionado, em vez de descartá-lo calado.
+  - Ao concluir, ou em "É este lugar", a busca parte do local, sem os filtros de tipo e de altura, que poderiam escondê-lo, e os detalhes abrem com o local destacado no mapa e na lista (`principal.js`, `irAoLocal`). O anúncio diz quando os filtros foram limpos. Se a busca falhar, a pessoa continua no passo em que estava, com o erro na tela.
+  - O endereço escolhido no passo 1 vai para o campo Endereço, que pode ser editado; ao voltar e escolher outro ponto, o campo acompanha, a não ser que a pessoa tenha escrito nele.
+  - Na lista vazia, "Cadastrar um local" fica ao lado de "Buscar até 10 km" (que some no raio máximo), e o anúncio de "nenhum local" no raio máximo também sugere cadastrar.
+  - Municípios e tipos de equipamento vêm de `/api/opcoes/`, como os filtros; as listas não se repetem no JavaScript.
+- **Arquivos:** `js/cadastro_local.js`, `js/principal.js`, `js/lista.js`, `js/busca.js`, `js/formatacao.js`, `testes/cadastro_local.test.js` (montagem do corpo e validações), o CSS e o template.
 - **Verificação:** itens 3, 4 e 5.
 
 ---

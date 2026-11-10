@@ -14,18 +14,19 @@ import {
  * Liga os cliques da visão Lista uma vez só. Um listener nela atende todos os
  * botões, inclusive os que a lista ainda vai criar (delegação de eventos).
  */
-export function iniciarLista({ aoEscolher, aoAmpliar }) {
+export function iniciarLista({ aoEscolher, aoAmpliar, aoCadastrar }) {
   const visao = $("#visao-lista");
   visao.on("click", "[data-local]", function () {
     aoEscolher(Number($(this).attr("data-local")));
   });
   visao.on("click", "[data-ampliar]", aoAmpliar);
+  visao.on("click", "[data-cadastrar]", aoCadastrar);
 }
 
 /**
- * Mostra `locais`, na ordem em que chegam (por distância). Sem resultados e com
- * raio abaixo do máximo, oferece buscar mais longe; "Cadastrar um local" chega
- * com o cadastro (Docs/plano_front.md, etapa 13).
+ * Mostra `locais`, na ordem em que chegam (por distância). Sem resultados, as
+ * duas ações da especificação (2.3): buscar mais longe, se o raio ainda pode
+ * aumentar, e cadastrar um local.
  */
 export function mostrarLista(locais, { tiposEquipamento, origem, raio, raioMaximo }) {
   const lista = $("#lista-locais").empty();
@@ -37,6 +38,7 @@ export function mostrarLista(locais, { tiposEquipamento, origem, raio, raioMaxim
         .text(`Buscar até ${formatarDistancia(raioMaximo)}`)
         .appendTo(acoes);
     }
+    $("<button>", { type: "button", "data-cadastrar": "" }).text("Cadastrar um local").appendTo(acoes);
     return;
   }
 

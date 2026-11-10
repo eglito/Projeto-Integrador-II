@@ -146,7 +146,7 @@ Sessão: no menu, "Entrar" abre o login no painel, e "Criar conta" fica logo aba
 docker compose exec web python manage.py shell -c "from usuarios.models import Usuario; print(Usuario.objects.filter(username__startswith='teste-etapa').delete())"
 ```
 
-Adicionar local: no menu, "Adicionar local" abre o modo de escolher o ponto (sem sessão, pede o login antes). Mova o mapa até a mira e use "Usar o centro do mapa", clique no mapa ou busque o endereço; o ponto ganha o marcador "Novo local". Pelo teclado: Tab até o mapa, setas e Shift+Tab até o botão. Esc cancela. O formulário do local chega na etapa 13: por enquanto, "Continuar" só avisa.
+Adicionar local: no menu, "Adicionar local" abre o modo de escolher o ponto (sem sessão, pede o login antes). Mova o mapa até a mira e use "Usar o centro do mapa", clique no mapa ou busque o endereço; o ponto ganha o marcador "Novo local". Pelo teclado: Tab até o mapa, setas e Shift+Tab até o botão. Esc cancela. "Continuar" abre o formulário em etapas: nome e comodidades (Não sei vira "não informado"), depois os equipamentos, um de cada vez, e "Concluir", que mostra o local no mapa, na lista e nos detalhes. Perto de um local já cadastrado (150 m), a API responde 409: "É este lugar" abre o existente, e "É outro lugar" cadastra mesmo assim. Na lista vazia, "Cadastrar um local" abre o mesmo modo. Apague os locais de teste depois, pelo admin ou pelo shell.
 
 Configurações: com sessão aberta, o menu mostra "Configurações", com a troca do nome de usuário e a da senha; as duas pedem a senha atual. Para ver as outras sessões caírem na troca de senha, entre na mesma conta em duas janelas (uma anônima), troque a senha numa e tente trocar o nome na outra: ela diz que a sessão terminou.
 
