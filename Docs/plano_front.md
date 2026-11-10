@@ -360,6 +360,13 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - Na lista vazia, "Cadastrar um local" fica ao lado de "Buscar até 10 km" (que some no raio máximo), e o anúncio de "nenhum local" no raio máximo também sugere cadastrar.
   - Municípios e tipos de equipamento vêm de `/api/opcoes/`, como os filtros; as listas não se repetem no JavaScript.
   - Achado na verificação: ao seguir para o passo 2, a faixa de anúncios continuava com "Use Continuar para seguir, ou Escolher outro ponto", visível para todos e já sem sentido. Continuar e os botões Voltar agora anunciam o passo ("Passo 2 de 3: nome e comodidades"), no lugar do aviso anterior.
+  - Achados na revisão:
+    - Sair do cadastro depois do 201 sem usar Concluir (menu, marcador, "Adicionar local" de novo) deixava o local novo fora do mapa e da lista, sem aviso. Agora "Buscar nesta área" volta e o anúncio cita o local; reabrir "Adicionar local" com o modo aberto encerra o cadastro anterior antes.
+    - Uma resposta atrasada só olhava se o modo estava aberto, e valia para um modo reaberto: o 201 antigo levava o cadastro novo ao passo 3. Um contador de geração do modo (como `geracaoDaVista`) descarta as respostas de outro cadastro; um 409 ou 400 que chega depois de "Voltar ao ponto" também é descartado, porque é do ponto de antes.
+    - A resposta atrasada da busca de endereço do passo 1 anunciava e montava a lista fora do passo; `formularioNaTela` agora olha todos os ancestrais escondidos, e a lista de endereços some com qualquer escolha do ponto.
+    - Com a busca da abertura falha (`busca` nula), Concluir lançava `TypeError` e nada mudava na tela; `irAoLocal` cai no raio padrão, sem filtros.
+    - "Entre de novo pelo menu para continuar o cadastro" prometia o que o login não faz (ele leva à lista): as mensagens do 403 agora dizem para recomeçar pelo "Adicionar local" ou, no passo 3, para abrir o local na lista.
+    - Concluir durante o POST de um equipamento mostrava, por um instante, "o equipamento ainda não foi adicionado"; agora espera o envio, como os outros botões.
 - **Arquivos:** `js/cadastro_local.js`, `js/principal.js`, `js/lista.js`, `js/busca.js`, `js/formatacao.js`, `testes/cadastro_local.test.js` (montagem do corpo e validações), o CSS e o template.
 - **Verificação:** itens 3, 4 e 5.
 

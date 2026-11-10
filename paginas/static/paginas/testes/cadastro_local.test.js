@@ -5,6 +5,7 @@ import {
   errosDoLocal,
   mensagemConclusao,
   mensagemLocalExistente,
+  mensagemLocalForaDoMapa,
   textoCandidato,
   textoCoordenadas,
   textoPasso,
@@ -157,6 +158,13 @@ QUnit.module("cadastro_local.js: duplicata e conclusão", function () {
       ),
     );
     assert.false(mensagemConclusao("Praça do Teste", 1).includes("filtros"), "controle: sem filtros, sem aviso");
+  });
+
+  QUnit.test("saída sem Concluir: o local existe, e a mensagem diz como vê-lo", function (assert) {
+    assert.strictEqual(
+      mensagemLocalForaDoMapa("Praça do Teste"),
+      "Local cadastrado: Praça do Teste. Para vê-lo no mapa e na lista, use Buscar nesta área.",
+    );
   });
 
   QUnit.test("É este lugar: diz que nada novo foi cadastrado", function (assert) {

@@ -69,8 +69,11 @@ const CAMPOS_DO_EQUIPAMENTO = {
 
 const COMODIDADES = ["tem_bebedouro", "tem_sanitario", "tem_bancos"];
 
-export const SESSAO_TERMINOU =
-  "Sua sessão terminou. Entre de novo pelo menu para continuar o cadastro.";
+// O login pelo menu leva à lista, e não de volta ao cadastro: as mensagens dizem o que dá para fazer.
+export const SESSAO_TERMINOU_NO_LOCAL =
+  "Sua sessão terminou. Entre de novo pelo menu e use Adicionar local para recomeçar o cadastro.";
+export const SESSAO_TERMINOU_NO_EQUIPAMENTO =
+  "Sua sessão terminou. O local já está cadastrado, mas faltam equipamentos: entre de novo pelo menu e abra o local na lista.";
 
 /** "Ponto escolhido pelo centro do mapa.", ou pelo endereço, com o rótulo dele. */
 export function textoPontoEscolhido({ origem, endereco }) {
@@ -198,6 +201,11 @@ export function mensagemLocalExistente(nome, { filtrosLimpos = false } = {}) {
   return `Nada novo foi cadastrado. Detalhes de ${nome}, no mapa e na lista.${filtros}`;
 }
 
+/** O local foi criado e a pessoa saiu do cadastro sem Concluir: ele ainda não está no mapa nem na lista. */
+export function mensagemLocalForaDoMapa(nome) {
+  return `Local cadastrado: ${nome}. Para vê-lo no mapa e na lista, use Buscar nesta área.`;
+}
+
 export const CONCLUSAO_FALHOU =
   "O local está cadastrado, mas não foi possível mostrá-lo no mapa agora. Confira a conexão com a internet e use Concluir de novo.";
 export const ABRIR_FALHOU =
@@ -215,13 +223,14 @@ let enderecoSugerido = "";
 // O local criado pelo POST (201): { id, nome, latitude, longitude }.
 let localCriado = null;
 let equipamentosAdicionados = 0;
-// Um pedido de cada vez em cada formulário.
-const enviando = { local: false, equipamento: false };
+// Sobe a cada abertura e a cada fim do modo, como `geracaoDaVista` no principal.js: uma
+// resposta que chega depois de o modo ter acabado, ou ter sido reaberto, é de outro
+// cadastro e não muda a tela (o @Version do JPA, outra vez).
+let geracaoDoModo = 0;
+// Um pedido de cada vez em cada formulário; `mostrando` é a busca que mostra o local.
+const enviando = { local: false, equipamento: false, mostrando: false };
 // Os locais do 409, para "É este lugar" achar o escolhido.
 let candidatos = [];
-// A busca que mostra o local (o novo, ou o escolhido no 409) está em curso:
-// ela mesma leva o mapa até ele, e "Buscar nesta área" não deve voltar.
-let mostrandoLocal = false;
 // Para "Buscar nesta área" voltar ao fim do modo: se o mapa foi para outra área
 // durante ele (a pessoa o moveu, ou ele foi até um endereço) e se o botão
 // estava na tela na entrada (o modo o esconde).
@@ -229,6 +238,21 @@ let mapaMudouNoModo = false;
 let buscarNaAreaNaEntrada = false;
 // O que o principal.js faz no fim: os dois devolvem o jqXHR da busca que mostra o local.
 let retornos = { aoConcluir: null, aoAbrirExistente: null };
+
+/** A resposta é do cadastro que está na tela, e não de um que já acabou ou foi reaberto. */
+function doModoAtual(geracao) {
+  return ativo && geracao === geracaoDoModo;
+}
+
+/**
+ * Libera o envio quando a resposta chega, a não ser que outro cadastro já
+ * esteja aberto: o sinalizador dele é dele, e a resposta velha não o apaga.
+ */
+function liberar(chave, geracao) {
+  if (!ativo || geracao === geracaoDoModo) {
+    enviando[chave] = false;
+  }
+}
 
 export function modoCadastroAtivo() {
   return ativo;
@@ -326,7 +350,13 @@ export function iniciarAdicao() {
 
 /** Abre o modo no passo 1, com tudo limpo. */
 export function entrarNoModoCadastro() {
+  // "Adicionar local" de novo, com o modo aberto: o cadastro anterior termina antes.
+  if (ativo) {
+    sairDoModoCadastro();
+  }
   ativo = true;
+  geracaoDoModo += 1;
+  Object.assign(enviando, { local: false, equipamento: false, mostrando: false });
   ponto = null;
   enderecoSugerido = "";
   localCriado = null;
@@ -356,7 +386,9 @@ export function sairDoModoCadastro() {
   if (!ativo) {
     return;
   }
+  const criado = localCriado;
   ativo = false;
+  geracaoDoModo += 1;
   ponto = null;
   localCriado = null;
   removerNovoLocal();
@@ -366,9 +398,20 @@ export function sairDoModoCadastro() {
   // O mapa foi para outra área (ou o botão já estava na tela): a lista mostra
   // a busca anterior, e "Buscar nesta área" volta a ser oferecido (especificação,
   // 2.3). Não enquanto a busca que mostra o local está em curso: ela é a nova.
-  if (!mostrandoLocal && (mapaMudouNoModo || buscarNaAreaNaEntrada)) {
+  if (enviando.mostrando) {
+    return;
+  }
+  if (criado) {
+    avisarLocalForaDoMapa(criado.nome);
+  } else if (mapaMudouNoModo || buscarNaAreaNaEntrada) {
     oferecerBuscaNaArea();
   }
+}
+
+/** O local existe, mas a busca na tela é a anterior: "Buscar nesta área" volta, e o anúncio diz por quê. */
+function avisarLocalForaDoMapa(nome) {
+  oferecerBuscaNaArea();
+  anunciar(mensagemLocalForaDoMapa(nome));
 }
 
 /**
@@ -441,8 +484,8 @@ function escolherPonto(novo) {
   }
   ponto = novo;
   marcarNovoLocal(ponto.latitude, ponto.longitude);
+  esconderResultados("endereco-local");
   if (ponto.origem === "endereco") {
-    esconderResultados("endereco-local");
     centralizarEm(ponto.latitude, ponto.longitude);
     mapaMudouNoModo = true;
   }
@@ -511,13 +554,14 @@ function enviarLocal({ confirmarNovo }) {
     return;
   }
 
+  const geracao = geracaoDoModo;
   enviando.local = true;
   anunciar("Cadastrando o local…");
   enviar("POST", "/api/locais/", corpoDoLocal({ ...dados, ponto }, { confirmarNovo }))
     .done(function (local) {
-      // A pessoa saiu do modo antes da resposta: o local existe, mas a tela fica onde ela está.
-      if (!ativo) {
-        anunciar(`Local cadastrado: ${local.nome}, ainda sem equipamentos.`);
+      // A pessoa saiu do cadastro antes da resposta: o local existe, mas a tela fica onde ela está.
+      if (!doModoAtual(geracao)) {
+        avisarLocalForaDoMapa(local.nome);
         return;
       }
       localCriado = {
@@ -531,7 +575,9 @@ function enviarLocal({ confirmarNovo }) {
       anunciar(`Local cadastrado: ${local.nome}. Agora acrescente os equipamentos, um de cada vez.`);
     })
     .fail(function (resposta) {
-      if (!ativo) {
+      // Nada foi cadastrado: se a pessoa já saiu do passo 2 (Voltar ao ponto), ou do cadastro, a
+      // resposta é do ponto e dos dados de antes, e não mexe na tela.
+      if (!doModoAtual(geracao) || !["dados", "duplicata"].includes(etapa)) {
         return;
       }
       if (resposta.status === 409) {
@@ -542,14 +588,14 @@ function enviarLocal({ confirmarNovo }) {
       if (resposta.status === 400) {
         mostrarErros("local", CAMPOS_DO_LOCAL, separarErros(resposta.responseJSON, CAMPOS_DO_LOCAL));
       } else if (resposta.status === 403) {
-        conferirSessao("local", CAMPOS_DO_LOCAL, "cadastrar o local");
+        conferirSessao("local", CAMPOS_DO_LOCAL, "cadastrar o local", geracao);
       } else {
         const geral = mensagemDeFalha("cadastrar o local", resposta.status);
         mostrarErros("local", CAMPOS_DO_LOCAL, { porCampo: {}, geral });
       }
     })
     .always(function () {
-      enviando.local = false;
+      liberar("local", geracao);
     });
 }
 
@@ -618,11 +664,12 @@ function enviarEquipamento() {
     return;
   }
 
+  const geracao = geracaoDoModo;
   enviando.equipamento = true;
   anunciar("Adicionando o equipamento…");
   enviar("POST", `/api/locais/${localCriado.id}/equipamentos/`, corpoDoEquipamento(dados))
     .done(function (equipamento) {
-      if (!ativo) {
+      if (!doModoAtual(geracao)) {
         return;
       }
       equipamentosAdicionados += 1;
@@ -636,7 +683,7 @@ function enviarEquipamento() {
       anunciar(`Equipamento adicionado: ${nome}. Adicione outro ou use Concluir.`);
     })
     .fail(function (resposta) {
-      if (!ativo) {
+      if (!doModoAtual(geracao)) {
         return;
       }
       if (resposta.status === 400) {
@@ -646,14 +693,14 @@ function enviarEquipamento() {
           separarErros(resposta.responseJSON, CAMPOS_DO_EQUIPAMENTO),
         );
       } else if (resposta.status === 403) {
-        conferirSessao("equipamento", CAMPOS_DO_EQUIPAMENTO, "adicionar o equipamento");
+        conferirSessao("equipamento", CAMPOS_DO_EQUIPAMENTO, "adicionar o equipamento", geracao);
       } else {
         const geral = mensagemDeFalha("adicionar o equipamento", resposta.status);
         mostrarErros("equipamento", CAMPOS_DO_EQUIPAMENTO, { porCampo: {}, geral });
       }
     })
     .always(function () {
-      enviando.equipamento = false;
+      liberar("equipamento", geracao);
     });
 }
 
@@ -663,7 +710,7 @@ function enviarEquipamento() {
  */
 function abrirExistente(id) {
   const candidato = candidatos.find((local) => local.id === id);
-  if (!candidato || mostrandoLocal) {
+  if (!candidato || enviando.mostrando) {
     return;
   }
   $("#duplicata-erro").text("").prop("hidden", true);
@@ -679,7 +726,8 @@ function abrirExistente(id) {
  * se perde calado: a pessoa decide o que fazer com ele.
  */
 function concluir() {
-  if (!localCriado || mostrandoLocal) {
+  // O anúncio "Adicionando o equipamento…" já está no ar: o equipamento a caminho entra na contagem.
+  if (!localCriado || enviando.mostrando || enviando.equipamento) {
     return;
   }
   limparErros("equipamento");
@@ -698,15 +746,16 @@ function concluir() {
  * passo em que estava, com o erro na tela, para tentar de novo.
  */
 function mostrarLocal(busca, aoFalhar) {
-  mostrandoLocal = true;
+  const geracao = geracaoDoModo;
+  enviando.mostrando = true;
   busca
     .fail(function () {
-      if (ativo) {
+      if (doModoAtual(geracao)) {
         aoFalhar();
       }
     })
     .always(function () {
-      mostrandoLocal = false;
+      liberar("mostrando", geracao);
     });
 }
 
@@ -714,13 +763,20 @@ function mostrarLocal(busca, aoFalhar) {
  * 403: a sessão caiu ou o token CSRF ficou velho. A API diz qual; se a sessão
  * caiu, o menu volta a mostrar Entrar, e a mensagem diz o que fazer.
  */
-function conferirSessao(formulario, campos, acao) {
+function conferirSessao(formulario, campos, acao, geracao) {
+  const semSessao = formulario === "local" ? SESSAO_TERMINOU_NO_LOCAL : SESSAO_TERMINOU_NO_EQUIPAMENTO;
   carregarSessao()
     .done(function () {
-      const geral = logado() ? mensagemDeFalha(acao, 403) : SESSAO_TERMINOU;
+      if (!doModoAtual(geracao)) {
+        return;
+      }
+      const geral = logado() ? mensagemDeFalha(acao, 403) : semSessao;
       mostrarErros(formulario, campos, { porCampo: {}, geral });
     })
     .fail(function (resposta) {
+      if (!doModoAtual(geracao)) {
+        return;
+      }
       const geral = mensagemDeFalha(acao, resposta.status);
       mostrarErros(formulario, campos, { porCampo: {}, geral });
     });

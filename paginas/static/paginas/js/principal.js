@@ -441,8 +441,9 @@ function abrirLocalExistente(local) {
  */
 function irAoLocal(local, mensagem) {
   geracaoDaVista += 1;
-  const filtrosLimpos = Boolean(busca.tipo) || busca.alturaMaxima !== null;
-  const raio = busca.raioDaArea ? opcoes.busca.raio_padrao_m : busca.raio;
+  // Sem busca anterior (a da abertura falhou): raio padrão e nenhum filtro a limpar.
+  const filtrosLimpos = Boolean(busca?.tipo) || (busca?.alturaMaxima ?? null) !== null;
+  const raio = !busca || busca.raioDaArea ? opcoes.busca.raio_padrao_m : busca.raio;
   return buscar({
     latitude: local.latitude,
     longitude: local.longitude,
