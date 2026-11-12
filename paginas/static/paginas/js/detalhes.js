@@ -140,7 +140,7 @@ let rotulos = null;
  * Liga os botões da visão Detalhes. `aoVoltar` roda em "Voltar à lista" e no
  * Esc com o foco no painel; `aoMostrarNoMapa`, em "Mostrar no mapa";
  * `aoContribuir(acao)`, nos botões de contribuição ("avaliar", "condicao",
- * "denunciar").
+ * "equipamento", "denunciar").
  */
 export function iniciarDetalhes({ opcoes, aoVoltar, aoMostrarNoMapa, aoContribuir }) {
   rotulos = opcoes;

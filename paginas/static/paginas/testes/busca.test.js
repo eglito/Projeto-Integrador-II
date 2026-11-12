@@ -1,4 +1,10 @@
-import { opcoesDeRaio, parametrosDaBusca, raioDaArea, validarAltura } from "../js/busca.js";
+import {
+  opcoesDeRaio,
+  parametrosDaBusca,
+  raioDaArea,
+  validarAltura,
+  validarMedida,
+} from "../js/busca.js";
 
 // Centro padrão de /api/opcoes/ (Araraquara).
 const CENTRO = { latitude: -21.7886713, longitude: -48.1773096 };
@@ -43,6 +49,15 @@ QUnit.module("busca.js: altura digitada", function () {
     for (const texto of ["0", "-5", "9,5", "9.5", "noventa"]) {
       assert.true(validarAltura(texto).erro.startsWith("Informe a altura em centímetros"), texto);
     }
+  });
+
+  QUnit.test("a mesma regra vale para outra medida, com o nome dela na mensagem", function (assert) {
+    assert.deepEqual(validarMedida("50", "largura"), { valor: 50 });
+    assert.deepEqual(validarMedida("", "largura"), { valor: null });
+    assert.strictEqual(
+      validarMedida("0", "largura").erro,
+      "Informe a largura em centímetros, com um número inteiro maior que zero, ou deixe o campo vazio.",
+    );
   });
 });
 

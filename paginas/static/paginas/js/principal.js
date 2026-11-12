@@ -11,11 +11,13 @@ import {
   esconderBuscaNaArea,
   iniciarBuscaNaArea,
   iniciarFiltros,
+  marcarFiltros,
   marcarRaio,
   oferecerBuscaNaArea,
   parametrosDaBusca,
   raioDaArea,
 } from "./busca.js";
+import { abrirContribuicao, iniciarContribuicoes } from "./contribuicoes.js";
 import {
   acompanharResultado,
   erroDeDetalhes,
@@ -26,6 +28,7 @@ import {
   mostrarErroDeDetalhes,
 } from "./detalhes.js";
 import {
+  comecarCadastro,
   entrarNoModoCadastro,
   iniciarCadastroLocal,
   modoCadastroAtivo,
@@ -59,13 +62,7 @@ import {
   temMarcador,
 } from "./mapa.js";
 import { iniciarNavegacao, registrarLocal } from "./navegacao.js";
-import {
-  carregarSessao,
-  iniciarSessao,
-  logado,
-  mensagemDeContribuicao,
-  pedirLogin,
-} from "./sessao.js";
+import { carregarSessao, iniciarSessao, logado, pedirLogin } from "./sessao.js";
 
 let opcoes = null;
 /**
@@ -95,8 +92,10 @@ let geracaoDaVista = 0;
 let localAberto = null;
 let origemDosDetalhes = null;
 let pedidoDeDetalhes = null;
-// Nome do local que a visão Detalhes mostra, para o contexto do login.
+// Nome e equipamentos do local que a visão Detalhes mostra: o contexto do login
+// e dos formulários de contribuição (o de condição escolhe entre os equipamentos).
 let nomeDoLocalAberto = null;
+let equipamentosDoLocalAberto = [];
 
 // Visitante ou logado (especificação, 2.6); a mesma chamada grava o cookie csrftoken.
 carregarSessao();
@@ -137,7 +136,7 @@ obter("/api/opcoes/")
 function iniciarPagina(centro, link) {
   criarMapa("mapa", centro);
   iniciarLayout({ aoMostrarMapa: ajustarTamanho, aoTrocarVisao: aoTrocarVisao });
-  iniciarLista({ aoEscolher: escolherNaLista, aoAmpliar: ampliarRaio });
+  iniciarLista({ aoEscolher: escolherNaLista, aoAmpliar: ampliarRaio, aoCadastrar: comecarCadastro });
   iniciarFiltros({
     tiposEquipamento: opcoes.tipos_equipamento,
     raioPadrao: opcoes.busca.raio_padrao_m,
@@ -161,7 +160,18 @@ function iniciarPagina(centro, link) {
   });
   iniciarSessao({ aoEntrar: voltarDoLogin, aoCancelar: cancelarLogin });
   iniciarConta();
-  iniciarCadastroLocal({ centroPadrao: opcoes.busca.centro_padrao });
+  iniciarCadastroLocal({
+    centroPadrao: opcoes.busca.centro_padrao,
+    municipios: opcoes.municipios,
+    aoCadastrar: depoisDeCadastrar,
+    aoEscolherExistente: abrirLocalExistente,
+  });
+  iniciarContribuicoes({
+    opcoes,
+    aoConcluir: concluirContribuicao,
+    aoCancelar: cancelarContribuicao,
+    aoAcrescentar: atualizarBusca,
+  });
   aoMoverPelaPessoa(function () {
     geracaoDaVista += 1;
     // No modo de adicionar local, mover o mapa é mirar: "Buscar nesta área" só
@@ -214,9 +224,10 @@ function iniciarPagina(centro, link) {
 /**
  * Uma chamada alimenta o mapa e a lista (especificação, 2.3). Devolve o jqXHR.
  * O estado só muda se a busca der certo: numa falha, mapa, lista e estado
- * continuam descrevendo a mesma busca anterior.
+ * continuam descrevendo a mesma busca anterior. Com `anunciarResultado` falso,
+ * quem chama anuncia o que importa, sem o resumo da busca por cima.
  */
-function buscar(novaBusca) {
+function buscar(novaBusca, { anunciarResultado = true } = {}) {
   return obter("/api/locais/", parametrosDaBusca(novaBusca))
     .done(function (locais) {
       busca = novaBusca;
@@ -247,7 +258,9 @@ function buscar(novaBusca) {
         filtros: descricaoFiltros(rotuloDoTipo(busca.tipo), busca.alturaMaxima),
         limitado: busca.limitado,
       });
-      anunciar(endereco ? `Endereço: ${endereco}. ${resumo}` : resumo);
+      if (anunciarResultado) {
+        anunciar(endereco ? `Endereço: ${endereco}. ${resumo}` : resumo);
+      }
       acompanharDetalhes();
     })
     .fail(function (resposta) {
@@ -490,27 +503,145 @@ function abrirDetalhes(
 /** Preenche a visão Detalhes; a distância vem da busca atual, quando o local está nela. */
 function exibirDetalhes(local) {
   nomeDoLocalAberto = local.nome;
+  equipamentosDoLocalAberto = local.equipamentos;
   mostrarDetalhes(local, noResultado(localPorId(local.id)));
   anunciar(`Detalhes de ${local.nome}.`);
 }
 
 /**
- * Botão de contribuição nos detalhes (especificação, 2.4). Com login, avisa que
- * a função chega numa próxima versão (plano, etapa 9). Sem login, guarda a ação
- * e leva a Entrar; depois do login, a pessoa volta a este local e a esta ação.
+ * Botão de contribuição nos detalhes (especificação, 2.4). Com login, abre o
+ * formulário da ação (contribuicoes.js). Sem login, guarda a ação e leva a
+ * Entrar; depois do login, a pessoa volta a este local e a esta ação.
  */
 function contribuir(acao) {
   if (logado()) {
-    anunciar(mensagemDeContribuicao(acao));
+    abrirContribuicao(acao, contextoDoLocalAberto());
     return;
   }
   pedirLogin({ local: localAberto, nome: nomeDoLocalAberto, acao, origem: origemDosDetalhes });
 }
 
+/** O local da visão Detalhes, no formato que os formulários de contribuição pedem. */
+function contextoDoLocalAberto() {
+  return {
+    local: localAberto,
+    nome: nomeDoLocalAberto,
+    equipamentos: equipamentosDoLocalAberto,
+    origem: origemDosDetalhes,
+    aposCadastro: false,
+  };
+}
+
+/**
+ * Contribuição enviada (contribuicoes.js): de volta aos detalhes do local, que
+ * a API devolve já com a avaliação, a condição ou o equipamento novos, e o
+ * anúncio do resultado por cima do "Detalhes de…". Se o local não reabrir, o
+ * anúncio do erro ainda diz que a contribuição deu certo.
+ */
+function concluirContribuicao(contexto, mensagem) {
+  abrirDetalhes(contexto.local, {
+    origem: contexto.origem,
+    // Depois do cadastro, o mapa vai até o local novo.
+    centralizar: contexto.aposCadastro,
+    prefixo: mensagem,
+    depois: () => anunciar(mensagem),
+  });
+}
+
+/** "Voltar…" e Esc num formulário de contribuição: de volta ao local, no botão que o abriu. */
+function cancelarContribuicao(contexto) {
+  abrirDetalhes(contexto.local, {
+    origem: contexto.origem,
+    depois: () => seguirNaContribuicao(contexto.acao),
+  });
+}
+
+/**
+ * Refaz a busca atual, sem anunciar: a lista mostra os tipos de equipamento, e
+ * um equipamento novo precisa aparecer nela sem a pessoa sair do formulário.
+ */
+function atualizarBusca() {
+  if (busca) {
+    buscar({ ...busca }, { anunciarResultado: false });
+  }
+}
+
+/**
+ * Refaz a busca ao redor de `local` e leva o mapa até ele, sem filtros: um
+ * local recém-cadastrado ainda não tem equipamentos, e um filtro por tipo o
+ * esconderia. O local fica com marcador e item na lista, como no link direto
+ * (decisão 31). Devolve o jqXHR.
+ */
+function buscarAoRedorDe({ latitude, longitude }) {
+  geracaoDaVista += 1;
+  const raio = busca && !busca.raioDaArea ? busca.raio : opcoes.busca.raio_padrao_m;
+  return buscar(
+    {
+      latitude,
+      longitude,
+      origem: "centro",
+      endereco: null,
+      raio,
+      raioDaArea: false,
+      tipo: "",
+      alturaMaxima: null,
+      limitado: false,
+    },
+    { anunciarResultado: false },
+  ).done(function () {
+    marcarRaio(raio);
+    marcarFiltros({ tipo: "", alturaMaxima: null });
+    removerPontoDeReferencia();
+    esconderBuscaNaArea();
+    centralizarEm(latitude, longitude);
+  });
+}
+
+/**
+ * O POST /api/locais/ respondeu 201 (cadastro_local.js). O local já existe: a
+ * busca é refeita ao redor dele e a pessoa segue para acrescentar os
+ * equipamentos. Se a busca falhar, o passo seguinte vem do mesmo jeito, porque
+ * o cadastro deu certo.
+ */
+function depoisDeCadastrar(local) {
+  const tinhaFiltros = Boolean(busca?.tipo || busca?.alturaMaxima);
+  const aviso = tinhaFiltros ? " A busca foi refeita ao redor dele, sem os filtros." : "";
+  buscarAoRedorDe(local).always(function () {
+    abrirContribuicao(
+      "equipamento",
+      {
+        local: local.id,
+        nome: local.nome,
+        equipamentos: [],
+        origem: { tipo: "lista", id: local.id },
+        aposCadastro: true,
+      },
+      `Local ${local.nome} cadastrado.${aviso} Acrescente os equipamentos que ele tem. Quando terminar, use Concluir.`,
+    );
+  });
+}
+
+/**
+ * "É este lugar", no aviso de duplicata: em vez de cadastrar de novo, a pessoa
+ * vai ao local que já existe (Docs/API.md, 6.2), com marcador e item na lista.
+ */
+function abrirLocalExistente(local) {
+  buscarAoRedorDe(local).always(function () {
+    abrirDetalhes(local.id, {
+      origem: { tipo: "lista", id: local.id },
+      centralizar: true,
+      depois: () =>
+        anunciar(
+          `${local.nome} já estava cadastrado. Em vez de cadastrar de novo, você pode avaliar o local ou registrar a condição dos equipamentos.`,
+        ),
+    });
+  });
+}
+
 /**
  * Login ou cadastro feito (sessao.js). Com uma ação pendente, os detalhes do
- * local reabrem e o foco vai para o botão da ação, que segue. Sem ela, a pessoa
- * volta à lista (especificação, 2.6).
+ * local reabrem e o formulário da ação abre por cima, como Adicionar local abre
+ * o modo. Sem ela, a pessoa volta à lista (especificação, 2.6).
  */
 function voltarDoLogin(usuario, pendente, { novaConta, naTela }) {
   const saudacao = novaConta
@@ -536,10 +667,7 @@ function voltarDoLogin(usuario, pendente, { novaConta, naTela }) {
     origem: pendente.origem,
     // Se o local não abrir, o anúncio do erro ainda diz que o login deu certo.
     prefixo: saudacao,
-    depois: function () {
-      seguirNaContribuicao(pendente.acao);
-      anunciar(`${saudacao} ${mensagemDeContribuicao(pendente.acao)}`);
-    },
+    depois: () => abrirContribuicao(pendente.acao, contextoDoLocalAberto(), saudacao),
   });
 }
 

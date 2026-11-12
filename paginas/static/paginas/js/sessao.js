@@ -40,21 +40,13 @@ const VAZIOS = {
 };
 
 // Ações de contribuição (especificação, 2.4). `alvo` completa o contexto do
-// login ("Entre para avaliar Parque Infantil"); `indisponivel` é o anúncio até
-// a função existir (plano, etapa 9).
+// login ("Entre ou crie uma conta para avaliar Parque Infantil"). As ações em si
+// ficam em contribuicoes.js (plano, etapa 14).
 const ACOES = {
-  avaliar: {
-    alvo: "avaliar",
-    indisponivel: "Avaliar a segurança e a limpeza do local ainda não está disponível.",
-  },
-  condicao: {
-    alvo: "registrar a condição de um equipamento de",
-    indisponivel: "Registrar a condição de um equipamento ainda não está disponível.",
-  },
-  denunciar: {
-    alvo: "denunciar",
-    indisponivel: "Denunciar um local ainda não está disponível.",
-  },
+  avaliar: { alvo: "avaliar" },
+  condicao: { alvo: "registrar a condição de um equipamento de" },
+  equipamento: { alvo: "adicionar um equipamento a" },
+  denunciar: { alvo: "denunciar" },
 };
 
 /** Campos vazios, conferidos antes de ir à API: { username: "Informe…" }, ou {} quando nada falta. */
@@ -84,11 +76,6 @@ export function textoContexto({ acao, nome }) {
 /** Botão do topo de Entrar e Criar conta: diz para onde volta. */
 export function rotuloVoltar(pendente) {
   return pendente?.nome ? `Voltar a ${pendente.nome}` : "Voltar à lista";
-}
-
-/** Anúncio de uma ação de contribuição, com login, até ela ser implementada. */
-export function mensagemDeContribuicao(acao) {
-  return `${ACOES[acao].indisponivel} Essa função chega numa próxima versão.`;
 }
 
 /** "Conectado como maria", no topo do menu. */
@@ -269,13 +256,23 @@ function sair() {
     });
 }
 
+// Visões do painel que só existem com sessão aberta: Configurações (plano, etapa
+// 11), adicionar local (etapas 12 e 13) e as contribuições num local (etapa 14).
+const VISOES_COM_LOGIN = [
+  "#visao-configuracoes",
+  "#visao-adicionar",
+  "#visao-avaliar",
+  "#visao-condicao",
+  "#visao-equipamento",
+  "#visao-denunciar",
+].join(", ");
+
 /**
- * Depois de Sair, o que exige login não fica na tela de um visitante:
- * Configurações (plano, etapa 11) e o modo de adicionar local (etapa 12). O
- * painel volta para a lista, sem tirar o foco do botão Menu.
+ * Depois de Sair, o que exige login não fica na tela de um visitante. O painel
+ * volta para a lista, sem tirar o foco do botão Menu.
  */
 function tirarDaTelaOQueExigeLogin() {
-  if ($("#visao-configuracoes, #visao-adicionar").filter(":not([hidden])").length) {
+  if ($(VISOES_COM_LOGIN).filter(":not([hidden])").length) {
     mostrarVisao("lista", { focar: false, frente: false });
   }
 }
