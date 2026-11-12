@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from django.contrib.staticfiles import finders
+from django.urls import Resolver404, resolve
 from pytest_django.asserts import assertTemplateUsed
 
 PASTA_JS = Path(__file__).resolve().parent.parent / "static" / "paginas" / "js"
@@ -117,13 +118,120 @@ def test_mira_e_so_visual_e_o_botao_do_centro_vem_antes_do_mapa(pagina):
     assert 'id="mapa-instrucoes-cadastro"' in html
 
 
-def test_detalhes_tem_as_tres_acoes_de_contribuicao(pagina):
-    # Especificação, 2.4: avaliar, registrar condição e denunciar, como botões.
+def test_detalhes_tem_as_acoes_de_contribuicao(pagina):
+    # Especificação, 2.4: avaliar, registrar condição e denunciar, como botões, e
+    # o equipamento (plano, etapa 14), sem o qual uma condição não tem onde ser registrada.
     acoes = re.findall(
         r'<button type="button" data-acao="(\w+)"', pagina.content.decode()
     )
 
-    assert acoes == ["avaliar", "condicao", "denunciar"]
+    assert acoes == ["avaliar", "condicao", "equipamento", "denunciar"]
+
+
+def test_visoes_do_painel_comecam_escondidas_e_o_titulo_recebe_o_foco(pagina):
+    # mostrarVisao() leva o foco ao h2 da visão: sem tabindex="-1", o foco não vai.
+    html = pagina.content.decode()
+    visoes = re.findall(
+        r'<section id="visao-(\w+)" class="visao" aria-labelledby="([^"]+)"([^>]*)>',
+        html,
+    )
+
+    nomes = [nome for nome, _, _ in visoes]
+    for esperada in ("avaliar", "condicao", "equipamento", "denunciar", "adicionar"):
+        assert esperada in nomes, f"Falta a visão {esperada}."
+    for nome, titulo, atributos in visoes:
+        if nome != "lista":
+            assert "hidden" in atributos, f"A visão {nome} deveria começar escondida."
+        assert re.search(rf'<h2 id="{titulo}"[^>]*tabindex="-1"', html), nome
+
+
+def test_contribuicoes_tem_o_botao_de_voltar_ao_local(pagina):
+    # Cada formulário diz para onde volta ("Voltar a {nome}", preenchido pelo JS).
+    html = pagina.content.decode()
+
+    assert html.count("data-voltar-contribuicao") == 4
+
+
+def test_seletores_de_contribuicao_nascem_vazios_e_o_front_monta_com_as_opcoes(pagina):
+    # CLAUDE.md: o front lê valores e rótulos de /api/opcoes/, nunca repete as listas.
+    html = pagina.content.decode()
+    seletores = [
+        "avaliar-faixa",
+        "avaliar-movimento",
+        "avaliar-iluminacao",
+        "avaliar-limpeza",
+        "condicao-equipamento",
+        "condicao-condicao",
+        "equipamento-tipo",
+        "denunciar-motivo",
+        "novo-local-municipio",
+    ]
+    for id_ in seletores:
+        assert re.search(rf'<select id="{id_}"[^>]*></select>', html), id_
+
+
+def test_campos_do_equipamento_que_dependem_do_tipo_comecam_escondidos(pagina):
+    # Nome só no tipo "Outro" e largura só nas barras paralelas (restrições do banco).
+    html = pagina.content.decode()
+
+    for id_ in ("equipamento-nome-outro-campo", "equipamento-largura-campo"):
+        campo = re.search(rf'<div id="{id_}"[^>]*>', html)
+        assert campo and "hidden" in campo.group(0), id_
+
+
+def test_formularios_do_painel_usam_as_mensagens_da_pagina(pagina):
+    # novalidate: o navegador não mostra balões em inglês no lugar das nossas mensagens.
+    html = pagina.content.decode()
+    formularios = re.findall(
+        r'<form id="form-[^"]+" class="formulario-conta"[^>]*>', html
+    )
+
+    assert len(formularios) >= 8
+    assert [f for f in formularios if "novalidate" not in f] == []
+
+
+def test_aviso_de_duplicata_e_o_passo_dos_dados_comecam_escondidos(pagina):
+    # Plano, etapa 13: o 409 e o passo 2 só aparecem pelo JavaScript.
+    html = pagina.content.decode()
+
+    for id_ in ("passo-dados", "duplicatas"):
+        elemento = re.search(rf'<(?:div|section) id="{id_}"[^>]*>', html)
+        assert elemento and "hidden" in elemento.group(0), id_
+    assert not re.search(r'<div id="passo-ponto"[^>]*hidden', html)
+
+
+def test_front_nao_tem_mais_aviso_de_funcao_que_chega_numa_proxima_versao(pagina):
+    # Avaliar, registrar condição, denunciar e adicionar local funcionam: nenhum
+    # texto provisório pode voltar a bloquear quem está logado.
+    textos = [pagina.content.decode()]
+    textos += [modulo.read_text() for modulo in PASTA_JS.glob("*.js")]
+
+    for texto in textos:
+        assert "próxima versão" not in texto
+        assert "ainda não está disponível" not in texto
+
+
+def test_rotas_que_o_front_chama_existem_no_back():
+    # Uma rota com nome errado só apareceria como 404 no navegador. As rotas saem
+    # do próprio JavaScript, com os ${...} trocados por um id.
+    conferidas = set()
+    for modulo in PASTA_JS.glob("*.js"):
+        for rota in re.findall(r'[`"](/api/[^`"]*)[`"]', modulo.read_text()):
+            caminho = re.sub(r"\$\{[^}]*\}", "1", rota)
+            try:
+                resolve(caminho)
+            except Resolver404:
+                pytest.fail(f"{modulo.name} chama {rota}, que não existe no back.")
+            conferidas.add(caminho)
+
+    # Controle: as rotas das contribuições entraram na conferência.
+    assert {
+        "/api/locais/1/avaliacoes/",
+        "/api/locais/1/denuncias/",
+        "/api/locais/1/equipamentos/",
+        "/api/equipamentos/1/registros-condicao/",
+        "/api/locais/",
+    } <= conferidas
 
 
 def test_arquivos_estaticos_citados_na_pagina_existem(pagina):

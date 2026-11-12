@@ -744,6 +744,89 @@ body {
   margin-bottom: 0.35rem;
 }
 
+/* Adicionar local, passo 2, e as contribuições num local (plano, etapas 13 e 14). */
+.local-da-contribuicao {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+#passo-dados h3,
+.duplicatas h3,
+.equipamentos-acrescentados h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+#dados-ponto {
+  margin: 0 0 0.5rem;
+  color: var(--cor-texto-secundario);
+}
+
+#mudar-ponto {
+  margin-bottom: 0.75rem;
+}
+
+.formulario-conta fieldset {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem 0.25rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.25rem;
+}
+
+.formulario-conta legend {
+  padding: 0 0.25rem;
+  font-weight: 700;
+}
+
+.acoes-formulario {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Alvo de pelo menos 24 × 24 px (WCAG 2.5.8). */
+.acoes-formulario button,
+.botao-secundario,
+#condicao-sem-equipamento button,
+.lista-duplicatas button {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem;
+  font: inherit;
+}
+
+.duplicatas {
+  margin-top: 1rem;
+}
+
+.lista-duplicatas {
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-duplicatas li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #d0d0d0;
+}
+
+.lista-duplicatas p {
+  margin: 0 0 0.35rem;
+  overflow-wrap: anywhere;
+}
+
+.equipamentos-acrescentados {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--cor-foco);
+  background: var(--cor-escolhido-fundo);
+}
+
+.equipamentos-acrescentados ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
 /* Nome de quem está conectado, no topo do menu. */
 .menu-usuario {
   margin: 1rem 0 0;
@@ -831,7 +914,8 @@ body {
   font: inherit;
 }
 
-.campo input[aria-invalid="true"] {
+.campo input[aria-invalid="true"],
+.campo select[aria-invalid="true"] {
   border: 2px solid var(--cor-erro);
 }
 
@@ -864,6 +948,14 @@ body {
   min-height: 2.25rem;
   padding: 0.25rem 0.75rem;
   font: inherit;
+}
+
+/* Lista vazia: "Buscar até 10 km" e "Cadastrar um local", lado a lado e quebrando linha em tela estreita. */
+#acoes-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 /* Gaveta do menu. Sem "display" aqui: ele anularia o atributo hidden. */

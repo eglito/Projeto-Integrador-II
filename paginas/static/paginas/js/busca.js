@@ -17,9 +17,6 @@ const RAIOS_M = [500, 1000, 2000, 5000, 10000];
 // O raio da área visível é arredondado para cima até 100 m: texto limpo ("3,4 km").
 const PASSO_RAIO_M = 100;
 
-const ALTURA_INVALIDA =
-  "Informe a altura em centímetros, com um número inteiro maior que zero, ou deixe o campo vazio.";
-
 /** Raios do seletor: os degraus até o máximo, sempre com o padrão e o máximo. */
 export function opcoesDeRaio(padrao, maximo) {
   const raios = new Set(RAIOS_M.filter((raio) => raio <= maximo));
@@ -40,16 +37,27 @@ export function raioDaArea(distanciaAoCantoM, raioMaximoM) {
   return { raio: Math.min(arredondado, raioMaximoM), limitado: arredondado > raioMaximoM };
 }
 
-/** Altura digitada: vazia vale null; senão, um inteiro maior que zero, ou o erro. */
-export function validarAltura(texto) {
+/**
+ * Medida digitada, em centímetros: vazia vale null; senão, um inteiro maior que
+ * zero, ou o erro. `rotulo` completa a mensagem ("altura", "largura"). O
+ * cadastro de equipamento (contribuicoes.js) usa a mesma regra da altura do filtro.
+ */
+export function validarMedida(texto, rotulo) {
   const limpo = texto.trim();
   if (limpo === "") {
     return { valor: null };
   }
   if (!/^\d+$/.test(limpo) || Number(limpo) === 0) {
-    return { erro: ALTURA_INVALIDA };
+    return {
+      erro: `Informe a ${rotulo} em centímetros, com um número inteiro maior que zero, ou deixe o campo vazio.`,
+    };
   }
   return { valor: Number(limpo) };
+}
+
+/** Altura do filtro: vazia vale null; senão, um inteiro maior que zero, ou o erro. */
+export function validarAltura(texto) {
+  return validarMedida(texto, "altura");
 }
 
 /**
@@ -132,6 +140,17 @@ export function marcarRaio(metros, { daArea = false } = {}) {
       .prependTo(raio);
   }
   raio.val(String(metros));
+}
+
+/**
+ * Mostra no formulário os filtros em uso, depois de uma busca que os trocou por
+ * conta própria: o cadastro de um local limpa os filtros, e "Alterar filtros"
+ * não pode mostrar os antigos.
+ */
+export function marcarFiltros({ tipo, alturaMaxima }) {
+  $("#filtro-tipo").val(tipo);
+  $("#filtro-altura").val(alturaMaxima ?? "");
+  limparErroDaAltura();
 }
 
 /**

@@ -12,6 +12,9 @@
 
 import { anunciar } from "./anuncio.js";
 
+// Todo controle que recebe valor: os formulários de contribuição usam select.
+const CONTROLES = "input, select, textarea";
+
 /**
  * Separa o corpo de um 400 em erros por campo, com as mensagens de cada um
  * juntas, e o erro geral: non_field_errors, ou o de um campo que não está em
@@ -48,7 +51,7 @@ export function mensagemDeFalha(acao, status) {
  * limparErros volta a ele, e mostrarErros soma o erro a ele.
  */
 export function prepararFormulario(nome) {
-  $(`#form-${nome} input`).each(function () {
+  $(`#form-${nome}`).find(CONTROLES).each(function () {
     $(this).data("descricao", $(this).attr("aria-describedby") || "");
   });
 }
@@ -88,7 +91,7 @@ export function mostrarErros(nome, campos, { porCampo, geral }) {
 export function limparErros(nome) {
   $(`#${nome}-erro-geral`).text("").prop("hidden", true);
   $(`#form-${nome} .erro`).not(".erro-geral").text("").prop("hidden", true);
-  $(`#form-${nome} input`).each(function () {
+  $(`#form-${nome}`).find(CONTROLES).each(function () {
     const entrada = $(this).removeAttr("aria-invalid");
     if (entrada.data("descricao")) {
       entrada.attr("aria-describedby", entrada.data("descricao"));

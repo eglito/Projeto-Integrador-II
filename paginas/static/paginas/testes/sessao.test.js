@@ -1,10 +1,4 @@
-import {
-  camposVazios,
-  mensagemDeContribuicao,
-  rotuloVoltar,
-  textoContexto,
-  textoUsuario,
-} from "../js/sessao.js";
+import { camposVazios, rotuloVoltar, textoContexto, textoUsuario } from "../js/sessao.js";
 
 QUnit.module("sessao.js: campos vazios", function () {
   QUnit.test("nome e senha preenchidos: nada a corrigir", function (assert) {
@@ -51,12 +45,17 @@ QUnit.module("sessao.js: ação pendente", function () {
     assert.strictEqual(rotuloVoltar({ acao: "adicionar" }), "Voltar à lista");
   });
 
-  QUnit.test("com login, cada ação avisa que chega numa próxima versão", function (assert) {
-    for (const acao of ["avaliar", "condicao", "denunciar"]) {
-      const mensagem = mensagemDeContribuicao(acao);
-      assert.true(mensagem.includes("ainda não está disponível"), acao);
-      assert.true(mensagem.endsWith("Essa função chega numa próxima versão."), acao);
+  QUnit.test("toda ação de contribuição tem contexto de login, e nenhuma fala em versão futura", function (assert) {
+    for (const acao of ["avaliar", "condicao", "equipamento", "denunciar"]) {
+      const texto = textoContexto({ ...pendente, acao });
+      assert.true(texto.startsWith("Entre ou crie uma conta para "), acao);
+      assert.true(texto.includes("Parque Infantil"), acao);
+      assert.false(texto.includes("próxima versão"), acao);
     }
+    assert.strictEqual(
+      textoContexto({ ...pendente, acao: "equipamento" }),
+      "Entre ou crie uma conta para adicionar um equipamento a Parque Infantil. Depois, você volta para este local.",
+    );
   });
 
   QUnit.test("o menu mostra o nome de quem está conectado", function (assert) {

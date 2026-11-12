@@ -106,13 +106,14 @@
         {# Leva o foco ao marcador; em tela estreita, traz o Mapa para a frente (README, decisão 41). #}
         <button type="button" id="mostrar-no-mapa" hidden>Mostrar no mapa</button>
         <div id="conteudo-detalhes" class="conteudo-detalhes"></div>
-        {# Contribuição (especificação, 2.4). Sem login, o botão leva a Entrar e, depois, de volta a este local (plano, etapa 9). #}
+        {# Contribuição (especificação, 2.4). Sem login, o botão leva a Entrar e, depois, de volta a este local (plano, etapa 9); com login, abre o formulário (plano, etapa 14). #}
         <section id="contribuir" class="contribuir" aria-labelledby="titulo-contribuir" hidden>
           <h3 id="titulo-contribuir">Contribuir</h3>
           <p id="contribuir-ajuda">Para contribuir, entre na sua conta. Depois, você volta para este local.</p>
           <div class="acoes-contribuir">
             <button type="button" data-acao="avaliar">Avaliar o local</button>
             <button type="button" data-acao="condicao">Registrar condição</button>
+            <button type="button" data-acao="equipamento">Adicionar equipamento</button>
             <button type="button" data-acao="denunciar">Denunciar</button>
           </div>
         </section>
@@ -164,10 +165,12 @@
         <p class="trocar-formulario">Já tem conta? <button type="button" id="ir-para-entrar">Entrar</button></p>
       </section>
 
-      {# Adicionar local, escolha do ponto (especificação, seção 3; plano, etapa 12). O formulário do local vem na etapa 13. #}
+      {# Adicionar local (especificação, seção 3), em dois passos dentro da mesma visão: o ponto (plano, etapa 12) e o nome com as comodidades (etapa 13). Os equipamentos vêm na visão própria, mais abaixo. #}
       <section id="visao-adicionar" class="visao" aria-labelledby="titulo-adicionar" hidden>
         <button type="button" id="cancelar-cadastro" class="voltar">Cancelar</button>
         <h2 id="titulo-adicionar" tabindex="-1">Adicionar local</h2>
+
+        <div id="passo-ponto">
         <section id="ponto-escolhido" class="ponto-escolhido" aria-labelledby="titulo-ponto-escolhido" hidden>
           <h3 id="titulo-ponto-escolhido" tabindex="-1">Ponto escolhido</h3>
           <p id="ponto-escolhido-texto"></p>
@@ -195,6 +198,206 @@
           <div id="resultados-endereco-local" class="resultados-endereco" hidden>
             <h4>Escolha o endereço</h4>
             <ul id="lista-endereco-local" class="lista-enderecos" role="list"></ul>
+          </div>
+        </form>
+        </div>
+
+        {# Passo 2: nome e comodidades. Comodidade sem resposta vai como null, "não informado" (Docs/API.md, seção 1). #}
+        <div id="passo-dados" hidden>
+          <h3 id="titulo-dados" tabindex="-1">Nome e comodidades</h3>
+          <p id="dados-ponto"></p>
+          <button type="button" id="mudar-ponto" class="botao-secundario">Mudar o ponto</button>
+
+          {# novalidate: as mensagens de erro são as nossas e as da API, em português e dizendo como corrigir. #}
+          <form id="form-novo-local" class="formulario-conta" novalidate>
+            <p id="novo-local-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+            <div class="campo">
+              <label for="novo-local-nome">Nome do local</label>
+              <input id="novo-local-nome" name="nome" type="text" autocomplete="off" aria-required="true" aria-describedby="novo-local-nome-ajuda">
+              <p id="novo-local-nome-ajuda" class="ajuda">Use o nome oficial da praça ou do parque. Exemplo: Praça da Matriz.</p>
+              <p id="novo-local-nome-erro" class="erro" hidden></p>
+            </div>
+            <div class="campo">
+              <label for="novo-local-endereco">Endereço (opcional)</label>
+              <input id="novo-local-endereco" name="endereco" type="text" autocomplete="off" aria-describedby="novo-local-endereco-ajuda">
+              <p id="novo-local-endereco-ajuda" class="ajuda">Rua e número, ou uma referência que ajude a achar o lugar.</p>
+              <p id="novo-local-endereco-erro" class="erro" hidden></p>
+            </div>
+            {# Com um só município, o seletor fica escondido e o texto diz qual é. O valor segue de /api/opcoes/. #}
+            <p id="novo-local-municipio-fixo" hidden></p>
+            <div id="novo-local-municipio-campo" class="campo">
+              <label for="novo-local-municipio">Município</label>
+              <select id="novo-local-municipio" name="municipio_ibge"></select>
+              <p id="novo-local-municipio-erro" class="erro" hidden></p>
+            </div>
+            <fieldset>
+              <legend>Comodidades (opcional)</legend>
+              <p id="comodidades-ajuda" class="ajuda">Se não souber, deixe "Não informado". Isso não quer dizer que o local não tem.</p>
+              <div class="campo">
+                <label for="novo-local-bebedouro">Bebedouro</label>
+                <select id="novo-local-bebedouro" name="tem_bebedouro" aria-describedby="comodidades-ajuda">
+                  <option value="">Não informado</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não</option>
+                </select>
+                <p id="novo-local-bebedouro-erro" class="erro" hidden></p>
+              </div>
+              <div class="campo">
+                <label for="novo-local-sanitario">Sanitário</label>
+                <select id="novo-local-sanitario" name="tem_sanitario" aria-describedby="comodidades-ajuda">
+                  <option value="">Não informado</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não</option>
+                </select>
+                <p id="novo-local-sanitario-erro" class="erro" hidden></p>
+              </div>
+              <div class="campo">
+                <label for="novo-local-bancos">Bancos</label>
+                <select id="novo-local-bancos" name="tem_bancos" aria-describedby="comodidades-ajuda">
+                  <option value="">Não informado</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não</option>
+                </select>
+                <p id="novo-local-bancos-erro" class="erro" hidden></p>
+              </div>
+            </fieldset>
+            <div class="acoes-formulario">
+              <button type="submit">Cadastrar local</button>
+            </div>
+          </form>
+
+          {# O 409 da API: o lugar pode já existir (Docs/API.md, 6.2). Escondido, a não ser nesse caso. #}
+          <section id="duplicatas" class="duplicatas" aria-labelledby="titulo-duplicatas" hidden>
+            <h3 id="titulo-duplicatas" tabindex="-1">Este lugar já está cadastrado?</h3>
+            <p>Já existem locais parecidos com este. Se o seu é um deles, abra o local e avalie-o, em vez de cadastrar de novo. Se é outro lugar, cadastre mesmo assim.</p>
+            <ul id="lista-duplicatas" class="lista-duplicatas" role="list"></ul>
+            <div class="acoes-formulario">
+              <button type="button" id="outro-lugar">É outro lugar: cadastrar mesmo assim</button>
+              <button type="button" id="corrigir-dados" class="botao-secundario">Voltar e corrigir os dados</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      {# Contribuir num local que já existe (especificação, 2.4; plano, etapa 14). Cada visão tem o botão "Voltar a {nome}" e o texto "Local: {nome}", preenchidos pelo contribuicoes.js. #}
+      <section id="visao-avaliar" class="visao" aria-labelledby="titulo-avaliar" hidden>
+        <button type="button" class="voltar" data-voltar-contribuicao>Voltar ao local</button>
+        <h2 id="titulo-avaliar" tabindex="-1">Avaliar o local</h2>
+        <p class="local-da-contribuicao"></p>
+        <p>Conte como foi a sua visita. A avaliação vale para a faixa de horário em que você esteve lá e entra na tabela de segurança, que mostra os últimos 90 dias.</p>
+        <form id="form-avaliar" class="formulario-conta" novalidate>
+          <p id="avaliar-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+          <div class="campo">
+            <label for="avaliar-faixa">Faixa de horário da visita</label>
+            <select id="avaliar-faixa" name="faixa_horario" aria-required="true"></select>
+            <p id="avaliar-faixa-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="avaliar-movimento">Movimento de pessoas</label>
+            <select id="avaliar-movimento" name="movimento" aria-required="true"></select>
+            <p id="avaliar-movimento-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="avaliar-iluminacao">Iluminação</label>
+            <select id="avaliar-iluminacao" name="iluminacao" aria-describedby="avaliar-iluminacao-ajuda"></select>
+            <p id="avaliar-iluminacao-ajuda" class="ajuda">Obrigatória nas visitas à noite. Nos outros horários, é opcional.</p>
+            <p id="avaliar-iluminacao-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="avaliar-limpeza">Limpeza do local</label>
+            <select id="avaliar-limpeza" name="limpeza" aria-required="true"></select>
+            <p id="avaliar-limpeza-erro" class="erro" hidden></p>
+          </div>
+          <div class="acoes-formulario">
+            <button type="submit">Enviar avaliação</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="visao-condicao" class="visao" aria-labelledby="titulo-condicao" hidden>
+        <button type="button" class="voltar" data-voltar-contribuicao>Voltar ao local</button>
+        <h2 id="titulo-condicao" tabindex="-1">Registrar condição</h2>
+        <p class="local-da-contribuicao"></p>
+        {# Sem equipamento cadastrado não há condição a registrar: o caminho é acrescentar o equipamento. #}
+        <div id="condicao-sem-equipamento" hidden>
+          <p>Este local ainda não tem equipamentos cadastrados, então não há condição para registrar. Acrescente primeiro o equipamento.</p>
+          <button type="button" id="condicao-adicionar-equipamento">Adicionar equipamento</button>
+        </div>
+        <form id="form-condicao" class="formulario-conta" novalidate>
+          <p id="condicao-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+          <div class="campo">
+            <label for="condicao-equipamento">Equipamento</label>
+            <select id="condicao-equipamento" name="equipamento" aria-required="true"></select>
+            <p id="condicao-equipamento-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="condicao-condicao">Condição</label>
+            <select id="condicao-condicao" name="condicao" aria-required="true" aria-describedby="condicao-condicao-ajuda"></select>
+            <p id="condicao-condicao-ajuda" class="ajuda">O registro fica com a data de hoje e não pode ser editado depois: ele forma o histórico do equipamento.</p>
+            <p id="condicao-condicao-erro" class="erro" hidden></p>
+          </div>
+          <div class="acoes-formulario">
+            <button type="submit">Registrar condição</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="visao-equipamento" class="visao" aria-labelledby="titulo-equipamento" hidden>
+        <button type="button" class="voltar" data-voltar-contribuicao>Voltar ao local</button>
+        <h2 id="titulo-equipamento" tabindex="-1">Adicionar equipamento</h2>
+        <p class="local-da-contribuicao"></p>
+        <p>Acrescente um equipamento de cada vez. Quando terminar, use Concluir.</p>
+        <section id="equipamentos-acrescentados" class="equipamentos-acrescentados" aria-labelledby="titulo-acrescentados" hidden>
+          <h3 id="titulo-acrescentados">Acrescentados agora</h3>
+          <ul id="lista-acrescentados" role="list"></ul>
+        </section>
+        <form id="form-equipamento" class="formulario-conta" novalidate>
+          <p id="equipamento-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+          <div class="campo">
+            <label for="equipamento-tipo">Tipo de equipamento</label>
+            <select id="equipamento-tipo" name="tipo" aria-required="true"></select>
+            <p id="equipamento-tipo-erro" class="erro" hidden></p>
+          </div>
+          {# Só com o tipo "Outro" (restrição do banco): o nome de quem cadastra vale no lugar do tipo. #}
+          <div id="equipamento-nome-outro-campo" class="campo" hidden>
+            <label for="equipamento-nome-outro">Nome do equipamento</label>
+            <input id="equipamento-nome-outro" name="nome_outro" type="text" autocomplete="off" aria-required="true">
+            <p id="equipamento-nome-outro-erro" class="erro" hidden></p>
+          </div>
+          <div class="campo">
+            <label for="equipamento-altura">Altura, em centímetros (opcional)</label>
+            {# Texto com teclado numérico, como no filtro: um campo number esconderia o texto inválido. #}
+            <input id="equipamento-altura" name="altura_cm" type="text" inputmode="numeric" autocomplete="off" aria-describedby="equipamento-altura-ajuda">
+            <p id="equipamento-altura-ajuda" class="ajuda">Se não tiver como medir, deixe em branco.</p>
+            <p id="equipamento-altura-erro" class="erro" hidden></p>
+          </div>
+          {# Só com barras paralelas (restrição do banco). #}
+          <div id="equipamento-largura-campo" class="campo" hidden>
+            <label for="equipamento-largura">Largura entre as barras, em centímetros (opcional)</label>
+            <input id="equipamento-largura" name="largura_cm" type="text" inputmode="numeric" autocomplete="off">
+            <p id="equipamento-largura-erro" class="erro" hidden></p>
+          </div>
+          <div class="acoes-formulario">
+            <button type="submit">Adicionar equipamento</button>
+            <button type="button" id="concluir-equipamento" class="botao-secundario">Concluir</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="visao-denunciar" class="visao" aria-labelledby="titulo-denunciar" hidden>
+        <button type="button" class="voltar" data-voltar-contribuicao>Voltar ao local</button>
+        <h2 id="titulo-denunciar" tabindex="-1">Denunciar o local</h2>
+        <p class="local-da-contribuicao"></p>
+        <p>Use a denúncia para pedir uma correção neste local. A moderação analisa cada uma.</p>
+        <form id="form-denunciar" class="formulario-conta" novalidate>
+          <p id="denunciar-erro-geral" class="erro erro-geral" tabindex="-1" hidden></p>
+          <div class="campo">
+            <label for="denunciar-motivo">Motivo da denúncia</label>
+            <select id="denunciar-motivo" name="motivo" aria-required="true"></select>
+            <p id="denunciar-motivo-erro" class="erro" hidden></p>
+          </div>
+          <div class="acoes-formulario">
+            <button type="submit">Enviar denúncia</button>
           </div>
         </form>
       </section>

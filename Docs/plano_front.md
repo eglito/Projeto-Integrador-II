@@ -1,7 +1,7 @@
 # Plano: front-end do mapa (Fase 4)
 
 Etapas para entregar o que pede `Docs/especificacao_mapa.md`. Aprovado em 03/11/2026.
-As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 41).
+As respostas da entrevista estão na especificação, seção 5. As decisões estão no README, seção 5 (22 a 45).
 
 > Regras de cada etapa: branch própria, commits por unidade lógica e PR aberta pelo autor (`CLAUDE.md`, Git). `pytest` e `ruff` rodam antes de cada commit, então o item 9 da verificação vale para todas as etapas e não é repetido. Cada etapa termina com evidência (screenshot, saída de comando), não com "pronto".
 
@@ -23,8 +23,9 @@ As respostas da entrevista estão na especificação, seção 5. As decisões es
 | 9 | Sessão no painel | `feat/sessao-front` | 8 | Concluída (PR #30) |
 | 10 | Configurações no back | `feat/api-conta` | — | Concluída (PR #23) |
 | 11 | Configurações no front | `feat/configuracoes-front` | 9 e 10 | Concluída (PR #31) |
-| 12 | Adicionar local: escolha do ponto | `feat/cadastro-local-ponto` | 9 | Pendente |
-| 13 | Adicionar local: formulário em etapas | `feat/cadastro-local-formulario` | 12 | Pendente |
+| 12 | Adicionar local: escolha do ponto | `feat/cadastro-local-ponto` | 9 | Concluída (PR #32) |
+| 13 | Adicionar local: nome, comodidades, aviso de duplicata e equipamentos | `feat/contribuicoes-front` | 12 | Concluída |
+| 14 | Contribuições num local: avaliar, registrar condição, denunciar e acrescentar equipamento | `feat/contribuicoes-front` | 9 e 13 | Concluída |
 
 As etapas 1 a 3 não dependem do layout e andam em paralelo com a etapa 0. A etapa 10 é só back-end e pode ser adiantada, por exemplo enquanto a etapa 0 não termina.
 
@@ -55,7 +56,10 @@ paginas/
 │   │   ├── navegacao.js       ?local=id e o Voltar do navegador
 │   │   ├── sessao.js          Entrar, cadastro de conta, sair
 │   │   ├── conta.js           Configurações
-│   │   └── cadastro_local.js  Adicionar local
+│   │   ├── cadastro_local.js  Adicionar local: ponto, nome, comodidades e aviso de duplicata
+│   │   ├── contribuicoes.js   Avaliar, registrar condição, denunciar e acrescentar equipamento
+│   │   ├── falhas.js          Falha de envio: 400 no campo, 403 confere a sessão
+│   │   └── formularios.js     Erros por campo, erro geral e foco dos formulários do painel
 │   ├── testes/                Página do QUnit e arquivos *.test.js
 │   └── vendor/                jquery/, leaflet/, qunit/, com as licenças
 └── tests/test_views.py
@@ -331,7 +335,7 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - "Usar o centro do mapa" fica antes do mapa no HTML, como "Buscar nesta área": com o mapa em foco, Shift+Tab chega nele depois das setas.
   - O clique no mapa escolhe o ponto; o clique num marcador continua abrindo os detalhes daquele local, e isso encerra o modo.
   - O endereço usa o `endereco.js`, adaptado num commit próprio para servir mais de um formulário (ids por prefixo, a mesma trava de 1 s e o mesmo cache), sem mudar a visão Buscar: a mesma verificação, com o Nominatim simulado, deu o mesmo resultado antes e depois.
-  - O ponto escolhido ganha o marcador "Novo local", um quadrado. O painel diz como ele foi escolhido ("pelo centro do mapa", "por um clique no mapa" ou "pelo endereço …") e mostra as coordenadas em pt-BR, com o foco no título "Ponto escolhido"; em tela estreita, o painel vem para a frente. "Escolher outro ponto" recomeça, e "Continuar" anuncia que nome e comodidades chegam numa próxima versão (etapa 13).
+  - O ponto escolhido ganha o marcador "Novo local", um quadrado. O painel diz como ele foi escolhido ("pelo centro do mapa", "por um clique no mapa" ou "pelo endereço …") e mostra as coordenadas em pt-BR, com o foco no título "Ponto escolhido"; em tela estreita, o painel vem para a frente. "Escolher outro ponto" recomeça, e "Continuar" segue para o formulário do local (etapa 13).
   - O Esc cancela com o foco na visão, em "Usar o centro do mapa" ou no próprio mapa; num marcador, continua só escondendo o nome (WCAG 1.4.13). Sair da conta com o modo aberto volta à lista, como Configurações.
   - A mira tem linhas escuras com contorno branco, para o contraste de 3:1 sobre qualquer tile (WCAG 1.4.11).
   - Achado na verificação: a faixa de anúncios muda de altura e o mapa é medido de novo (etapa 7), o que o desloca alguns pixels; o marcador do ponto acompanha o lugar escolhido, e a mira continua no centro.
@@ -350,8 +354,41 @@ Feita antes das conclusões da etapa 0 (decisão 39), com o layout definido pelo
   - Com 201, a pessoa acrescenta os equipamentos. `nome_outro` só aparece com o tipo "outro", e largura só com barras paralelas.
   - Ao concluir, o local novo aparece no mapa e na lista, e o resultado é anunciado.
   - Na lista vazia, o botão "Cadastrar um local", a segunda ação da especificação (2.3), ao lado de "Buscar até 10 km" (etapa 3).
-- **Arquivos:** `js/cadastro_local.js`, `testes/cadastro_local.test.js` (montagem do corpo) e o template.
+- **Arquivos:** `js/cadastro_local.js`, `js/lista.js`, `js/principal.js`, `testes/cadastro_local.test.js` (montagem do corpo) e o template.
+- Na implementação:
+  - O formulário é o passo 2 da mesma visão "Adicionar local" (`#passo-ponto` e `#passo-dados`), e não uma visão nova: o modo, a mira e o marcador "Novo local" vivem enquanto a visão está no painel, e o ponto precisa continuar marcado enquanto se escreve o nome. No passo 2, a mira e "Usar o centro do mapa" saem, e clique no mapa ou endereço atrasado não trocam o ponto sem a pessoa saber; "Mudar o ponto" volta ao passo 1 com o ponto ainda marcado.
+  - O endereço do formulário já vem com o do Nominatim quando o ponto foi escolhido por endereço; a pessoa pode mudá-lo, e uma nova escolha só o troca se ele continua como o formulário o preencheu.
+  - Comodidade em `<select>` com "Não informado", "Sim" e "Não" (`null`, `true`, `false`). Com um só município em `/api/opcoes/`, o seletor fica escondido e o texto diz qual é; o valor segue da API.
+  - O 409 troca o formulário pelo aviso: cada candidato com endereço e distância até o ponto, "É este lugar" (o nome acessível inclui o local, WCAG 2.5.3) e, para todos, "É outro lugar: cadastrar mesmo assim" e "Voltar e corrigir os dados". O texto do aviso é nosso: o `detail` da API cita `confirmar_novo` (decisão 45).
+  - Com o 201, o local já existe: a busca é refeita ao redor dele, sem filtros (decisão 44), e a pessoa segue para a visão de equipamentos da etapa 14. "Concluir" abre os detalhes do local novo, com o mapa nele.
+  - "É este lugar" refaz a busca ao redor do candidato, para ele ter marcador e item na lista mesmo fora do raio, e abre os detalhes dele.
+  - Na lista vazia, "Cadastrar um local" usa o mesmo caminho do menu: sem login, leva a Entrar e volta ao modo (`comecarCadastro`).
+  - Latitude e longitude vão com seis casas (cerca de 11 cm): o clique do Leaflet traz quinze, que não dizem nada a mais sobre o lugar.
 - **Verificação:** itens 3, 4 e 5.
+
+### Etapa 14: contribuições num local
+
+- **Entrega:** com login, os botões dos detalhes abrem formulários no painel, e todos terminam nos detalhes do local, já atualizados, com o resultado anunciado:
+
+  | Botão | Rota | Campos |
+  |---|---|---|
+  | Avaliar o local | `POST /api/locais/{id}/avaliacoes/` | faixa, movimento, iluminação (obrigatória à noite, RN-05) e limpeza |
+  | Registrar condição | `POST /api/equipamentos/{id}/registros-condicao/` | equipamento (vai na rota) e condição |
+  | Adicionar equipamento | `POST /api/locais/{id}/equipamentos/` | tipo, nome (só no tipo "Outro"), altura e largura (só em barras paralelas) |
+  | Denunciar | `POST /api/locais/{id}/denuncias/` | motivo |
+
+- Na implementação:
+  - Os seletores saem de `/api/opcoes/`, e o HTML os traz vazios (decisão 42). Uma tabela (`FORMULARIOS`) descreve campos, regras, rota e mensagem de cada formulário, e um código só os envia, como um `Map<String, Estratégia>` em Java.
+  - Campo vazio é conferido antes de ir à API, com mensagem que diz o que escolher: a API só diria "Este campo é obrigatório.". Os erros 400 da API aparecem no campo certo ou no topo (`non_field_errors`, como o da denúncia repetida), com foco e anúncio, igual aos outros formulários do painel (`formularios.js` passou a tratar `select`). `falhas.js` reúne o resto: o 403 confere a sessão com a API e diz se ela caiu, e a falha de rede diz para conferir a conexão.
+  - Iluminação: à noite, o campo ganha `aria-required` e a primeira opção deixa de ser "Não informar".
+  - Registrar condição: o seletor lista os equipamentos do local, com as medidas entre parênteses e "nº 1", "nº 2" quando duas barras são iguais; com um só equipamento, ele já vem escolhido; sem nenhum, o formulário dá lugar ao caminho "Adicionar equipamento" (decisão 43).
+  - Adicionar equipamento: a largura e o nome só aparecem com o tipo que os aceita, e o campo que sai de cena é esvaziado, para o valor de outro tipo não ir à API. Depois de cada envio, o formulário volta limpo, com o foco no tipo, a lista "Acrescentados agora" cresce e a lista de locais é atualizada sem anúncio. "Concluir" volta aos detalhes com o resumo.
+  - "Voltar a {nome}" e Esc devolvem a pessoa aos detalhes, com o foco no botão que abriu o formulário. Sair da conta com um formulário aberto leva o painel à lista.
+  - Sem login, o botão leva a Entrar (etapa 9); depois do login, o formulário da ação abre direto, no mesmo local.
+  - Envio que termina com a pessoa já fora da visão (rede lenta) só anuncia o resultado, sem tirá-la de onde está.
+- **Fora desta etapa:** foto no registro de condição (`foto_objeto`, opcional na API) e a foto do local. Seguem com o envio de foto (seção 6).
+- **Arquivos:** `js/contribuicoes.js`, `js/falhas.js`, `js/formularios.js`, `js/busca.js` (`validarMedida`, reaproveitada), `js/sessao.js`, `js/principal.js`, `testes/contribuicoes.test.js`, `testes/falhas.test.js`, `paginas/tests/test_views.py`, o template e o CSS.
+- **Verificação:** itens 4, 5 e 6, e o fluxo completo no navegador com uma conta de teste: avaliar (incluindo a noite sem iluminação), registrar condição, denunciar duas vezes o mesmo motivo (400 no topo), acrescentar equipamento, cadastrar local com o 409 e as duas saídas, e o caminho do visitante até o formulário. Em 320 px, sem rolagem horizontal. Os dados do teste foram removidos do banco depois.
 
 ---
 
@@ -364,9 +401,9 @@ Itens da especificação, seção 6, e as etapas que os verificam.
 | 1. Tiles do OSM carregados | 2 |
 | 2. Geolocalização permitida e negada | 6 e 7 |
 | 3. Mapa e lista com os mesmos locais | 3, 5 e 13 |
-| 4. Só com teclado | 3, 4, 8, 9, 11, 12 e 13 |
+| 4. Só com teclado | 3, 4, 8, 9, 11, 12, 13 e 14 |
 | 5. Anúncios no leitor de tela | 3 em diante |
-| 6. 320 px sem rolagem horizontal | 4 |
+| 6. 320 px sem rolagem horizontal | 4, 13 e 14 |
 | 7. Movimento reduzido | 3 e 7 |
 | 8. axe e Lighthouse | 4, 7 e o marco da etapa 8 |
 | 9. `pytest` e `ruff` | Todas |
@@ -384,6 +421,6 @@ Itens da especificação, seção 6, e as etapas que os verificam.
 
 ## 6. Fora deste plano
 
-- Avaliação de segurança e limpeza, registro de condição, denúncia e envio de foto (especificação, seção 4). Seguem num plano próprio, na ordem do HANDOFF, seção 5.
+- Envio de foto do local e da condição de um equipamento (especificação, seção 4). Segue num plano próprio, na ordem do HANDOFF, seção 5. A avaliação de segurança e limpeza, o registro de condição e a denúncia entraram na etapa 14.
 - Excluir a conta: Configurações cobre só nome de usuário e senha (decisão 23).
 - Tudo o que a seção 4 da especificação e o `CLAUDE.md` já deixam de fora.

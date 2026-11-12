@@ -95,13 +95,13 @@ Dados de `GET /api/locais/{id}/` (LocalDetalhe):
 - Rotas e navegação até o local, feed social, ranking, segmentos e mapas de calor (Strava), modo offline.
 - Rota nova no back-end sem combinar antes. Já combinados: o campo `busca.centro_padrao` em `/api/opcoes/` (decisão 25) e as rotas de Configurações (decisão 23).
 - Tudo o que a seção "Fora de escopo" do `CLAUDE.md` já lista.
-- Avaliação, registro de condição, denúncia e envio de foto: etapas seguintes, na ordem do HANDOFF, seção 5.
+- Envio de foto: etapa seguinte, na ordem do HANDOFF, seção 5. Avaliação, registro de condição, denúncia e equipamento entraram na etapa 14 do plano.
 
 ---
 
 ## 5. Decisões
 
-Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 41.
+Resolvidas na entrevista de 03/11/2026, antes do plano (`Docs/plano_front.md`). As decisões técnicas estão no README, seção 5, de 22 a 45.
 
 | # | Pergunta | Resposta | README |
 |---|---|---|---|
