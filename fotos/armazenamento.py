@@ -6,8 +6,9 @@ Fluxo, igual em desenvolvimento e em produção (README, decisão 15):
 2. Envia o arquivo direto para ela, com PUT.
 3. Informa o `objeto` devolvido no passo 1 ao anexar a foto.
 
-Em produção (Fase 5) a URL será do Cloud Storage. No desenvolvimento, a
-ArmazenamentoLocal imita o bucket com uma rota do próprio Django.
+No desenvolvimento e no deploy de teste em VM (decisão 46), a
+ArmazenamentoLocal imita o bucket com uma rota do próprio Django e grava em
+MEDIA_ROOT. Com o bucket (Fase 5), a URL será do Cloud Storage.
 """
 
 import re
@@ -44,7 +45,7 @@ def conteudo_confere_com_tipo(conteudo: bytes, tipo: str) -> bool:
 
 
 class ArmazenamentoLocal:
-    """Simula o bucket no desenvolvimento, gravando em MEDIA_ROOT."""
+    """Simula o bucket (desenvolvimento e VM de teste), gravando em MEDIA_ROOT."""
 
     def gerar_upload(self, tipo_conteudo: str) -> dict:
         objeto = f"fotos/{uuid.uuid4().hex}.{TIPOS_PERMITIDOS[tipo_conteudo]}"

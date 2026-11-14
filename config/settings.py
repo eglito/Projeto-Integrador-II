@@ -32,6 +32,25 @@ ALLOWED_HOSTS = [
     host for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if host
 ]
 
+# Interruptor da produção atrás de HTTPS (README, decisão 46). Desligado por
+# padrão: desenvolvimento e testes rodam em HTTP e não mudam.
+if os.environ.get("DJANGO_HTTPS", "False") == "True":
+    # O Caddy encerra o HTTPS e fala HTTP puro com o gunicorn, avisando o esquema
+    # original neste cabeçalho. Sem ele, o Django acha que a requisição é HTTP,
+    # compara com o "Origin: https://..." do navegador e recusa todo POST (login,
+    # cadastro) com 403 "Origin checking failed" (Docs/deploy.md, problemas comuns).
+    # Só é seguro confiar no cabeçalho porque o gunicorn não publica porta:
+    # se um cliente alcançasse o gunicorn direto, poderia forjar o cabeçalho.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    # Cookies de sessão e de CSRF só trafegam por HTTPS.
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS: o navegador passa a recusar HTTP neste domínio durante N segundos.
+    # Não dá para desfazer antes do prazo, então começa em 1 hora. Suba para
+    # 1 ano (31536000) quando o HTTPS estiver estável.
+    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SEGUNDOS", "3600"))
+
 # Os servidores de tiles do OpenStreetMap exigem o cabeçalho Referer
 # (osm.wiki/Blocked). O padrão do Django, "same-origin", omite o Referer para
 # outros domínios e faz o mapa ser bloqueado. Este valor envia só a origem

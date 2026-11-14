@@ -4,6 +4,10 @@ FROM python:3.12-slim-trixie
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Número de processos do gunicorn (ele lê esta variável sozinho). Cada um usa
+# cerca de 100 MB: 2 cabe numa VM de 2 GB junto com o banco.
+ENV WEB_CONCURRENCY=2
+
 # Bibliotecas geoespaciais do GeoDjango (GDAL, GEOS, PROJ).
 # Pacotes recomendados pela documentação do Django para Debian/Ubuntu.
 RUN apt-get update \
@@ -35,5 +39,7 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 EXPOSE 8000
 
-# Servidor de desenvolvimento. A imagem de produção (Fase 5) usará gunicorn.
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Servidor de produção. Sem log de acesso (--access-logfile) de propósito: a URL
+# da busca leva a latitude e a longitude de quem consulta (dado pessoal, LGPD).
+# O desenvolvimento troca este comando por runserver no docker-compose.yml.
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]

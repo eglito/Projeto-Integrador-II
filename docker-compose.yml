@@ -20,6 +20,11 @@ services:
       args:
         REQUIREMENTS: requirements-dev.txt
     env_file: .env
+    # A imagem sobe o gunicorn como usuário sem privilégios (produção). No
+    # desenvolvimento o código vem do host e precisa ser gravável (migrations,
+    # media/, caches): runserver como root, como sempre foi.
+    user: root
+    command: python manage.py runserver 0.0.0.0:8000
     # Monta o código do host no container: editar um arquivo reinicia o
     # runserver sem precisar reconstruir a imagem.
     volumes:
