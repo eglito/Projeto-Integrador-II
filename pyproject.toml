@@ -14,3 +14,6 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
+# O WhiteNoise avisa que /app/staticfiles não existe: o collectstatic roda no
+# build da imagem, e no desenvolvimento a pasta do host (montada) não o tem.
+filterwarnings = ["ignore:No directory at:UserWarning"]

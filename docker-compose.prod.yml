@@ -1,0 +1,62 @@
+# Produção em VM única (README, decisão 46). Roteiro completo: Docs/deploy.md
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Arquivo autônomo, e não um override do docker-compose.yml: o "-f" explícito
+# também impede que o docker-compose.override.yml do desenvolvimento (porta
+# 5434 do banco) seja carregado. Os valores vêm do .env da VM (.env.prod.example).
+services:
+  db:
+    build: ./docker/postgis
+    # Sobe sozinho depois de um reboot da VM ou de uma queda do container.
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Sem "ports": só os outros containers do Compose alcançam o banco.
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # As fotos (ArmazenamentoLocal grava em MEDIA_ROOT = /app/media).
+      - media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    # Sem "ports": só o Caddy alcança o gunicorn. É isso que torna seguro
+    # confiar no cabeçalho X-Forwarded-Proto (SECURE_PROXY_SSL_HEADER).
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Mesmo volume do web, só leitura: o Caddy serve /media/ sem passar pelo Django.
+      - media:/srv/media:ro
+      # Certificados. Se este volume sumir, o Let's Encrypt emite outro e, em
+      # excesso, bloqueia o domínio por dias.
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:

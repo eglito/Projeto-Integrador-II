@@ -15,3 +15,6 @@ __pycache__/
 
 # Fotos enviadas no desenvolvimento
 media/
+
+# Gerado pelo collectstatic
+staticfiles/

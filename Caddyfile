@@ -1,0 +1,27 @@
+# Proxy reverso da produção (README, decisão 46), ≈ o nginx na frente do Tomcat.
+# Com um domínio no lugar do endereço, o Caddy obtém e renova o certificado
+# HTTPS (Let's Encrypt) sozinho e redireciona HTTP para HTTPS.
+# SITE_ADDRESS vem do .env da VM, sem "https://" (ex.: mapa.example.com).
+{$SITE_ADDRESS} {
+	# Comprime as respostas de texto (HTML, JS, CSS, JSON).
+	encode zstd gzip
+
+	# O Django confere 2 MB no PUT de fotos, mas só depois de receber o corpo.
+	# Aqui o Caddy corta antes, em 3 MB, o que protege o disco e a memória.
+	@upload path /armazenamento-local/*
+	request_body @upload {
+		max_size 3MB
+	}
+
+	# Fotos: /media/fotos/x.jpg é lido de /srv/media/fotos/x.jpg (handle_path
+	# tira o prefixo /media antes de procurar o arquivo).
+	handle_path /media/* {
+		root * /srv/media
+		file_server
+	}
+
+	# Todo o resto vai para o gunicorn (nome "web" = serviço do Compose).
+	handle {
+		reverse_proxy web:8000
+	}
+}

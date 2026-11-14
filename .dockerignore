@@ -10,3 +10,6 @@ Docs
 
 # Fotos enviadas no desenvolvimento
 media/
+
+# Gerado pelo collectstatic (a imagem gera o próprio, no build)
+staticfiles/
