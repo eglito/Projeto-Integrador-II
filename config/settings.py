@@ -32,6 +32,25 @@ ALLOWED_HOSTS = [
     host for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if host
 ]
 
+# Interruptor da produção atrás de HTTPS (README, decisão 46). Desligado por
+# padrão: desenvolvimento e testes rodam em HTTP e não mudam.
+if os.environ.get("DJANGO_HTTPS", "False") == "True":
+    # O Caddy encerra o HTTPS e fala HTTP puro com o gunicorn, avisando o esquema
+    # original neste cabeçalho. Sem ele, o Django acha que a requisição é HTTP,
+    # compara com o "Origin: https://..." do navegador e recusa todo POST (login,
+    # cadastro) com 403 "Origin checking failed" (Docs/deploy.md, problemas comuns).
+    # Só é seguro confiar no cabeçalho porque o gunicorn não publica porta:
+    # se um cliente alcançasse o gunicorn direto, poderia forjar o cabeçalho.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    # Cookies de sessão e de CSRF só trafegam por HTTPS.
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS: o navegador passa a recusar HTTP neste domínio durante N segundos.
+    # Não dá para desfazer antes do prazo, então começa em 1 hora. Suba para
+    # 1 ano (31536000) quando o HTTPS estiver estável.
+    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SEGUNDOS", "3600"))
+
 # Os servidores de tiles do OpenStreetMap exigem o cabeçalho Referer
 # (osm.wiki/Blocked). O padrão do Django, "same-origin", omite o Referer para
 # outros domínios e faz o mapa ser bloqueado. Este valor envia só a origem
@@ -87,6 +106,9 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serve /static/ de dentro do Django. Logo após o SecurityMiddleware, como
+    # manda a documentação do WhiteNoise.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -167,6 +189,19 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# Destino do "collectstatic", de onde o WhiteNoise serve em produção.
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Armazenamentos. "default" guarda as fotos (MEDIA_ROOT); "staticfiles" só
+# comprime (gzip) no collectstatic. Sem o hash no nome do arquivo
+# (ManifestStaticFilesStorage): os módulos ES do front importam por caminho
+# relativo, e o Django não reescreve esses "import" (docs/plano_front.md).
+# Custo: depois de um deploy, o navegador pode usar CSS/JS antigo por até 60 s.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
+
 # Fotos enviadas. No desenvolvimento ficam em disco, servidas pelo runserver;
 # em produção, no Cloud Storage (README, decisão 15).
 MEDIA_URL = "/media/"
@@ -176,3 +211,15 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Logs
+# Com DEBUG desligado, a configuração padrão do Django não escreve o traceback
+# de um erro 500 em lugar nenhum (só envia e-mail aos ADMINS, que não existem).
+# Aqui os avisos e erros vão para a saída padrão, que o "docker compose logs" lê.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {"django": {"handlers": ["console"], "level": "WARNING"}},
+}
