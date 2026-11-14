@@ -25,21 +25,17 @@ RUN pip install --no-cache-dir -r ${REQUIREMENTS}
 
 COPY . .
 
-# Reúne os arquivos estáticos em /app/staticfiles, de onde o WhiteNoise os serve.
-# O settings exige variáveis que só existem em execução; as daqui são falsas e
-# valem só para este comando (não ficam gravadas na imagem).
-# --ignore deixa de fora a página de testes do QUnit (docs/plano_front.md).
-RUN DJANGO_SECRET_KEY=so-para-o-build POSTGRES_DB=build POSTGRES_USER=build \
-    POSTGRES_PASSWORD=build POSTGRES_HOST=build \
-    python manage.py collectstatic --noinput --ignore testes --ignore qunit
+# Junta os estáticos em STATIC_ROOT para o WhiteNoise servir em produção.
+# Valores fictícios só para o settings carregar: o collectstatic não abre o
+# banco, e nenhum segredo real entra na imagem.
+RUN DJANGO_SECRET_KEY=so-para-o-build POSTGRES_DB=x POSTGRES_USER=x \
+    POSTGRES_PASSWORD=x POSTGRES_HOST=x \
+    python manage.py collectstatic --noinput
 
-# Usuário sem privilégios: se alguém explorar uma falha da aplicação, não vira
-# root dentro do container. Só /app/media precisa ser gravável (fotos). O dono
-# da pasta na imagem vira o dono do volume nomeado na primeira vez que ele é criado.
-RUN useradd --system --create-home --uid 1000 app \
-    && mkdir -p /app/media \
-    && chown app:app /app/media
-USER app
+EXPOSE 8000
+
+# Desenvolvimento. Em produção, o Render roda docker/iniciar_producao.sh (render.yaml).
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 EXPOSE 8000
 

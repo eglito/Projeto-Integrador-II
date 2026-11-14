@@ -58,6 +58,19 @@ if os.environ.get("DJANGO_HTTPS", "False") == "True":
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 
+# Produção atrás de proxy (Render): o HTTPS termina no proxy, que avisa pelo
+# cabeçalho X-Forwarded-Proto. Sem isso o Django acha que a página é http e o
+# CSRF recusa o login vindo de https:// (README, decisão 46).
+CSRF_TRUSTED_ORIGINS = [
+    origem
+    for origem in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origem
+]
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -106,8 +119,6 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    # Serve /static/ de dentro do Django. Logo após o SecurityMiddleware, como
-    # manda a documentação do WhiteNoise.
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -189,18 +200,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-# Destino do "collectstatic", de onde o WhiteNoise serve em produção.
+# Destino do collectstatic. Em produção o WhiteNoise serve daqui CSS, JS e bibliotecas.
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# Armazenamentos. "default" guarda as fotos (MEDIA_ROOT); "staticfiles" só
-# comprime (gzip) no collectstatic. Sem o hash no nome do arquivo
-# (ManifestStaticFilesStorage): os módulos ES do front importam por caminho
-# relativo, e o Django não reescreve esses "import" (docs/plano_front.md).
-# Custo: depois de um deploy, o navegador pode usar CSS/JS antigo por até 60 s.
-STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
-}
 
 # Fotos enviadas. No desenvolvimento ficam em disco, servidas pelo runserver;
 # em produção, no Cloud Storage (README, decisão 15).
@@ -212,14 +213,13 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
-# Logs
-# Com DEBUG desligado, a configuração padrão do Django não escreve o traceback
-# de um erro 500 em lugar nenhum (só envia e-mail aos ADMINS, que não existem).
-# Aqui os avisos e erros vão para a saída padrão, que o "docker compose logs" lê.
+# Com DEBUG desligado, o Django não imprime os erros 500 no console. Em produção,
+# o log do Render é o único lugar para vê-los.
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "loggers": {"django": {"handlers": ["console"], "level": "WARNING"}},
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
 }
