@@ -4,7 +4,7 @@ from .views import ArmazenamentoLocalView, UploadView
 
 urlpatterns = [
     path("api/uploads/", UploadView.as_view(), name="uploads"),
-    # Simulação do bucket no desenvolvimento (README, decisão 15).
+    # Simulação do bucket: desenvolvimento (decisão 15) e VM de teste (decisão 46).
     path(
         "armazenamento-local/<str:token>/",
         ArmazenamentoLocalView.as_view(),

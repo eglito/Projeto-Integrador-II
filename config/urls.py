@@ -20,6 +20,7 @@ urlpatterns = [
     path("", include("paginas.urls")),
 ]
 
-# Serve as fotos no desenvolvimento. Em produção, quem serve é o bucket.
+# Serve as fotos no desenvolvimento. Em produção, o Caddy serve /media/
+# direto do volume (decisão 46); com o bucket (Fase 5), seria o Cloud Storage.
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

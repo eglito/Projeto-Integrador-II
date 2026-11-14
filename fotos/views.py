@@ -40,10 +40,12 @@ def erro(mensagem, codigo):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class ArmazenamentoLocalView(View):
-    """Passo 2, só no desenvolvimento: imita o PUT numa URL assinada do bucket.
+    """Passo 2: imita o PUT numa URL assinada do bucket.
 
-    Fica fora da API documentada: em produção, este papel é do Cloud Storage.
-    Sem CSRF porque, como no bucket real, quem autoriza é a assinatura da URL.
+    Existe no desenvolvimento e no deploy de teste em VM (decisão 46); com o
+    Cloud Storage (Fase 5), este papel passa a ser dele. Fica fora da API
+    documentada. Sem CSRF porque, como no bucket real, quem autoriza é a
+    assinatura da URL (válida por 10 minutos, um arquivo, até 2 MB).
     """
 
     http_method_names = ["put"]
