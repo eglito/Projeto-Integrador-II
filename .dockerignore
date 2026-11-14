@@ -10,3 +10,8 @@ Docs
 
 # Fotos enviadas no desenvolvimento
 media/
+
+staticfiles/
+media/
+.claude
+**/.env

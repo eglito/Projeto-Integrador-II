@@ -39,6 +39,19 @@ ALLOWED_HOSTS = [
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 
+# Produção atrás de proxy (Render): o HTTPS termina no proxy, que avisa pelo
+# cabeçalho X-Forwarded-Proto. Sem isso o Django acha que a página é http e o
+# CSRF recusa o login vindo de https:// (README, decisão 46).
+CSRF_TRUSTED_ORIGINS = [
+    origem
+    for origem in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origem
+]
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -87,6 +100,7 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -167,6 +181,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# Destino do collectstatic. Em produção o WhiteNoise serve daqui CSS, JS e bibliotecas.
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 # Fotos enviadas. No desenvolvimento ficam em disco, servidas pelo runserver;
 # em produção, no Cloud Storage (README, decisão 15).
 MEDIA_URL = "/media/"
@@ -176,3 +193,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Com DEBUG desligado, o Django não imprime os erros 500 no console. Em produção,
+# o log do Render é o único lugar para vê-los.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
+}

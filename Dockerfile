@@ -21,6 +21,18 @@ RUN pip install --no-cache-dir -r ${REQUIREMENTS}
 
 COPY . .
 
+# Junta os estáticos em STATIC_ROOT para o WhiteNoise servir em produção.
+# Valores fictícios só para o settings carregar: o collectstatic não abre o
+# banco, e nenhum segredo real entra na imagem.
+RUN DJANGO_SECRET_KEY=so-para-o-build POSTGRES_DB=x POSTGRES_USER=x \
+    POSTGRES_PASSWORD=x POSTGRES_HOST=x \
+    python manage.py collectstatic --noinput
+
+EXPOSE 8000
+
+# Desenvolvimento. Em produção, o Render roda docker/iniciar_producao.sh (render.yaml).
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
 EXPOSE 8000
 
 # Servidor de desenvolvimento. A imagem de produção (Fase 5) usará gunicorn.

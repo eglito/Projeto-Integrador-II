@@ -1,7 +1,7 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.static import serve
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from .views import OpcoesView
@@ -20,6 +20,8 @@ urlpatterns = [
     path("", include("paginas.urls")),
 ]
 
-# Serve as fotos no desenvolvimento. Em produção, quem serve é o bucket.
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Fotos enviadas. Sem o bucket (Fase 5 adiada), o próprio Django as entrega,
+# também com DEBUG desligado. Serve para o MVP e a demonstração, não para tráfego real.
+urlpatterns += [
+    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+]

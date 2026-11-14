@@ -1,0 +1,57 @@
+# Deploy de demonstração no Render, plano gratuito (README, decisão 46).
+# Segredos não ficam aqui: a chave é gerada pelo Render e a senha do
+# superusuário é pedida no painel (sync: false).
+databases:
+  - name: calistenia-db
+    plan: free
+    region: virginia
+    databaseName: calistenia
+    user: calistenia
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: mapa-calistenia
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: sh docker/iniciar_producao.sh
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: calistenia-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: calistenia-db
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: calistenia-db
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: calistenia-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: calistenia-db
+          property: password
+      - key: CARREGAR_LOCAIS_EXEMPLO
+        value: "True"
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@example.com
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
